@@ -34,6 +34,7 @@ export default function Profile() {
   const [timezone, setTimezone] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
 
   // Fetch user info
   const { data: userData, isLoading } = useQuery({
@@ -135,6 +136,10 @@ export default function Profile() {
   };
 
   const handleConnectPlatform = async (platform: string) => {
+    setError('');
+    setSuccess('');
+    setConnectingPlatform(platform);
+    
     try {
       let response;
       
@@ -161,31 +166,49 @@ export default function Profile() {
           return;
       }
       
-      if (response.data.oauth_url) {
+      console.log(`${platform} OAuth response:`, response.data);
+      
+      if (response.data?.oauth_url) {
         // Open OAuth URL in popup window
         const width = 600;
         const height = 700;
         const left = (window.screen.width - width) / 2;
         const top = (window.screen.height - height) / 2;
         
-        window.open(
+        const popup = window.open(
           response.data.oauth_url,
           'OAuth',
           `width=${width},height=${height},left=${left},top=${top}`
         );
         
+        if (!popup) {
+          setError('Popup blocked. Please allow popups for this site and try again.');
+          return;
+        }
+        
         // Listen for OAuth completion
-        window.addEventListener('message', (event) => {
+        const messageHandler = (event: MessageEvent) => {
           if (event.data.type === 'oauth_success') {
             queryClient.invalidateQueries({ queryKey: ['user_info'] });
             setSuccess(`${platform} connected successfully!`);
             setTimeout(() => setSuccess(''), 3000);
+            window.removeEventListener('message', messageHandler);
           }
-        });
+        };
+        window.addEventListener('message', messageHandler);
+      } else {
+        setError(`No OAuth URL received from server for ${platform}. Please check backend configuration.`);
+        console.error('Missing oauth_url in response:', response.data);
       }
     } catch (err: any) {
       console.error(`Error connecting ${platform}:`, err);
-      setError(`Failed to connect ${platform}`);
+      const errorMessage = err.response?.data?.error || 
+                          err.response?.data?.message || 
+                          err.message || 
+                          `Failed to connect ${platform}. Please check your browser console for details.`;
+      setError(`${errorMessage} (Status: ${err.response?.status || 'Unknown'})`);
+    } finally {
+      setConnectingPlatform(null);
     }
   };
   
@@ -320,8 +343,9 @@ export default function Profile() {
               <button
                 onClick={() => handleConnectPlatform('Facebook')}
                 className="connect-btn"
+                disabled={connectingPlatform === 'Facebook'}
               >
-                Connect Facebook
+                {connectingPlatform === 'Facebook' ? 'Connecting...' : 'Connect Facebook'}
               </button>
             )}
           </div>
@@ -353,8 +377,9 @@ export default function Profile() {
               <button
                 onClick={() => handleConnectPlatform('X')}
                 className="connect-btn"
+                disabled={connectingPlatform === 'X'}
               >
-                Connect X
+                {connectingPlatform === 'X' ? 'Connecting...' : 'Connect X'}
               </button>
             )}
           </div>
@@ -386,8 +411,9 @@ export default function Profile() {
               <button
                 onClick={() => handleConnectPlatform('LinkedIn')}
                 className="connect-btn"
+                disabled={connectingPlatform === 'LinkedIn'}
               >
-                Connect LinkedIn
+                {connectingPlatform === 'LinkedIn' ? 'Connecting...' : 'Connect LinkedIn'}
               </button>
             )}
           </div>
@@ -422,8 +448,9 @@ export default function Profile() {
               <button
                 onClick={() => handleConnectPlatform('Google My Business')}
                 className="connect-btn"
+                disabled={connectingPlatform === 'Google My Business'}
               >
-                Connect Google
+                {connectingPlatform === 'Google My Business' ? 'Connecting...' : 'Connect Google'}
               </button>
             )}
           </div>
@@ -473,8 +500,9 @@ export default function Profile() {
               <button
                 onClick={() => handleConnectPlatform('TikTok')}
                 className="connect-btn"
+                disabled={connectingPlatform === 'TikTok'}
               >
-                Connect TikTok
+                {connectingPlatform === 'TikTok' ? 'Connecting...' : 'Connect TikTok'}
               </button>
             )}
           </div>
@@ -506,8 +534,9 @@ export default function Profile() {
               <button
                 onClick={() => handleConnectPlatform('YouTube')}
                 className="connect-btn"
+                disabled={connectingPlatform === 'YouTube'}
               >
-                Connect YouTube
+                {connectingPlatform === 'YouTube' ? 'Connecting...' : 'Connect YouTube'}
               </button>
             )}
           </div>
