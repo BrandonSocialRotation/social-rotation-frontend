@@ -542,6 +542,174 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Subscription Plans */}
+      <SubscriptionPlansSection />
+    </div>
+  );
+}
+
+// Subscription Plans Component
+function SubscriptionPlansSection() {
+  const [selectedPlanType, setSelectedPlanType] = useState<'location_based' | 'user_seat_based'>('location_based');
+  const [loadingCheckout, setLoadingCheckout] = useState<number | null>(null);
+
+  // Fetch plans
+  const { data: plansData, isLoading: plansLoading } = useQuery({
+    queryKey: ['plans', selectedPlanType],
+    queryFn: async () => {
+      const response = await api.get(`/plans?plan_type=${selectedPlanType}`);
+      return response.data;
+    },
+  });
+
+  // Fetch current subscription
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['subscription'],
+    queryFn: async () => {
+      try {
+        const response = await api.get('/subscriptions');
+        return response.data;
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          return { subscription: null };
+        }
+        throw err;
+      }
+    },
+  });
+
+  const handleSubscribe = async (planId: number) => {
+    setLoadingCheckout(planId);
+    try {
+      const response = await api.post('/subscriptions/checkout_session', { plan_id: planId });
+      if (response.data?.checkout_url) {
+        window.location.href = response.data.checkout_url;
+      } else {
+        alert('Failed to create checkout session. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      alert(err.response?.data?.error || 'Failed to start checkout. Please try again.');
+    } finally {
+      setLoadingCheckout(null);
+    }
+  };
+
+  const plans = plansData?.plans || [];
+  const currentSubscription = subscriptionData?.subscription;
+
+  return (
+    <div className="profile-section">
+      <h2>Subscription Plans</h2>
+      <p className="section-description">
+        Choose a plan that fits your needs. All plans include RSS feeds and analytics.
+      </p>
+
+      {currentSubscription && (
+        <div className="current-subscription">
+          <h3>Current Plan: {currentSubscription.plan?.name || 'Active Subscription'}</h3>
+          <p>
+            Status: <span className={`status ${currentSubscription.status}`}>{currentSubscription.status}</span>
+          </p>
+          {currentSubscription.current_period_end && (
+            <p>
+              Renews: {new Date(currentSubscription.current_period_end).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Plan Type Toggle */}
+      <div className="plan-type-toggle">
+        <button
+          className={selectedPlanType === 'location_based' ? 'active' : ''}
+          onClick={() => setSelectedPlanType('location_based')}
+        >
+          Location-Based
+        </button>
+        <button
+          className={selectedPlanType === 'user_seat_based' ? 'active' : ''}
+          onClick={() => setSelectedPlanType('user_seat_based')}
+        >
+          User-Seat-Based
+        </button>
+      </div>
+
+      {plansLoading ? (
+        <div className="loading">Loading plans...</div>
+      ) : plans.length === 0 ? (
+        <p>No plans available for this type.</p>
+      ) : (
+        <div className="plans-grid">
+          {plans.map((plan: any) => (
+            <div key={plan.id} className="plan-card">
+              <div className="plan-header">
+                <h3>{plan.name}</h3>
+                <div className="plan-price">
+                  <span className="price">{plan.formatted_price}</span>
+                  <span className="period">/month</span>
+                </div>
+              </div>
+              
+              <div className="plan-features">
+                {plan.plan_type === 'location_based' ? (
+                  <>
+                    <div className="feature">
+                      <span className="feature-label">Max Locations:</span>
+                      <span className="feature-value">{plan.max_locations}</span>
+                    </div>
+                    <div className="feature">
+                      <span className="feature-label">Max Users:</span>
+                      <span className="feature-value">{plan.max_users}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="feature">
+                      <span className="feature-label">Max Users:</span>
+                      <span className="feature-value">{plan.max_users}</span>
+                    </div>
+                  </>
+                )}
+                <div className="feature">
+                  <span className="feature-label">Max Buckets:</span>
+                  <span className="feature-value">{plan.max_buckets}</span>
+                </div>
+                <div className="feature">
+                  <span className="feature-label">Images per Bucket:</span>
+                  <span className="feature-value">{plan.max_images_per_bucket}</span>
+                </div>
+                
+                <div className="feature-list">
+                  <h4>Features:</h4>
+                  <ul>
+                    {plan.features?.rss && <li>✓ RSS Feeds</li>}
+                    {plan.features?.marketplace && <li>✓ Marketplace</li>}
+                    {plan.features?.watermark && <li>✓ Watermarking</li>}
+                    {plan.features?.analytics && <li>✓ Analytics</li>}
+                    {plan.features?.white_label && <li>✓ White Label</li>}
+                    {plan.features?.ai_copywriting && <li>✓ AI Copywriting</li>}
+                    {plan.features?.ai_image_gen && <li>✓ AI Image Generation</li>}
+                  </ul>
+                </div>
+              </div>
+
+              <button
+                className="subscribe-btn"
+                onClick={() => handleSubscribe(plan.id)}
+                disabled={loadingCheckout === plan.id || !plan.stripe_price_id}
+              >
+                {loadingCheckout === plan.id
+                  ? 'Loading...'
+                  : plan.stripe_price_id
+                  ? 'Subscribe'
+                  : 'Coming Soon'}
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

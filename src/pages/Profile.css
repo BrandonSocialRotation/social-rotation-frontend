@@ -264,3 +264,197 @@ form {
   }
 }
 
+/* Subscription Plans */
+.current-subscription {
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.current-subscription h3 {
+  margin: 0 0 0.5rem 0;
+  color: #333;
+}
+
+.current-subscription p {
+  margin: 0.5rem 0;
+  color: #666;
+}
+
+.current-subscription .status {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.current-subscription .status.active {
+  color: #28a745;
+}
+
+.current-subscription .status.trialing {
+  color: #17a2b8;
+}
+
+.current-subscription .status.canceled {
+  color: #dc3545;
+}
+
+.plan-type-toggle {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.plan-type-toggle button {
+  flex: 1;
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.plan-type-toggle button:hover {
+  border-color: #007bff;
+  background: #f8f9fa;
+}
+
+.plan-type-toggle button.active {
+  border-color: #007bff;
+  background: #007bff;
+  color: white;
+}
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.plan-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 2rem;
+  background: white;
+  transition: all 0.3s;
+  display: flex;
+  flex-direction: column;
+}
+
+.plan-card:hover {
+  border-color: #007bff;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.15);
+  transform: translateY(-4px);
+}
+
+.plan-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.plan-header h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+.plan-price .price {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #007bff;
+}
+
+.plan-price .period {
+  font-size: 1rem;
+  color: #666;
+}
+
+.plan-features {
+  flex: 1;
+  margin-bottom: 1.5rem;
+}
+
+.plan-features .feature {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.plan-features .feature:last-of-type {
+  border-bottom: none;
+}
+
+.feature-label {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.feature-value {
+  font-weight: bold;
+  color: #333;
+}
+
+.feature-list {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.feature-list h4 {
+  margin: 0 0 0.75rem 0;
+  color: #333;
+  font-size: 1rem;
+}
+
+.feature-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-list li {
+  padding: 0.5rem 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.subscribe-btn {
+  width: 100%;
+  padding: 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: auto;
+}
+
+.subscribe-btn:hover:not(:disabled) {
+  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.subscribe-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
