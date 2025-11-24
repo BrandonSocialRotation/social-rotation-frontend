@@ -40,6 +40,8 @@ function App() {
       {/* Public routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/terms-of-service" element={<Terms />} />
+      <Route path="/privacy-policy" element={<Privacy />} />
       
       {/* Protected routes with layout */}
       <Route
@@ -58,8 +60,6 @@ function App() {
         <Route path="rss-feeds" element={<RssFeeds />} />
         <Route path="rss-feeds/:feedId/posts" element={<RssPosts />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="terms-of-service" element={<Terms />} />
-        <Route path="privacy-policy" element={<Privacy />} />
       </Route>
       
       {/* Catch all - redirect to dashboard */}
