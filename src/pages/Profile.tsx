@@ -551,16 +551,27 @@ export default function Profile() {
 
 // Subscription Plans Component
 function SubscriptionPlansSection() {
-  const [selectedPlanType, setSelectedPlanType] = useState<'location_based' | 'user_seat_based'>('location_based');
   const [loadingCheckout, setLoadingCheckout] = useState<number | null>(null);
 
-  // Fetch plans
-  const { data: plansData, isLoading: plansLoading } = useQuery({
-    queryKey: ['plans', selectedPlanType],
+  // Get user account type
+  const { data: userData } = useQuery({
+    queryKey: ['user_info'],
     queryFn: async () => {
-      const response = await api.get(`/plans?plan_type=${selectedPlanType}`);
+      const response = await api.get('/user_info');
       return response.data;
     },
+  });
+
+  const accountType = userData?.user?.account_type || 'personal'; // 'personal' or 'agency'
+
+  // Fetch plans based on account type
+  const { data: plansData, isLoading: plansLoading } = useQuery({
+    queryKey: ['plans', accountType],
+    queryFn: async () => {
+      const response = await api.get(`/plans?account_type=${accountType}`);
+      return response.data;
+    },
+    enabled: !!accountType, // Only fetch when account type is known
   });
 
   // Fetch current subscription
@@ -620,20 +631,13 @@ function SubscriptionPlansSection() {
         </div>
       )}
 
-      {/* Plan Type Toggle */}
-      <div className="plan-type-toggle">
-        <button
-          className={selectedPlanType === 'location_based' ? 'active' : ''}
-          onClick={() => setSelectedPlanType('location_based')}
-        >
-          Location-Based
-        </button>
-        <button
-          className={selectedPlanType === 'user_seat_based' ? 'active' : ''}
-          onClick={() => setSelectedPlanType('user_seat_based')}
-        >
-          User-Seat-Based
-        </button>
+      <div className="account-type-info">
+        <p>
+          <strong>Account Type:</strong> {accountType === 'agency' ? 'Agency' : 'Personal'}
+          {accountType === 'agency' && (
+            <span className="info-text"> - Plans are based on maximum sub-accounts you can manage</span>
+          )}
+        </p>
       </div>
 
       {plansLoading ? (
@@ -653,19 +657,24 @@ function SubscriptionPlansSection() {
               </div>
               
               <div className="plan-features">
-                {plan.plan_type === 'location_based' ? (
-                  <>
-                    <div className="feature">
-                      <span className="feature-label">Max Locations:</span>
-                      <span className="feature-value">{plan.max_locations}</span>
-                    </div>
-                    <div className="feature">
-                      <span className="feature-label">Max Users:</span>
-                      <span className="feature-value">{plan.max_users}</span>
-                    </div>
-                  </>
+                {plan.plan_type === 'personal' ? (
+                  <div className="feature">
+                    <span className="feature-label">Plan Type:</span>
+                    <span className="feature-value">Personal Use</span>
+                  </div>
+                ) : plan.plan_type === 'agency' ? (
+                  <div className="feature">
+                    <span className="feature-label">Max Sub-Accounts:</span>
+                    <span className="feature-value">{plan.max_users}</span>
+                  </div>
                 ) : (
                   <>
+                    {plan.max_locations > 0 && (
+                      <div className="feature">
+                        <span className="feature-label">Max Locations:</span>
+                        <span className="feature-value">{plan.max_locations}</span>
+                      </div>
+                    )}
                     <div className="feature">
                       <span className="feature-label">Max Users:</span>
                       <span className="feature-value">{plan.max_users}</span>
