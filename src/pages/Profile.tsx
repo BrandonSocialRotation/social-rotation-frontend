@@ -36,6 +36,22 @@ export default function Profile() {
   const [success, setSuccess] = useState('');
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
 
+  // Check for success message from URL params (Stripe redirect)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'subscription_active') {
+      setSuccess('Subscription activated successfully! Welcome to Social Rotation.');
+      // Clean up URL
+      window.history.replaceState({}, '', '/profile');
+      // Refresh subscription data
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+    }
+    if (urlParams.get('error') === 'subscription_canceled') {
+      setError('Payment was canceled. Please try again.');
+      window.history.replaceState({}, '', '/profile');
+    }
+  }, [queryClient]);
+
   // Fetch user info
   const { data: userData, isLoading } = useQuery({
     queryKey: ['user_info'],
