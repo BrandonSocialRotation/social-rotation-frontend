@@ -29,5 +29,7 @@ export default defineConfig({
     },
     // Optimize chunk size
     chunkSizeWarningLimit: 1000,
+    // Copy 404.html to dist
+    copyPublicDir: true,
   },
 })

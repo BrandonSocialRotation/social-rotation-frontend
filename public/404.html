@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Rotation</title>
+    <script>
+        // Redirect to index.html so React Router can handle the route
+        // Preserve the path so React Router can route correctly
+        var path = window.location.pathname;
+        var search = window.location.search;
+        var hash = window.location.hash;
+        window.location.replace('/index.html' + path + search + hash);
+    </script>
+</head>
+<body>
+    <p>Redirecting...</p>
+    <noscript>
+        <meta http-equiv="refresh" content="0;url=/">
+    </noscript>
+</body>
+</html>
+
