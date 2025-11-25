@@ -552,6 +552,7 @@ export default function Profile() {
 // Subscription Plans Component
 function SubscriptionPlansSection() {
   const [loadingCheckout, setLoadingCheckout] = useState<number | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
 
   // Get user account type
   const { data: userData } = useQuery({
@@ -563,6 +564,7 @@ function SubscriptionPlansSection() {
   });
 
   const accountType = userData?.user?.account_type || 'personal'; // 'personal' or 'agency'
+  const currentUserCount = userData?.user?.account?.users?.length || 1;
 
   // Fetch plans based on account type
   const { data: plansData, isLoading: plansLoading } = useQuery({
@@ -590,10 +592,49 @@ function SubscriptionPlansSection() {
     },
   });
 
+  // Calculate price for a plan based on user count
+  const calculatePrice = (plan: any, userCount: number, period: 'monthly' | 'annual') => {
+    if (!plan.supports_per_user_pricing) {
+      return plan.price_cents;
+    }
+
+    const basePrice = plan.base_price_cents || 0;
+    const additionalUsers = Math.max(userCount - 1, 0);
+    
+    let total = basePrice;
+    if (additionalUsers > 0) {
+      // First 10 additional users
+      const usersAtRegularPrice = Math.min(additionalUsers, 10);
+      total += usersAtRegularPrice * (plan.per_user_price_cents || 0);
+      
+      // Users after 10
+      if (additionalUsers > 10) {
+        const usersAtDiscountedPrice = additionalUsers - 10;
+        total += usersAtDiscountedPrice * (plan.per_user_price_after_10_cents || 0);
+      }
+    }
+    
+    // Apply annual discount (2 months free = 10/12)
+    if (period === 'annual') {
+      total = Math.round(total * 10 / 12);
+    }
+    
+    return total;
+  };
+
+  const formatPrice = (cents: number, period: 'monthly' | 'annual') => {
+    const dollars = cents / 100;
+    const periodText = period === 'annual' ? 'year' : 'month';
+    return `$${dollars.toFixed(2)}/${periodText}`;
+  };
+
   const handleSubscribe = async (planId: number) => {
     setLoadingCheckout(planId);
     try {
-      const response = await api.post('/subscriptions/checkout_session', { plan_id: planId });
+      const response = await api.post('/subscriptions/checkout_session', { 
+        plan_id: planId,
+        billing_period: billingPeriod
+      });
       if (response.data?.checkout_url) {
         window.location.href = response.data.checkout_url;
       } else {
@@ -640,21 +681,77 @@ function SubscriptionPlansSection() {
         </p>
       </div>
 
+      {/* Billing Period Selector - only show for per-user pricing plans */}
+      {plans.some((p: any) => p.supports_per_user_pricing) && (
+        <div className="billing-period-selector" style={{ marginBottom: '20px', padding: '15px', background: '#f5f5f5', borderRadius: '8px' }}>
+          <label style={{ marginRight: '15px', fontWeight: 'bold' }}>Billing Period:</label>
+          <label style={{ marginRight: '20px', cursor: 'pointer' }}>
+            <input
+              type="radio"
+              value="monthly"
+              checked={billingPeriod === 'monthly'}
+              onChange={(e) => setBillingPeriod(e.target.value as 'monthly' | 'annual')}
+              style={{ marginRight: '5px' }}
+            />
+            Monthly
+          </label>
+          <label style={{ cursor: 'pointer' }}>
+            <input
+              type="radio"
+              value="annual"
+              checked={billingPeriod === 'annual'}
+              onChange={(e) => setBillingPeriod(e.target.value as 'monthly' | 'annual')}
+              style={{ marginRight: '5px' }}
+            />
+            Annual <span style={{ color: '#28a745', fontWeight: 'bold' }}>(2 months free!)</span>
+          </label>
+        </div>
+      )}
+
       {plansLoading ? (
         <div className="loading">Loading plans...</div>
       ) : plans.length === 0 ? (
         <p>No plans available for this type.</p>
       ) : (
         <div className="plans-grid">
-          {plans.map((plan: any) => (
+          {plans.map((plan: any) => {
+            const calculatedPrice = plan.supports_per_user_pricing 
+              ? calculatePrice(plan, currentUserCount, billingPeriod)
+              : plan.price_cents;
+            const displayPrice = formatPrice(calculatedPrice, billingPeriod);
+            
+            return (
             <div key={plan.id} className="plan-card">
               <div className="plan-header">
                 <h3>{plan.name}</h3>
                 <div className="plan-price">
-                  <span className="price">{plan.formatted_price}</span>
-                  <span className="period">/month</span>
+                  {plan.supports_per_user_pricing ? (
+                    <>
+                      <span className="price">{displayPrice}</span>
+                      <span className="period" style={{ fontSize: '0.9em', color: '#666' }}>
+                        ({currentUserCount} user{currentUserCount !== 1 ? 's' : ''})
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="price">{plan.formatted_price}</span>
+                      <span className="period">/month</span>
+                    </>
+                  )}
                 </div>
               </div>
+              
+              {plan.supports_per_user_pricing && (
+                <div className="pricing-breakdown" style={{ marginBottom: '15px', padding: '10px', background: '#f9f9f9', borderRadius: '5px', fontSize: '0.9em' }}>
+                  <p style={{ margin: '5px 0' }}><strong>Pricing:</strong></p>
+                  <p style={{ margin: '5px 0' }}>Base: ${(plan.base_price_cents / 100).toFixed(2)}/{billingPeriod === 'annual' ? 'year' : 'month'}</p>
+                  <p style={{ margin: '5px 0' }}>+ ${(plan.per_user_price_cents / 100).toFixed(2)}/user (first 10 users)</p>
+                  <p style={{ margin: '5px 0' }}>+ ${(plan.per_user_price_after_10_cents / 100).toFixed(2)}/user (after 10 users)</p>
+                  {billingPeriod === 'annual' && (
+                    <p style={{ margin: '5px 0', color: '#28a745', fontWeight: 'bold' }}>✓ 2 months free with annual billing!</p>
+                  )}
+                </div>
+              )}
               
               <div className="plan-features">
                 {plan.plan_type === 'personal' ? (
@@ -707,18 +804,18 @@ function SubscriptionPlansSection() {
               <button
                 className="subscribe-btn"
                 onClick={() => handleSubscribe(plan.id)}
-                disabled={loadingCheckout === plan.id || !plan.stripe_price_id}
+                disabled={loadingCheckout === plan.id}
               >
                 {loadingCheckout === plan.id
                   ? 'Loading...'
-                  : plan.stripe_price_id
-                  ? 'Subscribe'
-                  : 'Coming Soon'}
+                  : `Subscribe - ${displayPrice}`}
               </button>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
+
