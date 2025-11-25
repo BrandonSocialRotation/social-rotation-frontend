@@ -567,10 +567,12 @@ function SubscriptionPlansSection() {
   const currentUserCount = userData?.user?.account?.users?.length || 1;
 
   // Fetch plans based on account type
-  const { data: plansData, isLoading: plansLoading } = useQuery({
+  const { data: plansData, isLoading: plansLoading, error: plansError } = useQuery({
     queryKey: ['plans', accountType],
     queryFn: async () => {
+      console.log('Fetching plans for account_type:', accountType);
       const response = await api.get(`/plans?account_type=${accountType}`);
+      console.log('Plans response:', response.data);
       return response.data;
     },
     enabled: !!accountType, // Only fetch when account type is known
@@ -672,13 +674,21 @@ function SubscriptionPlansSection() {
         </div>
       )}
 
-      <div className="account-type-info">
+      <div className="account-type-info" style={{ marginBottom: '20px', padding: '15px', background: '#f0f8ff', borderRadius: '8px' }}>
         <p>
           <strong>Account Type:</strong> {accountType === 'agency' ? 'Agency' : 'Personal'}
           {accountType === 'agency' && (
             <span className="info-text"> - Plans are based on maximum sub-accounts you can manage</span>
           )}
         </p>
+        {accountType === 'personal' && (
+          <div style={{ marginTop: '10px' }}>
+            <p style={{ marginBottom: '10px', fontSize: '0.9em', color: '#666' }}>
+              Want to manage multiple sub-accounts? Convert to an Agency account.
+            </p>
+            <ConvertToAgencyButton />
+          </div>
+        )}
       </div>
 
       {/* Billing Period Selector - only show for per-user pricing plans */}
@@ -710,8 +720,22 @@ function SubscriptionPlansSection() {
 
       {plansLoading ? (
         <div className="loading">Loading plans...</div>
+      ) : plansError ? (
+        <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>
+          <p>Error loading plans: {plansError.message || 'Unknown error'}</p>
+          <p style={{ fontSize: '0.9em', marginTop: '10px' }}>
+            Please refresh the page or contact support if this persists.
+          </p>
+        </div>
       ) : plans.length === 0 ? (
-        <p>No plans available for this type.</p>
+        <div style={{ padding: '20px', textAlign: 'center' }}>
+          <p style={{ marginBottom: '10px' }}>No plans available for this account type ({accountType}).</p>
+          {accountType === 'personal' && (
+            <p style={{ fontSize: '0.9em', color: '#666' }}>
+              If you're expecting to see the Personal plan ($49/month), please refresh the page or contact support.
+            </p>
+          )}
+        </div>
       ) : (
         <div className="plans-grid">
           {plans.map((plan: any) => {
@@ -816,6 +840,151 @@ function SubscriptionPlansSection() {
         </div>
       )}
     </div>
+  );
+}
+
+function ConvertToAgencyButton() {
+  const queryClient = useQueryClient();
+  const [showModal, setShowModal] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const convertMutation = useMutation({
+    mutationFn: async (data: { company_name?: string }) => {
+      return await api.post('/user_info/convert_to_agency', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user_info'] });
+      queryClient.invalidateQueries({ queryKey: ['plans'] });
+      setShowModal(false);
+      setCompanyName('');
+      alert('Account successfully converted to Agency! You can now manage sub-accounts.');
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.error || 'Failed to convert account. Please try again.');
+    },
+  });
+
+  const handleConvert = () => {
+    setError('');
+    setLoading(true);
+    convertMutation.mutate(
+      { company_name: companyName || undefined },
+      {
+        onSettled: () => setLoading(false),
+      }
+    );
+  };
+
+  return (
+    <>
+      <button
+        onClick={() => setShowModal(true)}
+        style={{
+          padding: '8px 16px',
+          background: '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer',
+          fontSize: '0.9em',
+        }}
+      >
+        Convert to Agency Account
+      </button>
+
+      {showModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+          onClick={() => !loading && setShowModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              padding: '30px',
+              borderRadius: '8px',
+              maxWidth: '500px',
+              width: '90%',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ marginTop: 0 }}>Convert to Agency Account</h3>
+            <p style={{ marginBottom: '20px', color: '#666' }}>
+              Converting to an Agency account will allow you to manage multiple sub-accounts.
+              This action cannot be undone.
+            </p>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                Company/Agency Name (optional):
+              </label>
+              <input
+                type="text"
+                value={companyName}
+                onChange={(e) => setCompanyName(e.target.value)}
+                placeholder="Enter your company name"
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  border: '1px solid #ddd',
+                  borderRadius: '4px',
+                }}
+                disabled={loading}
+              />
+            </div>
+
+            {error && (
+              <div style={{ color: 'red', marginBottom: '15px', fontSize: '0.9em' }}>
+                {error}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => !loading && setShowModal(false)}
+                disabled={loading}
+                style={{
+                  padding: '8px 16px',
+                  background: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConvert}
+                disabled={loading}
+                style={{
+                  padding: '8px 16px',
+                  background: '#007bff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {loading ? 'Converting...' : 'Convert to Agency'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
