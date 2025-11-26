@@ -102,21 +102,30 @@ function Register() {
       setStep(2)
     } catch (err: any) {
       // Show detailed error messages
-      const errorData = err.response?.data
-      console.error('Registration error:', err)
-      console.error('Error response data:', errorData)
+      console.error('=== Registration Error Debug ===')
+      console.error('Full error object:', err)
+      console.error('Error response:', err.response)
+      console.error('Error response data:', err.response?.data)
+      console.error('Error response status:', err.response?.status)
+      console.error('Error message:', err.message)
       
+      const errorData = err.response?.data || err.data
       let errorMessage = 'Registration failed. Please try again.'
       
       if (errorData) {
-        // Prefer user-friendly message, then details, then error
-        if (errorData.message) {
+        console.error('Processing errorData:', errorData)
+        
+        // Try multiple error formats
+        if (errorData.message && typeof errorData.message === 'string' && errorData.message.length > 0) {
           errorMessage = errorData.message
+          console.log('Using errorData.message:', errorMessage)
         } else if (errorData.details && Array.isArray(errorData.details) && errorData.details.length > 0) {
           errorMessage = errorData.details.join('. ')
-        } else if (errorData.error) {
+          console.log('Using errorData.details:', errorMessage)
+        } else if (errorData.error && typeof errorData.error === 'string' && errorData.error !== 'Registration failed') {
           errorMessage = errorData.error
-        } else if (errorData.errors) {
+          console.log('Using errorData.error:', errorMessage)
+        } else if (errorData.errors && typeof errorData.errors === 'object') {
           // Handle Rails error format
           const errorStrings: string[] = []
           Object.keys(errorData.errors).forEach((field) => {
@@ -131,12 +140,17 @@ function Register() {
               errorStrings.push(`${field}: ${JSON.stringify(fieldErrors)}`)
             }
           })
-          errorMessage = errorStrings.length > 0 ? errorStrings.join('. ') : errorMessage
+          if (errorStrings.length > 0) {
+            errorMessage = errorStrings.join('. ')
+            console.log('Using errorData.errors:', errorMessage)
+          }
         }
       } else if (err.message) {
         errorMessage = err.message
+        console.log('Using err.message:', errorMessage)
       }
       
+      console.error('Final error message to display:', errorMessage)
       setError(errorMessage)
     } finally {
       setLoading(false)
