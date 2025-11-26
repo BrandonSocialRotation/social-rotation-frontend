@@ -22,10 +22,10 @@ function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [processingPayment, setProcessingPayment] = useState(false)
-  const [userToken, setUserToken] = useState<string | null>(null) // Store token after account creation
+  const [_userToken, setUserToken] = useState<string | null>(null) // Store token after account creation
   
-  const login = useAuthStore((state) => state.login)
-  const navigate = useNavigate()
+  const _login = useAuthStore((state) => state.login)
+  const _navigate = useNavigate()
 
   // Fetch plans to calculate pricing
   const [plans, setPlans] = useState<any[]>([])
@@ -92,7 +92,7 @@ function Register() {
 
     try {
       const response = await authAPI.register(name, email, password, accountType, companyName)
-      const { user, token } = response.data
+      const { token } = response.data
       
       setUserToken(token)
       // Set token temporarily for API calls
