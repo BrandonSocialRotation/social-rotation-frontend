@@ -100,6 +100,7 @@ function Register() {
       
       // Move to payment step
       setStep(2)
+      setLoading(false) // Reset loading before moving to next step
     } catch (err: any) {
       // Show detailed error messages
       console.error('=== Registration Error Debug ===')
