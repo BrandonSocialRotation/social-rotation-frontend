@@ -103,13 +103,16 @@ function Register() {
     } catch (err: any) {
       // Show detailed error messages
       const errorData = err.response?.data
+      console.error('Registration error:', err)
+      console.error('Error response data:', errorData)
+      
       let errorMessage = 'Registration failed. Please try again.'
       
       if (errorData) {
         // Prefer user-friendly message, then details, then error
         if (errorData.message) {
           errorMessage = errorData.message
-        } else if (errorData.details && Array.isArray(errorData.details)) {
+        } else if (errorData.details && Array.isArray(errorData.details) && errorData.details.length > 0) {
           errorMessage = errorData.details.join('. ')
         } else if (errorData.error) {
           errorMessage = errorData.error
@@ -122,12 +125,16 @@ function Register() {
               fieldErrors.forEach((msg: string) => {
                 errorStrings.push(`${field.charAt(0).toUpperCase() + field.slice(1)} ${msg}`)
               })
+            } else if (typeof fieldErrors === 'string') {
+              errorStrings.push(`${field.charAt(0).toUpperCase() + field.slice(1)} ${fieldErrors}`)
             } else {
-              errorStrings.push(`${field}: ${fieldErrors}`)
+              errorStrings.push(`${field}: ${JSON.stringify(fieldErrors)}`)
             }
           })
-          errorMessage = errorStrings.join('. ')
+          errorMessage = errorStrings.length > 0 ? errorStrings.join('. ') : errorMessage
         }
+      } else if (err.message) {
+        errorMessage = err.message
       }
       
       setError(errorMessage)
