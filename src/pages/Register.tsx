@@ -101,7 +101,36 @@ function Register() {
       // Move to payment step
       setStep(2)
     } catch (err: any) {
-      setError(err.response?.data?.error || err.response?.data?.details?.join(', ') || 'Registration failed. Please try again.')
+      // Show detailed error messages
+      const errorData = err.response?.data
+      let errorMessage = 'Registration failed. Please try again.'
+      
+      if (errorData) {
+        // Prefer user-friendly message, then details, then error
+        if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.details && Array.isArray(errorData.details)) {
+          errorMessage = errorData.details.join('. ')
+        } else if (errorData.error) {
+          errorMessage = errorData.error
+        } else if (errorData.errors) {
+          // Handle Rails error format
+          const errorStrings: string[] = []
+          Object.keys(errorData.errors).forEach((field) => {
+            const fieldErrors = errorData.errors[field]
+            if (Array.isArray(fieldErrors)) {
+              fieldErrors.forEach((msg: string) => {
+                errorStrings.push(`${field.charAt(0).toUpperCase() + field.slice(1)} ${msg}`)
+              })
+            } else {
+              errorStrings.push(`${field}: ${fieldErrors}`)
+            }
+          })
+          errorMessage = errorStrings.join('. ')
+        }
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -126,7 +155,7 @@ function Register() {
       }
 
       if (!plan) {
-        throw new Error('No plan found for your account type')
+        throw new Error('No plan found for your account type. Please refresh the page and try again.')
       }
 
       // Create checkout session
@@ -139,10 +168,28 @@ function Register() {
         // Redirect to Stripe Checkout
         window.location.href = checkoutResponse.data.checkout_url
       } else {
-        throw new Error('Failed to create checkout session')
+        throw new Error('Failed to create checkout session. Please try again.')
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Payment setup failed. Please try again.')
+      // Show detailed error messages for payment
+      const errorData = err.response?.data
+      let errorMessage = 'Payment setup failed. Please try again.'
+      
+      if (errorData) {
+        if (errorData.error) {
+          errorMessage = errorData.error
+        } else if (errorData.message) {
+          errorMessage = errorData.message
+        } else if (errorData.details) {
+          errorMessage = Array.isArray(errorData.details) 
+            ? errorData.details.join('. ')
+            : errorData.details
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
       setProcessingPayment(false)
     }
   }
