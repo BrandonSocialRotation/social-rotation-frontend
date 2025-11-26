@@ -116,17 +116,14 @@ function Register() {
       if (errorData) {
         console.error('Processing errorData:', errorData)
         
-        // Try multiple error formats
-        if (errorData.message && typeof errorData.message === 'string' && errorData.message.length > 0) {
+        // Try multiple error formats - prioritize message field
+        if (errorData.message && typeof errorData.message === 'string' && errorData.message.length > 0 && errorData.message !== 'Registration failed') {
           errorMessage = errorData.message
           console.log('Using errorData.message:', errorMessage)
         } else if (errorData.details && Array.isArray(errorData.details) && errorData.details.length > 0) {
           errorMessage = errorData.details.join('. ')
           console.log('Using errorData.details:', errorMessage)
-        } else if (errorData.error && typeof errorData.error === 'string' && errorData.error !== 'Registration failed') {
-          errorMessage = errorData.error
-          console.log('Using errorData.error:', errorMessage)
-        } else if (errorData.errors && typeof errorData.errors === 'object') {
+        } else if (errorData.errors && typeof errorData.errors === 'object' && Object.keys(errorData.errors).length > 0) {
           // Handle Rails error format
           const errorStrings: string[] = []
           Object.keys(errorData.errors).forEach((field) => {
