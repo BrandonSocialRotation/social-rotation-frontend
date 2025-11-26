@@ -1,8 +1,7 @@
 // Register page - new user signup with payment collection
 // Multi-step form: Account info -> Payment info -> Process payment
 import { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
+import { Link } from 'react-router-dom'
 import { authAPI } from '../services/api'
 import api from '../services/api'
 import './Auth.css'
@@ -23,9 +22,6 @@ function Register() {
   const [loading, setLoading] = useState(false)
   const [processingPayment, setProcessingPayment] = useState(false)
   const [_userToken, setUserToken] = useState<string | null>(null) // Store token after account creation
-  
-  const _login = useAuthStore((state) => state.login)
-  const _navigate = useNavigate()
 
   // Fetch plans to calculate pricing
   const [plans, setPlans] = useState<any[]>([])
