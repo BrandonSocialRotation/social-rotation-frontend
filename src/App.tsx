@@ -22,6 +22,7 @@ import RssFeeds from './pages/RssFeeds'
 import RssPosts from './pages/RssPosts'
 import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
+import OAuthCallback from './pages/OAuthCallback'
 
 // Protected Route wrapper - redirects to login if not authenticated
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -42,6 +43,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/terms-of-service" element={<Terms />} />
       <Route path="/privacy-policy" element={<Privacy />} />
+      <Route path="/oauth/callback" element={<OAuthCallback />} />
       
       {/* Protected routes with layout */}
       <Route

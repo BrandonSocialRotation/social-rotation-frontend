@@ -204,14 +204,36 @@ export default function Profile() {
         
         // Listen for OAuth completion
         const messageHandler = (event: MessageEvent) => {
+          // Only accept messages from same origin
+          if (event.origin !== window.location.origin) return;
+          
           if (event.data.type === 'oauth_success') {
             queryClient.invalidateQueries({ queryKey: ['user_info'] });
-            setSuccess(`${platform} connected successfully!`);
+            setSuccess(`${event.data.platform || platform} connected successfully!`);
             setTimeout(() => setSuccess(''), 3000);
             window.removeEventListener('message', messageHandler);
+            if (popup && !popup.closed) {
+              popup.close();
+            }
+          } else if (event.data.type === 'oauth_error') {
+            const errorMsg = event.data.message || `Failed to connect ${event.data.platform || platform}`;
+            setError(errorMsg);
+            window.removeEventListener('message', messageHandler);
+            if (popup && !popup.closed) {
+              popup.close();
+            }
           }
         };
         window.addEventListener('message', messageHandler);
+        
+        // Also check if popup was closed manually
+        const checkPopup = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkPopup);
+            window.removeEventListener('message', messageHandler);
+            setConnectingPlatform(null);
+          }
+        }, 500);
       } else {
         setError(`No OAuth URL received from server for ${platform}. Please check backend configuration.`);
         console.error('Missing oauth_url in response:', response.data);
@@ -348,13 +370,22 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.facebook_connected ? (
-              <button
-                onClick={() => disconnectFacebookMutation.mutate()}
-                className="disconnect-btn"
-                disabled={disconnectFacebookMutation.isPending}
-              >
-                Disconnect
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleConnectPlatform('Facebook')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'Facebook'}
+                >
+                  {connectingPlatform === 'Facebook' ? 'Connecting...' : 'Change Facebook Account'}
+                </button>
+                <button
+                  onClick={() => disconnectFacebookMutation.mutate()}
+                  className="disconnect-btn"
+                  disabled={disconnectFacebookMutation.isPending}
+                >
+                  Disconnect
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => handleConnectPlatform('Facebook')}
@@ -416,13 +447,22 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.linkedin_connected ? (
-              <button
-                onClick={() => disconnectLinkedInMutation.mutate()}
-                className="disconnect-btn"
-                disabled={disconnectLinkedInMutation.isPending}
-              >
-                Disconnect
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleConnectPlatform('LinkedIn')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'LinkedIn'}
+                >
+                  {connectingPlatform === 'LinkedIn' ? 'Connecting...' : 'Change LinkedIn Account'}
+                </button>
+                <button
+                  onClick={() => disconnectLinkedInMutation.mutate()}
+                  className="disconnect-btn"
+                  disabled={disconnectLinkedInMutation.isPending}
+                >
+                  Disconnect
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => handleConnectPlatform('LinkedIn')}
@@ -453,13 +493,22 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.google_connected ? (
-              <button
-                onClick={() => disconnectGoogleMutation.mutate()}
-                className="disconnect-btn"
-                disabled={disconnectGoogleMutation.isPending}
-              >
-                Disconnect
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleConnectPlatform('Google My Business')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'Google My Business'}
+                >
+                  {connectingPlatform === 'Google My Business' ? 'Connecting...' : 'Change Google Account'}
+                </button>
+                <button
+                  onClick={() => disconnectGoogleMutation.mutate()}
+                  className="disconnect-btn"
+                  disabled={disconnectGoogleMutation.isPending}
+                >
+                  Disconnect
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => handleConnectPlatform('Google My Business')}
@@ -505,13 +554,22 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.tiktok_connected ? (
-              <button
-                onClick={() => disconnectTikTokMutation.mutate()}
-                className="disconnect-btn"
-                disabled={disconnectTikTokMutation.isPending}
-              >
-                Disconnect
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleConnectPlatform('TikTok')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'TikTok'}
+                >
+                  {connectingPlatform === 'TikTok' ? 'Connecting...' : 'Change TikTok Account'}
+                </button>
+                <button
+                  onClick={() => disconnectTikTokMutation.mutate()}
+                  className="disconnect-btn"
+                  disabled={disconnectTikTokMutation.isPending}
+                >
+                  Disconnect
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => handleConnectPlatform('TikTok')}
@@ -539,13 +597,22 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.youtube_connected ? (
-              <button
-                onClick={() => disconnectYouTubeMutation.mutate()}
-                className="disconnect-btn"
-                disabled={disconnectYouTubeMutation.isPending}
-              >
-                Disconnect
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleConnectPlatform('YouTube')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'YouTube'}
+                >
+                  {connectingPlatform === 'YouTube' ? 'Connecting...' : 'Change YouTube Account'}
+                </button>
+                <button
+                  onClick={() => disconnectYouTubeMutation.mutate()}
+                  className="disconnect-btn"
+                  disabled={disconnectYouTubeMutation.isPending}
+                >
+                  Disconnect
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => handleConnectPlatform('YouTube')}
