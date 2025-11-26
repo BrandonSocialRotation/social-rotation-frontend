@@ -413,13 +413,22 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.twitter_connected ? (
-              <button
-                onClick={() => disconnectXMutation.mutate()}
-                className="disconnect-btn"
-                disabled={disconnectXMutation.isPending}
-              >
-                Disconnect
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleConnectPlatform('X')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'X'}
+                >
+                  {connectingPlatform === 'X' ? 'Connecting...' : 'Change X Account'}
+                </button>
+                <button
+                  onClick={() => disconnectXMutation.mutate()}
+                  className="disconnect-btn"
+                  disabled={disconnectXMutation.isPending}
+                >
+                  Disconnect
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => handleConnectPlatform('X')}
