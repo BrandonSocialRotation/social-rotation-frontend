@@ -191,15 +191,28 @@ export default function Profile() {
         const left = (window.screen.width - width) / 2;
         const top = (window.screen.height - height) / 2;
         
+        // Open popup with explicit features to prevent it from opening in a new tab
         const popup = window.open(
           response.data.oauth_url,
           'OAuth',
-          `width=${width},height=${height},left=${left},top=${top}`
+          `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`
         );
         
-        if (!popup) {
+        if (!popup || popup.closed || typeof popup.closed === 'undefined') {
           setError('Popup blocked. Please allow popups for this site and try again.');
+          setConnectingPlatform(null);
           return;
+        }
+        
+        // Verify the popup actually opened and is pointing to the OAuth URL
+        try {
+          // Check if popup was redirected (this might throw if cross-origin)
+          if (popup.location.href && !popup.location.href.includes('linkedin.com') && !popup.location.href.includes('facebook.com') && !popup.location.href.includes('twitter.com') && !popup.location.href.includes('google.com') && !popup.location.href.includes('tiktok.com') && !popup.location.href.includes('youtube.com')) {
+            console.warn('Popup may have been redirected to:', popup.location.href);
+          }
+        } catch (e) {
+          // Cross-origin check will fail, which is expected - popup is on OAuth provider's domain
+          console.log('Popup opened successfully (cross-origin check expected to fail)');
         }
         
         // Listen for OAuth completion
