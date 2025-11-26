@@ -10,23 +10,31 @@ export default function OAuthCallback() {
   const platform = searchParams.get('platform') || 'social media'
 
   useEffect(() => {
+    console.log('OAuthCallback mounted:', { success, error, platform, hasOpener: !!window.opener })
+    
     // Send message to parent window
     if (window.opener) {
       if (success) {
+        console.log('Sending success message to parent:', { type: 'oauth_success', platform, message: success })
         window.opener.postMessage(
           { type: 'oauth_success', platform, message: success },
           window.location.origin
         )
       } else if (error) {
+        console.log('Sending error message to parent:', { type: 'oauth_error', platform, message: error })
         window.opener.postMessage(
           { type: 'oauth_error', platform, message: error },
           window.location.origin
         )
       }
-      // Close the popup
-      window.close()
+      // Close the popup after a short delay to ensure message is sent
+      setTimeout(() => {
+        console.log('Closing popup window')
+        window.close()
+      }, 100)
     } else {
       // If no opener (direct navigation), redirect to profile
+      console.log('No window.opener, redirecting to profile')
       window.location.href = '/profile'
     }
   }, [success, error, platform])
