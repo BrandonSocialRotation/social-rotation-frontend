@@ -240,7 +240,20 @@ function Register() {
           }}>2</div>
         </div>
         
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="error-message" style={{ 
+            padding: '15px', 
+            marginBottom: '20px', 
+            background: '#fee', 
+            border: '1px solid #fcc', 
+            borderRadius: '5px', 
+            color: '#c33',
+            fontSize: '0.95em',
+            lineHeight: '1.5'
+          }}>
+            <strong>Error:</strong> {error}
+          </div>
+        )}
         
         {step === 1 && (
           <form onSubmit={handleAccountSubmit}>
