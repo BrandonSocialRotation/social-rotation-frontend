@@ -191,62 +191,80 @@ export default function Profile() {
         const left = (window.screen.width - width) / 2;
         const top = (window.screen.height - height) / 2;
         
+        // Store current window location to detect if main window was navigated
+        const currentUrl = window.location.href;
+        
         // Open popup with explicit features to prevent it from opening in a new tab
         const popup = window.open(
           response.data.oauth_url,
-          'OAuth',
-          `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=no,status=no,resizable=yes,scrollbars=yes`
+          `oauth_${platform}_${Date.now()}`, // Unique name to prevent reuse
+          `width=${width},height=${height},left=${left},top=${top},menubar=no,toolbar=no,location=yes,status=no,resizable=yes,scrollbars=yes`
         );
         
+        // Check if popup was blocked
         if (!popup || popup.closed || typeof popup.closed === 'undefined') {
           setError('Popup blocked. Please allow popups for this site and try again.');
           setConnectingPlatform(null);
           return;
         }
         
-        // Verify the popup actually opened and is pointing to the OAuth URL
-        try {
-          // Check if popup was redirected (this might throw if cross-origin)
-          if (popup.location.href && !popup.location.href.includes('linkedin.com') && !popup.location.href.includes('facebook.com') && !popup.location.href.includes('twitter.com') && !popup.location.href.includes('google.com') && !popup.location.href.includes('tiktok.com') && !popup.location.href.includes('youtube.com')) {
-            console.warn('Popup may have been redirected to:', popup.location.href);
+        // Verify popup opened correctly by checking if main window was navigated
+        setTimeout(() => {
+          if (window.location.href !== currentUrl) {
+            // Main window was navigated - popup was likely blocked
+            console.error('Main window was navigated - popup may have been blocked');
+            setError('Popup was blocked. The page navigated instead. Please allow popups and try again.');
+            setConnectingPlatform(null);
+            // Try to go back
+            window.history.back();
           }
-        } catch (e) {
-          // Cross-origin check will fail, which is expected - popup is on OAuth provider's domain
-          console.log('Popup opened successfully (cross-origin check expected to fail)');
-        }
+        }, 100);
+        
+        console.log('Popup opened successfully:', { url: response.data.oauth_url, popup });
         
         // Listen for OAuth completion
         const messageHandler = (event: MessageEvent) => {
+          console.log('Message received:', event.data, 'from origin:', event.origin, 'current origin:', window.location.origin);
+          
           // Accept messages from OAuth callback pages (can be from different origins if backend redirects to old URL)
           // Validate that it's a valid OAuth message
           if (!event.data || typeof event.data !== 'object' || !event.data.type) {
+            console.log('Ignoring message - invalid data structure');
             return;
           }
           
           // Only process oauth_success and oauth_error messages
           if (event.data.type !== 'oauth_success' && event.data.type !== 'oauth_error') {
+            console.log('Ignoring message - wrong type:', event.data.type);
             return;
           }
           
-          console.log('Received OAuth message:', event.data, 'from origin:', event.origin);
+          console.log('Processing OAuth message:', event.data);
           
           if (event.data.type === 'oauth_success') {
+            console.log('OAuth success! Invalidating queries and updating UI');
             queryClient.invalidateQueries({ queryKey: ['user_info'] });
             setSuccess(`${event.data.platform || platform} connected successfully!`);
             setTimeout(() => setSuccess(''), 3000);
+            setConnectingPlatform(null);
             window.removeEventListener('message', messageHandler);
             if (popup && !popup.closed) {
+              console.log('Closing popup window');
               popup.close();
             }
           } else if (event.data.type === 'oauth_error') {
+            console.log('OAuth error:', event.data.message);
             const errorMsg = event.data.message || `Failed to connect ${event.data.platform || platform}`;
             setError(errorMsg);
+            setConnectingPlatform(null);
             window.removeEventListener('message', messageHandler);
             if (popup && !popup.closed) {
+              console.log('Closing popup window after error');
               popup.close();
             }
           }
         };
+        console.log('Adding message listener for OAuth callback');
         window.addEventListener('message', messageHandler);
         
         // Also check if popup was closed manually

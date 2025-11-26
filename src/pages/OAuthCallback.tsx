@@ -10,36 +10,60 @@ export default function OAuthCallback() {
   const platform = searchParams.get('platform') || 'social media'
 
   useEffect(() => {
-    console.log('OAuthCallback mounted:', { success, error, platform, hasOpener: !!window.opener })
+    console.log('OAuthCallback mounted:', { success, error, platform, hasOpener: !!window.opener, url: window.location.href })
     
     // Send message to parent window
-    if (window.opener) {
+    if (window.opener && !window.opener.closed) {
       // Use '*' as target origin to allow cross-origin communication
       // The parent window will validate the origin in its message handler
       const targetOrigin = '*'
       
       if (success) {
         console.log('Sending success message to parent:', { type: 'oauth_success', platform, message: success, targetOrigin })
-        window.opener.postMessage(
-          { type: 'oauth_success', platform, message: success },
-          targetOrigin
-        )
+        try {
+          window.opener.postMessage(
+            { type: 'oauth_success', platform, message: success },
+            targetOrigin
+          )
+          console.log('Success message sent to parent')
+        } catch (e) {
+          console.error('Error sending success message:', e)
+        }
       } else if (error) {
         console.log('Sending error message to parent:', { type: 'oauth_error', platform, message: error, targetOrigin })
-        window.opener.postMessage(
-          { type: 'oauth_error', platform, message: error },
-          targetOrigin
-        )
+        try {
+          window.opener.postMessage(
+            { type: 'oauth_error', platform, message: error },
+            targetOrigin
+          )
+          console.log('Error message sent to parent')
+        } catch (e) {
+          console.error('Error sending error message:', e)
+        }
       }
+      
       // Close the popup after a short delay to ensure message is sent
       setTimeout(() => {
-        console.log('Closing popup window')
-        window.close()
-      }, 100)
+        console.log('Attempting to close popup window')
+        try {
+          window.close()
+          // If window doesn't close, try again after a longer delay
+          setTimeout(() => {
+            if (!window.closed) {
+              console.warn('Popup did not close automatically, trying again...')
+              window.close()
+            }
+          }, 500)
+        } catch (e) {
+          console.error('Error closing popup:', e)
+        }
+      }, 200)
     } else {
       // If no opener (direct navigation), redirect to profile
-      console.log('No window.opener, redirecting to profile')
-      window.location.href = '/profile'
+      console.log('No window.opener or opener is closed, redirecting to profile')
+      setTimeout(() => {
+        window.location.href = '/profile'
+      }, 1000)
     }
   }, [success, error, platform])
 
