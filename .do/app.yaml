@@ -12,8 +12,10 @@ static_sites:
     catchall_document: index.html
   - path: /terms-of-service
     catchall_document: index.html
-  - path: /privacy-policy
-    catchall_document: index.html
+         - path: /privacy-policy
+           catchall_document: index.html
+         - path: /oauth/callback
+           catchall_document: index.html
   - path: /login
     catchall_document: index.html
   - path: /register
