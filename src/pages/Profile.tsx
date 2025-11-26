@@ -204,8 +204,18 @@ export default function Profile() {
         
         // Listen for OAuth completion
         const messageHandler = (event: MessageEvent) => {
-          // Only accept messages from same origin
-          if (event.origin !== window.location.origin) return;
+          // Accept messages from OAuth callback pages (can be from different origins if backend redirects to old URL)
+          // Validate that it's a valid OAuth message
+          if (!event.data || typeof event.data !== 'object' || !event.data.type) {
+            return;
+          }
+          
+          // Only process oauth_success and oauth_error messages
+          if (event.data.type !== 'oauth_success' && event.data.type !== 'oauth_error') {
+            return;
+          }
+          
+          console.log('Received OAuth message:', event.data, 'from origin:', event.origin);
           
           if (event.data.type === 'oauth_success') {
             queryClient.invalidateQueries({ queryKey: ['user_info'] });

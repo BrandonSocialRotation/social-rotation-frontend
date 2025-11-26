@@ -14,17 +14,21 @@ export default function OAuthCallback() {
     
     // Send message to parent window
     if (window.opener) {
+      // Use '*' as target origin to allow cross-origin communication
+      // The parent window will validate the origin in its message handler
+      const targetOrigin = '*'
+      
       if (success) {
-        console.log('Sending success message to parent:', { type: 'oauth_success', platform, message: success })
+        console.log('Sending success message to parent:', { type: 'oauth_success', platform, message: success, targetOrigin })
         window.opener.postMessage(
           { type: 'oauth_success', platform, message: success },
-          window.location.origin
+          targetOrigin
         )
       } else if (error) {
-        console.log('Sending error message to parent:', { type: 'oauth_error', platform, message: error })
+        console.log('Sending error message to parent:', { type: 'oauth_error', platform, message: error, targetOrigin })
         window.opener.postMessage(
           { type: 'oauth_error', platform, message: error },
-          window.location.origin
+          targetOrigin
         )
       }
       // Close the popup after a short delay to ensure message is sent
