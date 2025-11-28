@@ -247,6 +247,7 @@ export default function Profile() {
             setSuccess(`${event.data.platform || platform} connected successfully!`);
             setTimeout(() => setSuccess(''), 3000);
             setConnectingPlatform(null);
+            clearInterval(checkPopup);
             window.removeEventListener('message', messageHandler);
             if (popup && !popup.closed) {
               console.log('Closing popup window');
@@ -257,6 +258,7 @@ export default function Profile() {
             const errorMsg = event.data.message || `Failed to connect ${event.data.platform || platform}`;
             setError(errorMsg);
             setConnectingPlatform(null);
+            clearInterval(checkPopup);
             window.removeEventListener('message', messageHandler);
             if (popup && !popup.closed) {
               console.log('Closing popup window after error');
@@ -267,12 +269,58 @@ export default function Profile() {
         console.log('Adding message listener for OAuth callback');
         window.addEventListener('message', messageHandler);
         
-        // Also check if popup was closed manually
+        // Also poll the popup window to check if it has navigated to the callback page
+        // This is a fallback in case postMessage doesn't work
         const checkPopup = setInterval(() => {
           if (popup.closed) {
+            console.log('Popup was closed');
             clearInterval(checkPopup);
             window.removeEventListener('message', messageHandler);
             setConnectingPlatform(null);
+            // Refresh user info in case connection succeeded but message wasn't received
+            queryClient.invalidateQueries({ queryKey: ['user_info'] });
+            return;
+          }
+          
+          // Try to check popup URL (will fail if cross-origin, which is expected)
+          try {
+            const popupUrl = popup.location.href;
+            console.log('Popup URL:', popupUrl);
+            
+            // If popup is on our callback page, it should have sent a message
+            // If we're here and no message was received, try to read URL params
+            if (popupUrl.includes('/oauth/callback')) {
+              const urlParams = new URLSearchParams(popupUrl.split('?')[1] || '');
+              const success = urlParams.get('success');
+              const error = urlParams.get('error');
+              
+              if (success || error) {
+                console.log('Detected OAuth callback in popup URL:', { success, error });
+                // Manually trigger the success/error handling
+                if (success) {
+                  queryClient.invalidateQueries({ queryKey: ['user_info'] });
+                  setSuccess(`${platform} connected successfully!`);
+                  setTimeout(() => setSuccess(''), 3000);
+                  setConnectingPlatform(null);
+                  clearInterval(checkPopup);
+                  window.removeEventListener('message', messageHandler);
+                  if (popup && !popup.closed) {
+                    popup.close();
+                  }
+                } else if (error) {
+                  setError(`Failed to connect ${platform}: ${error}`);
+                  setConnectingPlatform(null);
+                  clearInterval(checkPopup);
+                  window.removeEventListener('message', messageHandler);
+                  if (popup && !popup.closed) {
+                    popup.close();
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            // Cross-origin error is expected when popup is on OAuth provider's domain
+            // This is normal and we'll rely on postMessage instead
           }
         }, 500);
       } else {
