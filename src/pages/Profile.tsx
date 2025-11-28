@@ -383,6 +383,7 @@ export default function Profile() {
         linkedin_auth_failed: 'LinkedIn authentication failed. Please try again.',
         linkedin_access_denied: 'LinkedIn authorization was denied. Please grant permissions and try again.',
         linkedin_invalid_request: 'LinkedIn request was invalid. Please try again.',
+        linkedin_scope_error: 'LinkedIn app configuration error. The requested permissions are not enabled for this app. Please contact support.',
         linkedin_config_error: 'LinkedIn configuration error. Please contact support.',
         google_auth_failed: 'Google authentication failed.',
       };
