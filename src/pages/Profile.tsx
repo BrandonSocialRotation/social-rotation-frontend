@@ -395,7 +395,24 @@ export default function Profile() {
   }
 
   // const _user = userData?.user as User;
-  const connectedAccounts = userData?.connected_accounts as ConnectedAccounts;
+  // Extract connected accounts from user object (backend provides boolean flags)
+  const connectedAccounts: ConnectedAccounts = userData?.user ? {
+    facebook_connected: userData.user.facebook_connected || false,
+    twitter_connected: userData.user.twitter_connected || false,
+    linkedin_connected: userData.user.linkedin_connected || false,
+    google_connected: userData.user.google_connected || false,
+    instagram_connected: userData.user.instagram_connected || false,
+    tiktok_connected: userData.user.tiktok_connected || false,
+    youtube_connected: userData.user.youtube_connected || false,
+  } : {
+    facebook_connected: false,
+    twitter_connected: false,
+    linkedin_connected: false,
+    google_connected: false,
+    instagram_connected: false,
+    tiktok_connected: false,
+    youtube_connected: false,
+  };
 
   return (
     <div className="profile-page">
