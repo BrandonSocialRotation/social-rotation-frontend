@@ -333,8 +333,9 @@ export default function Profile() {
             // Cross-origin error is expected when popup is on OAuth provider's domain
             // This is normal and we'll rely on postMessage instead
             // Only log if it's not a cross-origin error
-            if (!e.message?.includes('cross-origin') && !e.message?.includes('Blocked a frame')) {
-              console.log('Error checking popup URL (expected for cross-origin):', e.message);
+            const errorMessage = e instanceof Error ? e.message : String(e);
+            if (!errorMessage.includes('cross-origin') && !errorMessage.includes('Blocked a frame')) {
+              console.log('Error checking popup URL (expected for cross-origin):', errorMessage);
             }
           }
         }, 500);
