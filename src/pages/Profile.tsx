@@ -380,7 +380,10 @@ export default function Profile() {
         invalid_state: 'OAuth validation failed. Please try again.',
         user_not_found: 'User session expired. Please login again.',
         facebook_auth_failed: 'Facebook authentication failed.',
-        linkedin_auth_failed: 'LinkedIn authentication failed.',
+        linkedin_auth_failed: 'LinkedIn authentication failed. Please try again.',
+        linkedin_access_denied: 'LinkedIn authorization was denied. Please grant permissions and try again.',
+        linkedin_invalid_request: 'LinkedIn request was invalid. Please try again.',
+        linkedin_config_error: 'LinkedIn configuration error. Please contact support.',
         google_auth_failed: 'Google authentication failed.',
       };
       setError(messages[error] || 'Authentication failed. Please try again.');
