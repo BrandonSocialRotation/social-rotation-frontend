@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import './Schedule.css';
@@ -6,6 +6,15 @@ import './Schedule.css';
 interface Bucket {
   id: number;
   name: string;
+}
+
+interface BucketImage {
+  id: number;
+  friendly_name: string;
+  image?: {
+    source_url?: string;
+    file_path?: string;
+  };
 }
 
 interface BucketSchedule {
@@ -43,6 +52,7 @@ export default function Schedule() {
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
+  const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [scheduleType, setScheduleType] = useState<number>(SCHEDULE_TYPE_ROTATION);
   const [time, setTime] = useState('12:00');
   const [description, setDescription] = useState('');
@@ -57,6 +67,17 @@ export default function Schedule() {
   const [pinterest, setPinterest] = useState(false);
   
   const [error, setError] = useState('');
+
+  // Fetch bucket images when bucket is selected
+  const { data: bucketImagesData, isLoading: imagesLoading } = useQuery({
+    queryKey: ['bucket_images', selectedBucket],
+    queryFn: async () => {
+      if (!selectedBucket) return [];
+      const response = await api.get(`/buckets/${selectedBucket}/images`);
+      return response.data.bucket_images as BucketImage[];
+    },
+    enabled: !!selectedBucket,
+  });
 
   // Fetch all schedules
   const { data: schedulesData, isLoading: schedulesLoading } = useQuery({
@@ -113,6 +134,7 @@ export default function Schedule() {
 
   const resetForm = () => {
     setSelectedBucket(null);
+    setSelectedImage(null);
     setScheduleType(SCHEDULE_TYPE_ROTATION);
     setTime('12:00');
     setDescription('');
@@ -125,6 +147,11 @@ export default function Schedule() {
     setPinterest(false);
     setError('');
   };
+
+  // Reset image selection when bucket changes
+  useEffect(() => {
+    setSelectedImage(null);
+  }, [selectedBucket]);
 
   const calculatePostTo = () => {
     let postTo = 0;
@@ -163,6 +190,12 @@ export default function Schedule() {
       return;
     }
 
+    // For ONCE and ANNUALLY schedules, require image selection
+    if ((scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY) && !selectedImage) {
+      setError('Please select an image for "Once" or "Annually" schedules');
+      return;
+    }
+
     const postTo = calculatePostTo();
     if (postTo === 0) {
       setError('Please select at least one social media platform');
@@ -171,13 +204,22 @@ export default function Schedule() {
 
     const cronString = generateCronString();
 
-    createMutation.mutate({
+    const scheduleData: any = {
       bucket_id: selectedBucket,
       schedule: cronString,
       schedule_type: scheduleType,
       post_to: postTo,
       description: description,
       twitter_description: twitterDescription || description,
+    };
+
+    // Include bucket_image_id if a specific image is selected
+    if (selectedImage) {
+      scheduleData.bucket_image_id = selectedImage;
+    }
+
+    createMutation.mutate({
+      bucket_schedule: scheduleData,
     });
   };
 
@@ -337,17 +379,53 @@ export default function Schedule() {
                 </select>
               </div>
 
+              {selectedBucket && (
+                <div className="form-group">
+                  <label htmlFor="image">Select Image *</label>
+                  {imagesLoading ? (
+                    <div>Loading images...</div>
+                  ) : (
+                    <select
+                      id="image"
+                      value={selectedImage || ''}
+                      onChange={(e) => setSelectedImage(e.target.value ? Number(e.target.value) : null)}
+                      required={scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY}
+                    >
+                      <option value="">
+                        {scheduleType === SCHEDULE_TYPE_ROTATION 
+                          ? 'All Images (Rotation)' 
+                          : 'Select an image'}
+                      </option>
+                      {(bucketImagesData || []).map((image) => (
+                        <option key={image.id} value={image.id}>
+                          {image.friendly_name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {selectedBucket && !imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) && (
+                    <small className="error-text">This bucket has no images. Please add images first.</small>
+                  )}
+                </div>
+              )}
+
               <div className="form-group">
                 <label htmlFor="scheduleType">Schedule Type *</label>
                 <select
                   id="scheduleType"
                   value={scheduleType}
-                  onChange={(e) => setScheduleType(Number(e.target.value))}
+                  onChange={(e) => {
+                    setScheduleType(Number(e.target.value));
+                    // Clear image selection when switching to rotation
+                    if (Number(e.target.value) === SCHEDULE_TYPE_ROTATION) {
+                      setSelectedImage(null);
+                    }
+                  }}
                   required
                 >
-                  <option value={SCHEDULE_TYPE_ROTATION}>Rotation (Daily)</option>
-                  <option value={SCHEDULE_TYPE_ONCE}>Once</option>
-                  <option value={SCHEDULE_TYPE_ANNUALLY}>Annually</option>
+                  <option value={SCHEDULE_TYPE_ROTATION}>Rotation (Daily) - All Images</option>
+                  <option value={SCHEDULE_TYPE_ONCE}>Once - Single Image</option>
+                  <option value={SCHEDULE_TYPE_ANNUALLY}>Annually - Single Image</option>
                 </select>
               </div>
 
