@@ -287,33 +287,44 @@ export default function Profile() {
             const popupUrl = popup.location.href;
             console.log('Popup URL:', popupUrl);
             
-            // If popup is on our callback page, it should have sent a message
-            // If we're here and no message was received, try to read URL params
-            if (popupUrl.includes('/oauth/callback')) {
-              const urlParams = new URLSearchParams(popupUrl.split('?')[1] || '');
-              const success = urlParams.get('success');
-              const error = urlParams.get('error');
-              
-              if (success || error) {
-                console.log('Detected OAuth callback in popup URL:', { success, error });
-                // Manually trigger the success/error handling
-                if (success) {
-                  queryClient.invalidateQueries({ queryKey: ['user_info'] });
-                  setSuccess(`${platform} connected successfully!`);
-                  setTimeout(() => setSuccess(''), 3000);
-                  setConnectingPlatform(null);
-                  clearInterval(checkPopup);
-                  window.removeEventListener('message', messageHandler);
-                  if (popup && !popup.closed) {
-                    popup.close();
-                  }
-                } else if (error) {
-                  setError(`Failed to connect ${platform}: ${error}`);
-                  setConnectingPlatform(null);
-                  clearInterval(checkPopup);
-                  window.removeEventListener('message', messageHandler);
-                  if (popup && !popup.closed) {
-                    popup.close();
+            // Check if popup is on our domain (could be callback page or root with params)
+            const isOurDomain = popupUrl.includes(window.location.hostname);
+            if (isOurDomain) {
+              // Extract URL params - handle both /oauth/callback and root path
+              const urlMatch = popupUrl.match(/\?(.+)$/);
+              if (urlMatch) {
+                const urlParams = new URLSearchParams(urlMatch[1]);
+                const success = urlParams.get('success');
+                const error = urlParams.get('error');
+                const callbackPlatform = urlParams.get('platform');
+                
+                if (success || error) {
+                  console.log('Detected OAuth callback in popup URL:', { success, error, platform: callbackPlatform });
+                  // Manually trigger the success/error handling
+                  if (success) {
+                    console.log('Triggering success handling from popup URL detection');
+                    queryClient.invalidateQueries({ queryKey: ['user_info'] });
+                    setSuccess(`${callbackPlatform || platform} connected successfully!`);
+                    setTimeout(() => setSuccess(''), 3000);
+                    setConnectingPlatform(null);
+                    clearInterval(checkPopup);
+                    window.removeEventListener('message', messageHandler);
+                    if (popup && !popup.closed) {
+                      console.log('Closing popup after success detection');
+                      popup.close();
+                    }
+                    return; // Exit early to prevent further checks
+                  } else if (error) {
+                    console.log('Triggering error handling from popup URL detection');
+                    setError(`Failed to connect ${callbackPlatform || platform}: ${error}`);
+                    setConnectingPlatform(null);
+                    clearInterval(checkPopup);
+                    window.removeEventListener('message', messageHandler);
+                    if (popup && !popup.closed) {
+                      console.log('Closing popup after error detection');
+                      popup.close();
+                    }
+                    return; // Exit early to prevent further checks
                   }
                 }
               }
@@ -321,6 +332,10 @@ export default function Profile() {
           } catch (e) {
             // Cross-origin error is expected when popup is on OAuth provider's domain
             // This is normal and we'll rely on postMessage instead
+            // Only log if it's not a cross-origin error
+            if (!e.message?.includes('cross-origin') && !e.message?.includes('Blocked a frame')) {
+              console.log('Error checking popup URL (expected for cross-origin):', e.message);
+            }
           }
         }, 500);
       } else {
