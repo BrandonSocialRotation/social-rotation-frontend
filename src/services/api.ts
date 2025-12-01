@@ -38,7 +38,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor - handles 401 (unauthorized) errors
+// Response interceptor - handles 401 (unauthorized) and 403 (subscription required) errors
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -46,6 +46,11 @@ api.interceptors.response.use(
       // Token expired or invalid - logout user
       useAuthStore.getState().logout()
       window.location.href = '/login'
+    } else if (error.response?.status === 403 && error.response?.data?.subscription_required) {
+      // Subscription required - redirect to register/subscription page
+      // Don't logout, just redirect so they can complete payment
+      const redirectTo = error.response.data.redirect_to || '/register'
+      window.location.href = redirectTo
     }
     return Promise.reject(error)
   }
