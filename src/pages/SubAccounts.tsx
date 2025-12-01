@@ -77,7 +77,7 @@ export default function SubAccounts() {
       // Store original user/token before switching
       switchToSubAccount(response.data.user, response.data.token);
       // Refresh page to reload with new context
-      window.location.href = '/';
+      window.location.href = '/dashboard';
     },
   });
 

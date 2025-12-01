@@ -27,7 +27,7 @@ function Login() {
       const { user, token } = response.data
       
       login(user, token)
-      navigate('/')
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed. Please try again.')
     } finally {

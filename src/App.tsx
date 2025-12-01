@@ -1,6 +1,7 @@
 // Main App component - handles routing and layout
 // Routes:
-//   / - Dashboard (protected)
+//   / - Landing page (public)
+//   /dashboard - Dashboard (protected)
 //   /login - Login page
 //   /register - Register page
 //   /buckets - Bucket management (protected)
@@ -10,6 +11,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
 import Layout from './components/Layout'
+import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -39,6 +41,7 @@ function App() {
   return (
     <Routes>
       {/* Public routes */}
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/terms-of-service" element={<Terms />} />
@@ -47,7 +50,7 @@ function App() {
       
       {/* Protected routes with layout */}
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <Layout />
@@ -55,6 +58,16 @@ function App() {
         }
       >
         <Route index element={<Dashboard />} />
+      </Route>
+      
+      {/* Other protected routes */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
         <Route path="buckets" element={<Buckets />} />
         <Route path="buckets/:bucketId/images" element={<BucketImages />} />
         <Route path="schedule" element={<Schedule />} />
@@ -64,7 +77,7 @@ function App() {
         <Route path="profile" element={<Profile />} />
       </Route>
       
-      {/* Catch all - redirect to dashboard */}
+      {/* Catch all - redirect authenticated users to dashboard, others to landing */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
