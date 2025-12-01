@@ -122,6 +122,15 @@ export default function Profile() {
     },
   });
 
+  const disconnectInstagramMutation = useMutation({
+    mutationFn: () => api.post('/user_info/disconnect_instagram'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user_info'] });
+      setSuccess('Instagram disconnected successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    },
+  });
+
   const disconnectTikTokMutation = useMutation({
     mutationFn: () => api.post('/user_info/disconnect_tiktok'),
     onSuccess: () => {
@@ -172,6 +181,25 @@ export default function Profile() {
         case 'X':
           response = await api.get('/oauth/twitter/login');
           break;
+        case 'Instagram':
+          // Instagram uses Facebook API - check if Facebook is connected first
+          if (!connectedAccounts?.facebook_connected) {
+            setError('Please connect Facebook first. Instagram uses Facebook\'s API and requires a connected Facebook account.');
+            setConnectingPlatform(null);
+            return;
+          }
+          // Call Instagram connect endpoint (fetches Instagram account from Facebook)
+          response = await api.get('/oauth/instagram/connect');
+          // Instagram connect doesn't use OAuth popup, so handle it directly
+          if (response.data?.success) {
+            queryClient.invalidateQueries({ queryKey: ['user_info'] });
+            setSuccess('Instagram connected successfully!');
+            setTimeout(() => setSuccess(''), 3000);
+            setConnectingPlatform(null);
+            return;
+          } else {
+            throw new Error(response.data?.message || 'Failed to connect Instagram');
+          }
         case 'TikTok':
           response = await api.get('/oauth/tiktok/login');
           break;
@@ -670,7 +698,36 @@ export default function Profile() {
                 </span>
               </div>
             </div>
-            <p className="account-note">Connected via Facebook</p>
+            <p className="account-note" style={{ fontSize: '0.85em', color: '#666', marginBottom: '10px' }}>
+              Requires Facebook connection
+            </p>
+            {connectedAccounts?.instagram_connected ? (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleConnectPlatform('Instagram')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'Instagram'}
+                >
+                  {connectingPlatform === 'Instagram' ? 'Reconnecting...' : 'Reconnect Instagram'}
+                </button>
+                <button
+                  onClick={() => disconnectInstagramMutation.mutate()}
+                  className="disconnect-btn"
+                  disabled={disconnectInstagramMutation.isPending}
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleConnectPlatform('Instagram')}
+                className="connect-btn"
+                disabled={connectingPlatform === 'Instagram' || !connectedAccounts?.facebook_connected}
+                title={!connectedAccounts?.facebook_connected ? 'Please connect Facebook first' : ''}
+              >
+                {connectingPlatform === 'Instagram' ? 'Connecting...' : 'Connect Instagram'}
+              </button>
+            )}
           </div>
 
           {/* TikTok */}
