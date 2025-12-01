@@ -420,9 +420,20 @@ function Register() {
                   marginBottom: '20px' 
                 }}>
                   <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Pricing:</p>
-                  <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                    Base: $49/{billingPeriod === 'annual' ? 'year' : 'month'}
-                  </p>
+                  {billingPeriod === 'annual' ? (
+                    <>
+                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
+                        Base: $49/month × 10 months = $490/year
+                      </p>
+                      <p style={{ margin: '5px 0', fontSize: '0.9em', color: '#28a745' }}>
+                        (Save 2 months - pay for 10, get 12!)
+                      </p>
+                    </>
+                  ) : (
+                    <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
+                      Base: $49/month
+                    </p>
+                  )}
                   <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
                     + $15/user (first 10 users)
                   </p>
