@@ -174,9 +174,13 @@ function Register() {
       }
 
       // Create checkout session
+      // Pass registration info so account can be created in webhook after payment
       const checkoutResponse = await api.post('/subscriptions/checkout_session', {
         plan_id: plan.id,
-        billing_period: billingPeriod
+        billing_period: billingPeriod,
+        account_type: accountType,
+        company_name: companyName || undefined,
+        user_count: accountType === 'personal' ? 1 : subAccountCount
       })
 
       if (checkoutResponse.data?.checkout_url) {
