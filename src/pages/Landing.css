@@ -4,6 +4,7 @@
   flex-direction: column;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* Header */
@@ -22,10 +23,23 @@
   align-items: center;
 }
 
+.landing-logo {
+  display: flex;
+  align-items: center;
+}
+
+.landing-logo .logo-image {
+  height: 40px;
+  width: auto;
+  max-width: 220px;
+  object-fit: contain;
+}
+
 .landing-logo h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
+  display: block;
 }
 
 .landing-nav {
@@ -137,7 +151,7 @@
 
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
 }
 

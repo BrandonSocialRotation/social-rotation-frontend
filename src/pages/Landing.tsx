@@ -8,7 +8,19 @@ export default function Landing() {
       <header className="landing-header">
         <div className="landing-header-content">
           <div className="landing-logo">
-            <h1>Social Rotation</h1>
+            {/* Logo placeholder - add logo_negative.png here when available */}
+            <img 
+              src="/logo_negative.png" 
+              alt="Social Rotation" 
+              className="logo-image"
+              onError={(e) => {
+                // Fallback to text if logo not found
+                e.currentTarget.style.display = 'none'
+                const textLogo = e.currentTarget.nextElementSibling as HTMLElement
+                if (textLogo) textLogo.style.display = 'block'
+              }}
+            />
+            <h1 style={{ display: 'none' }}>Social Rotation</h1>
           </div>
           <nav className="landing-nav">
             <Link to="/login" className="login-button">
@@ -21,9 +33,10 @@ export default function Landing() {
       {/* Hero Section */}
       <section className="landing-hero">
         <div className="landing-hero-content">
-          <h2>Manage All Your Social Media in One Place</h2>
+          <h2>Social Media Automation & Marketing Tool</h2>
           <p className="landing-subtitle">
-            Schedule posts, rotate content, and grow your presence across multiple platforms
+            A Software as a Service (SaaS) platform that helps you automate your social media presence. 
+            Schedule posts, rotate content, and manage all your accounts from one powerful dashboard.
           </p>
           <div className="landing-cta">
             <Link to="/register" className="cta-button primary">
@@ -39,27 +52,47 @@ export default function Landing() {
       {/* Features Section */}
       <section className="landing-features">
         <div className="landing-features-content">
-          <h3>Everything You Need to Manage Your Social Media</h3>
+          <h3>Everything You Need to Automate Your Social Media</h3>
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">📅</div>
-              <h4>Schedule Posts</h4>
-              <p>Plan and schedule your content across all your social media accounts</p>
+              <h4>Smart Scheduling</h4>
+              <p>Schedule posts for specific dates, set up rotation schedules, or post immediately across all your connected platforms</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">🔄</div>
               <h4>Content Rotation</h4>
-              <p>Automatically rotate through your image buckets for consistent posting</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📊</div>
-              <h4>Analytics</h4>
-              <p>Track your performance and engagement across all platforms</p>
+              <p>Create image buckets and automatically rotate through your content for consistent, fresh posts</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">🔗</div>
-              <h4>Multi-Platform</h4>
-              <p>Connect Facebook, Instagram, Twitter, LinkedIn, and more</p>
+              <h4>Multi-Platform Posting</h4>
+              <p>Connect and post to Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube, and Google My Business</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📰</div>
+              <h4>RSS Feed Integration</h4>
+              <p>Automatically pull content from RSS feeds and create posts with images from your favorite sources</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🖼️</div>
+              <h4>Watermarking</h4>
+              <p>Add custom watermarks to your images with adjustable size, opacity, and positioning</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📊</div>
+              <h4>Analytics & Insights</h4>
+              <p>Track your performance, reach, and engagement across all your social media accounts</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">👥</div>
+              <h4>Agency Features</h4>
+              <p>Manage multiple sub-accounts, perfect for agencies managing multiple clients</p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🛒</div>
+              <h4>Content Marketplace</h4>
+              <p>Browse and purchase pre-made content buckets or sell your own content to other users</p>
             </div>
           </div>
         </div>
