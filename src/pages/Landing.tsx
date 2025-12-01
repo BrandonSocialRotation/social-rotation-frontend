@@ -34,10 +34,6 @@ export default function Landing() {
       <section className="landing-hero">
         <div className="landing-hero-content">
           <h2>Social Media Automation & Marketing Tool</h2>
-          <p className="landing-subtitle">
-            A Software as a Service (SaaS) platform that helps you automate your social media presence. 
-            Schedule posts, rotate content, and manage all your accounts from one powerful dashboard.
-          </p>
           <div className="landing-cta">
             <Link to="/register" className="cta-button primary">
               Get Started Free
@@ -49,52 +45,10 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="landing-features">
-        <div className="landing-features-content">
-          <h3>Everything You Need to Automate Your Social Media</h3>
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">📅</div>
-              <h4>Smart Scheduling</h4>
-              <p>Schedule posts for specific dates, set up rotation schedules, or post immediately across all your connected platforms</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🔄</div>
-              <h4>Content Rotation</h4>
-              <p>Create image buckets and automatically rotate through your content for consistent, fresh posts</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🔗</div>
-              <h4>Multi-Platform Posting</h4>
-              <p>Connect and post to Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube, and Google My Business</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📰</div>
-              <h4>RSS Feed Integration</h4>
-              <p>Automatically pull content from RSS feeds and create posts with images from your favorite sources</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🖼️</div>
-              <h4>Watermarking</h4>
-              <p>Add custom watermarks to your images with adjustable size, opacity, and positioning</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📊</div>
-              <h4>Analytics & Insights</h4>
-              <p>Track your performance, reach, and engagement across all your social media accounts</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">👥</div>
-              <h4>Agency Features</h4>
-              <p>Manage multiple sub-accounts, perfect for agencies managing multiple clients</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🛒</div>
-              <h4>Content Marketplace</h4>
-              <p>Browse and purchase pre-made content buckets or sell your own content to other users</p>
-            </div>
-          </div>
+      {/* Coming Soon Section */}
+      <section className="landing-coming-soon">
+        <div className="landing-coming-soon-content">
+          <h3>Coming Soon</h3>
         </div>
       </section>
 

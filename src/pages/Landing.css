@@ -85,11 +85,22 @@
   line-height: 1.2;
 }
 
-.landing-subtitle {
-  font-size: 1.25rem;
-  margin: 0 0 2rem 0;
+/* Coming Soon Section */
+.landing-coming-soon {
+  padding: 4rem 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.landing-coming-soon-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.landing-coming-soon-content h3 {
+  font-size: 2.5rem;
+  margin: 0;
   opacity: 0.9;
-  line-height: 1.6;
 }
 
 .landing-cta {
