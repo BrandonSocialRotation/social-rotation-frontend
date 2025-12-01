@@ -702,21 +702,29 @@ export default function Profile() {
               Requires Facebook connection
             </p>
             {connectedAccounts?.instagram_connected ? (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => handleConnectPlatform('Instagram')}
-                  className="connect-btn"
-                  disabled={connectingPlatform === 'Instagram'}
-                >
-                  {connectingPlatform === 'Instagram' ? 'Reconnecting...' : 'Reconnect Instagram'}
-                </button>
-                <button
-                  onClick={() => disconnectInstagramMutation.mutate()}
-                  className="disconnect-btn"
-                  disabled={disconnectInstagramMutation.isPending}
-                >
-                  Disconnect
-                </button>
+              <div>
+                {userData?.user?.instagram_account && (
+                  <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                    Connected: @{userData.user.instagram_account.username || userData.user.instagram_account.id}
+                    {userData.user.instagram_account.name && ` (${userData.user.instagram_account.name})`}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => handleConnectPlatform('Instagram')}
+                    className="connect-btn"
+                    disabled={connectingPlatform === 'Instagram'}
+                  >
+                    {connectingPlatform === 'Instagram' ? 'Reconnecting...' : 'Reconnect Instagram'}
+                  </button>
+                  <button
+                    onClick={() => disconnectInstagramMutation.mutate()}
+                    className="disconnect-btn"
+                    disabled={disconnectInstagramMutation.isPending}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <button
