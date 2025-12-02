@@ -36,7 +36,7 @@ export default function Landing() {
           <h2>Social Media Automation & Marketing Tool</h2>
           <div className="landing-cta">
             <Link to="/register" className="cta-button primary">
-              Get Started Free
+              Get Started
             </Link>
             <Link to="/login" className="cta-button secondary">
               Sign In
