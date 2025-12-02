@@ -38,9 +38,6 @@ export default function Landing() {
             <Link to="/register" className="cta-button primary">
               Get Started
             </Link>
-            <Link to="/login" className="cta-button secondary">
-              Sign In
-            </Link>
           </div>
         </div>
       </section>
