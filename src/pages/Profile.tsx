@@ -23,6 +23,7 @@ interface ConnectedAccounts {
   instagram_connected: boolean;
   tiktok_connected: boolean;
   youtube_connected: boolean;
+  pinterest_connected: boolean;
 }
 
 export default function Profile() {
@@ -149,6 +150,15 @@ export default function Profile() {
     },
   });
 
+  const disconnectPinterestMutation = useMutation({
+    mutationFn: () => api.post('/user_info/disconnect_pinterest'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user_info'] });
+      setSuccess('Pinterest disconnected successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    },
+  });
+
   const handleUpdateProfile = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -205,6 +215,9 @@ export default function Profile() {
           break;
         case 'YouTube':
           response = await api.get('/oauth/youtube/login');
+          break;
+        case 'Pinterest':
+          response = await api.get('/oauth/pinterest/login');
           break;
         default:
           return;
@@ -436,6 +449,7 @@ export default function Profile() {
     instagram_connected: userData.user.instagram_connected || false,
     tiktok_connected: userData.user.tiktok_connected || false,
     youtube_connected: userData.user.youtube_connected || false,
+    pinterest_connected: userData.user.pinterest_connected || false,
   } : {
     facebook_connected: false,
     twitter_connected: false,
@@ -444,6 +458,7 @@ export default function Profile() {
     instagram_connected: false,
     tiktok_connected: false,
     youtube_connected: false,
+    pinterest_connected: false,
   };
 
   return (
@@ -820,6 +835,49 @@ export default function Profile() {
                 disabled={connectingPlatform === 'YouTube'}
               >
                 {connectingPlatform === 'YouTube' ? 'Connecting...' : 'Connect YouTube'}
+              </button>
+            )}
+          </div>
+
+          {/* Pinterest */}
+          <div className="account-card">
+            <div className="account-header">
+              <div className="account-icon pinterest">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.219-.937 1.407-5.965 1.407-5.965s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.023 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0z"/>
+                </svg>
+              </div>
+              <div className="account-info">
+                <h3>Pinterest</h3>
+                <span className={`status ${connectedAccounts?.pinterest_connected ? 'connected' : 'disconnected'}`}>
+                  {connectedAccounts?.pinterest_connected ? 'Connected' : 'Not Connected'}
+                </span>
+              </div>
+            </div>
+            {connectedAccounts?.pinterest_connected ? (
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => handleConnectPlatform('Pinterest')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'Pinterest'}
+                >
+                  {connectingPlatform === 'Pinterest' ? 'Connecting...' : 'Change Pinterest Account'}
+                </button>
+                <button
+                  onClick={() => disconnectPinterestMutation.mutate()}
+                  className="disconnect-btn"
+                  disabled={disconnectPinterestMutation.isPending}
+                >
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => handleConnectPlatform('Pinterest')}
+                className="connect-btn"
+                disabled={connectingPlatform === 'Pinterest'}
+              >
+                {connectingPlatform === 'Pinterest' ? 'Connecting...' : 'Connect Pinterest'}
               </button>
             )}
           </div>
