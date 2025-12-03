@@ -582,21 +582,28 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.twitter_connected ? (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => handleConnectPlatform('X')}
-                  className="connect-btn"
-                  disabled={connectingPlatform === 'X'}
-                >
-                  {connectingPlatform === 'X' ? 'Connecting...' : 'Change X Account'}
-                </button>
-                <button
-                  onClick={() => disconnectXMutation.mutate()}
-                  className="disconnect-btn"
-                  disabled={disconnectXMutation.isPending}
-                >
-                  Disconnect
-                </button>
+              <div>
+                {userData?.user?.twitter_account && (
+                  <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                    Connected: @{userData.user.twitter_account.username || userData.user.twitter_account.user_id}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => handleConnectPlatform('X')}
+                    className="connect-btn"
+                    disabled={connectingPlatform === 'X'}
+                  >
+                    {connectingPlatform === 'X' ? 'Connecting...' : 'Change X Account'}
+                  </button>
+                  <button
+                    onClick={() => disconnectXMutation.mutate()}
+                    className="disconnect-btn"
+                    disabled={disconnectXMutation.isPending}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <button
@@ -625,21 +632,28 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.linkedin_connected ? (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => handleConnectPlatform('LinkedIn')}
-                  className="connect-btn"
-                  disabled={connectingPlatform === 'LinkedIn'}
-                >
-                  {connectingPlatform === 'LinkedIn' ? 'Connecting...' : 'Change LinkedIn Account'}
-                </button>
-                <button
-                  onClick={() => disconnectLinkedInMutation.mutate()}
-                  className="disconnect-btn"
-                  disabled={disconnectLinkedInMutation.isPending}
-                >
-                  Disconnect
-                </button>
+              <div>
+                {userData?.user?.linkedin_account && (
+                  <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                    Connected: Profile ID {userData.user.linkedin_account.profile_id}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => handleConnectPlatform('LinkedIn')}
+                    className="connect-btn"
+                    disabled={connectingPlatform === 'LinkedIn'}
+                  >
+                    {connectingPlatform === 'LinkedIn' ? 'Connecting...' : 'Change LinkedIn Account'}
+                  </button>
+                  <button
+                    onClick={() => disconnectLinkedInMutation.mutate()}
+                    className="disconnect-btn"
+                    disabled={disconnectLinkedInMutation.isPending}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <button
@@ -769,21 +783,28 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.tiktok_connected ? (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => handleConnectPlatform('TikTok')}
-                  className="connect-btn"
-                  disabled={connectingPlatform === 'TikTok'}
-                >
-                  {connectingPlatform === 'TikTok' ? 'Connecting...' : 'Change TikTok Account'}
-                </button>
-                <button
-                  onClick={() => disconnectTikTokMutation.mutate()}
-                  className="disconnect-btn"
-                  disabled={disconnectTikTokMutation.isPending}
-                >
-                  Disconnect
-                </button>
+              <div>
+                {userData?.user?.tiktok_account && (
+                  <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                    Connected: @{userData.user.tiktok_account.username || userData.user.tiktok_account.user_id}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => handleConnectPlatform('TikTok')}
+                    className="connect-btn"
+                    disabled={connectingPlatform === 'TikTok'}
+                  >
+                    {connectingPlatform === 'TikTok' ? 'Connecting...' : 'Change TikTok Account'}
+                  </button>
+                  <button
+                    onClick={() => disconnectTikTokMutation.mutate()}
+                    className="disconnect-btn"
+                    disabled={disconnectTikTokMutation.isPending}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <button
@@ -812,21 +833,28 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.youtube_connected ? (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => handleConnectPlatform('YouTube')}
-                  className="connect-btn"
-                  disabled={connectingPlatform === 'YouTube'}
-                >
-                  {connectingPlatform === 'YouTube' ? 'Connecting...' : 'Change YouTube Account'}
-                </button>
-                <button
-                  onClick={() => disconnectYouTubeMutation.mutate()}
-                  className="disconnect-btn"
-                  disabled={disconnectYouTubeMutation.isPending}
-                >
-                  Disconnect
-                </button>
+              <div>
+                {userData?.user?.youtube_account && (
+                  <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                    Connected: Channel ID {userData.user.youtube_account.channel_id || 'Connected'}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => handleConnectPlatform('YouTube')}
+                    className="connect-btn"
+                    disabled={connectingPlatform === 'YouTube'}
+                  >
+                    {connectingPlatform === 'YouTube' ? 'Connecting...' : 'Change YouTube Account'}
+                  </button>
+                  <button
+                    onClick={() => disconnectYouTubeMutation.mutate()}
+                    className="disconnect-btn"
+                    disabled={disconnectYouTubeMutation.isPending}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <button
@@ -855,21 +883,28 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.pinterest_connected ? (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => handleConnectPlatform('Pinterest')}
-                  className="connect-btn"
-                  disabled={connectingPlatform === 'Pinterest'}
-                >
-                  {connectingPlatform === 'Pinterest' ? 'Connecting...' : 'Change Pinterest Account'}
-                </button>
-                <button
-                  onClick={() => disconnectPinterestMutation.mutate()}
-                  className="disconnect-btn"
-                  disabled={disconnectPinterestMutation.isPending}
-                >
-                  Disconnect
-                </button>
+              <div>
+                {userData?.user?.pinterest_account && (
+                  <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                    Connected: Pinterest Account
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => handleConnectPlatform('Pinterest')}
+                    className="connect-btn"
+                    disabled={connectingPlatform === 'Pinterest'}
+                  >
+                    {connectingPlatform === 'Pinterest' ? 'Connecting...' : 'Change Pinterest Account'}
+                  </button>
+                  <button
+                    onClick={() => disconnectPinterestMutation.mutate()}
+                    className="disconnect-btn"
+                    disabled={disconnectPinterestMutation.isPending}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <button
