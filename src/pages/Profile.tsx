@@ -540,9 +540,11 @@ export default function Profile() {
             </div>
             {connectedAccounts?.facebook_connected ? (
               <div>
-                <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
-                  Connected: Facebook Account
-                </p>
+                {userData?.user?.facebook_account && (
+                  <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                    Connected: {userData.user.facebook_account.name || 'Facebook Account'}
+                  </p>
+                )}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
                     onClick={() => handleConnectPlatform('Facebook')}
@@ -691,9 +693,11 @@ export default function Profile() {
             </div>
             {connectedAccounts?.google_connected ? (
               <div>
-                <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
-                  Connected: Google My Business Account
-                </p>
+                {userData?.user?.google_account && (
+                  <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                    Connected: {userData.user.google_account.name || 'Google My Business Account'}
+                  </p>
+                )}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
                     onClick={() => handleConnectPlatform('Google My Business')}
@@ -896,7 +900,7 @@ export default function Profile() {
               <div>
                 {userData?.user?.pinterest_account && (
                   <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
-                    Connected: Pinterest Account
+                    Connected: @{userData.user.pinterest_account.username || 'Pinterest Account'}
                   </p>
                 )}
                 <div style={{ display: 'flex', gap: '10px' }}>
