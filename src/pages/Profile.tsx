@@ -539,21 +539,26 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.facebook_connected ? (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => handleConnectPlatform('Facebook')}
-                  className="connect-btn"
-                  disabled={connectingPlatform === 'Facebook'}
-                >
-                  {connectingPlatform === 'Facebook' ? 'Connecting...' : 'Change Facebook Account'}
-                </button>
-                <button
-                  onClick={() => disconnectFacebookMutation.mutate()}
-                  className="disconnect-btn"
-                  disabled={disconnectFacebookMutation.isPending}
-                >
-                  Disconnect
-                </button>
+              <div>
+                <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                  Connected: Facebook Account
+                </p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => handleConnectPlatform('Facebook')}
+                    className="connect-btn"
+                    disabled={connectingPlatform === 'Facebook'}
+                  >
+                    {connectingPlatform === 'Facebook' ? 'Connecting...' : 'Change Facebook Account'}
+                  </button>
+                  <button
+                    onClick={() => disconnectFacebookMutation.mutate()}
+                    className="disconnect-btn"
+                    disabled={disconnectFacebookMutation.isPending}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <button
@@ -685,21 +690,26 @@ export default function Profile() {
               </div>
             </div>
             {connectedAccounts?.google_connected ? (
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => handleConnectPlatform('Google My Business')}
-                  className="connect-btn"
-                  disabled={connectingPlatform === 'Google My Business'}
-                >
-                  {connectingPlatform === 'Google My Business' ? 'Connecting...' : 'Change Google Account'}
-                </button>
-                <button
-                  onClick={() => disconnectGoogleMutation.mutate()}
-                  className="disconnect-btn"
-                  disabled={disconnectGoogleMutation.isPending}
-                >
-                  Disconnect
-                </button>
+              <div>
+                <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
+                  Connected: Google My Business Account
+                </p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={() => handleConnectPlatform('Google My Business')}
+                    className="connect-btn"
+                    disabled={connectingPlatform === 'Google My Business'}
+                  >
+                    {connectingPlatform === 'Google My Business' ? 'Connecting...' : 'Change Google Account'}
+                  </button>
+                  <button
+                    onClick={() => disconnectGoogleMutation.mutate()}
+                    className="disconnect-btn"
+                    disabled={disconnectGoogleMutation.isPending}
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
             ) : (
               <button
