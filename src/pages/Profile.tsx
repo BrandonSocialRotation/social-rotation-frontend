@@ -850,7 +850,7 @@ export default function Profile() {
               <div>
                 {userData?.user?.youtube_account && (
                   <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
-                    Connected: Channel ID {userData.user.youtube_account.channel_id || 'Connected'}
+                    Connected: {userData.user.youtube_account.channel_name || userData.user.youtube_account.channel_id || 'YouTube Account'}
                   </p>
                 )}
                 <div style={{ display: 'flex', gap: '10px' }}>
