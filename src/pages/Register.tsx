@@ -1,7 +1,7 @@
 // Register page - new user signup with payment collection
 // Multi-step form: Account info -> Payment info -> Process payment
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { authAPI } from '../services/api'
 import api from '../services/api'
 import './Auth.css'
@@ -22,6 +22,7 @@ function Register() {
   const [loading, setLoading] = useState(false)
   const [processingPayment, setProcessingPayment] = useState(false)
   const [_userToken, setUserToken] = useState<string | null>(null) // Store token after account creation
+  const navigate = useNavigate()
 
   // Fetch plans to calculate pricing
   const [plans, setPlans] = useState<any[]>([])
@@ -222,6 +223,18 @@ function Register() {
 
   return (
     <div className="auth-container">
+      <button
+        type="button"
+        className="back-button"
+        onClick={() => navigate('/')}
+        aria-label="Back to home"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Back
+      </button>
+
       <div className="auth-card" style={{ maxWidth: '600px' }}>
         <h1>Social Rotation</h1>
         <h2>Create Account</h2>
