@@ -66,6 +66,13 @@ export default function Schedule() {
   const [gmb, setGmb] = useState(false);
   const [pinterest, setPinterest] = useState(false);
   
+  // Page selection for Facebook and LinkedIn
+  const [facebookPages, setFacebookPages] = useState<Array<{id: string; name: string}>>([]);
+  const [linkedInOrganizations, setLinkedInOrganizations] = useState<Array<{urn: string; name: string}>>([]);
+  const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string>('');
+  const [selectedLinkedInOrgUrn, setSelectedLinkedInOrgUrn] = useState<string>('');
+  const [loadingPages, setLoadingPages] = useState(false);
+  
   const [error, setError] = useState('');
 
   // Fetch bucket images when bucket is selected
@@ -145,6 +152,10 @@ export default function Schedule() {
     setLinkedin(false);
     setGmb(false);
     setPinterest(false);
+    setFacebookPages([]);
+    setLinkedInOrganizations([]);
+    setSelectedFacebookPageId('');
+    setSelectedLinkedInOrgUrn('');
     setError('');
   };
 
@@ -152,6 +163,56 @@ export default function Schedule() {
   useEffect(() => {
     setSelectedImage(null);
   }, [selectedBucket]);
+
+  // Fetch pages when Facebook or LinkedIn is checked
+  useEffect(() => {
+    const fetchPages = async () => {
+      if (facebook && facebookPages.length === 0 && !loadingPages) {
+        try {
+          setLoadingPages(true);
+          console.log('Fetching Facebook pages...');
+          const response = await api.get('/user_info/facebook_pages');
+          console.log('Facebook pages response:', response.data);
+          const pages = response.data.pages || [];
+          setFacebookPages(pages);
+          // Auto-select first page if none selected
+          if (!selectedFacebookPageId && pages.length > 0) {
+            setSelectedFacebookPageId(pages[0].id);
+          }
+        } catch (err: any) {
+          console.error('Error fetching Facebook pages:', err);
+          console.error('Error response:', err.response?.data);
+          // Don't block the form if pages can't be loaded
+        } finally {
+          setLoadingPages(false);
+        }
+      }
+      
+      if (linkedin && linkedInOrganizations.length === 0 && !loadingPages) {
+        try {
+          setLoadingPages(true);
+          console.log('Fetching LinkedIn organizations...');
+          const response = await api.get('/user_info/linkedin_organizations');
+          console.log('LinkedIn organizations response:', response.data);
+          const organizations = response.data.organizations || [];
+          setLinkedInOrganizations(organizations);
+          // Auto-select first organization if none selected
+          if (!selectedLinkedInOrgUrn && organizations.length > 0) {
+            setSelectedLinkedInOrgUrn(organizations[0].urn);
+          }
+        } catch (err: any) {
+          console.error('Error fetching LinkedIn organizations:', err);
+          console.error('Error response:', err.response?.data);
+          // Don't block the form if organizations can't be loaded
+        } finally {
+          setLoadingPages(false);
+        }
+      }
+    };
+
+    fetchPages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facebook, linkedin]);
 
   const calculatePostTo = () => {
     let postTo = 0;
@@ -216,6 +277,14 @@ export default function Schedule() {
     // Include bucket_image_id if a specific image is selected
     if (selectedImage) {
       scheduleData.bucket_image_id = selectedImage;
+    }
+
+    // Include page IDs if Facebook or LinkedIn is selected
+    if (facebook && selectedFacebookPageId) {
+      scheduleData.facebook_page_id = selectedFacebookPageId;
+    }
+    if (linkedin && selectedLinkedInOrgUrn) {
+      scheduleData.linkedin_organization_urn = selectedLinkedInOrgUrn;
     }
 
     createMutation.mutate({
@@ -447,6 +516,31 @@ export default function Schedule() {
                     <input type="checkbox" checked={facebook} onChange={(e) => setFacebook(e.target.checked)} />
                     <span>Facebook</span>
                   </label>
+                  {facebook && (
+                    <div className="page-selection" style={{ marginLeft: '20px', marginTop: '8px', marginBottom: '8px' }}>
+                      <select
+                        value={selectedFacebookPageId}
+                        onChange={(e) => setSelectedFacebookPageId(e.target.value)}
+                        disabled={loadingPages}
+                        style={{ width: '100%', padding: '6px', fontSize: '14px' }}
+                      >
+                        {loadingPages ? (
+                          <option>Loading pages...</option>
+                        ) : facebookPages.length === 0 ? (
+                          <option>No pages available</option>
+                        ) : (
+                          <>
+                            <option value="">Select a page...</option>
+                            {facebookPages.map((page) => (
+                              <option key={page.id} value={page.id}>
+                                {page.name}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                    </div>
+                  )}
                   <label className="checkbox-label">
                     <input type="checkbox" checked={twitter} onChange={(e) => setTwitter(e.target.checked)} />
                     <span>X</span>
@@ -459,6 +553,31 @@ export default function Schedule() {
                     <input type="checkbox" checked={linkedin} onChange={(e) => setLinkedin(e.target.checked)} />
                     <span>LinkedIn</span>
                   </label>
+                  {linkedin && (
+                    <div className="page-selection" style={{ marginLeft: '20px', marginTop: '8px', marginBottom: '8px' }}>
+                      <select
+                        value={selectedLinkedInOrgUrn}
+                        onChange={(e) => setSelectedLinkedInOrgUrn(e.target.value)}
+                        disabled={loadingPages}
+                        style={{ width: '100%', padding: '6px', fontSize: '14px' }}
+                      >
+                        {loadingPages ? (
+                          <option>Loading organizations...</option>
+                        ) : linkedInOrganizations.length === 0 ? (
+                          <option>No organizations available</option>
+                        ) : (
+                          <>
+                            <option value="">Select an organization...</option>
+                            {linkedInOrganizations.map((org) => (
+                              <option key={org.urn} value={org.urn}>
+                                {org.name}
+                              </option>
+                            ))}
+                          </>
+                        )}
+                      </select>
+                    </div>
+                  )}
                   <label className="checkbox-label">
                     <input type="checkbox" checked={gmb} onChange={(e) => setGmb(e.target.checked)} />
                     <span>Google My Business</span>
