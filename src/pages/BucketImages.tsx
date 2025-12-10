@@ -19,6 +19,8 @@ interface BucketImage {
   repeat: boolean;
   post_to: number;
   use_watermark: boolean;
+  facebook_page_id?: string | null;
+  linkedin_organization_urn?: string | null;
   image: Image;
   created_at: string;
   updated_at: string;

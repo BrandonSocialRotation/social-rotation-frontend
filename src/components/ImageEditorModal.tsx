@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import api from '../utils/api';
 import './ImageEditorModal.css';
 
 interface Image {
@@ -16,9 +17,23 @@ interface BucketImage {
   repeat: boolean;
   post_to: number;
   use_watermark: boolean;
+  facebook_page_id?: string | null;
+  linkedin_organization_urn?: string | null;
   image: Image;
   created_at: string;
   updated_at: string;
+}
+
+interface FacebookPage {
+  id: string;
+  name: string;
+  access_token: string;
+}
+
+interface LinkedInOrganization {
+  id: string;
+  name: string;
+  urn: string;
 }
 
 interface ImageEditorModalProps {
@@ -54,6 +69,13 @@ export default function ImageEditorModal({ bucketImage, bucketId: _bucketId, onC
   const [postToInstagram, setPostToInstagram] = useState(false);
   const [postToPinterest, setPostToPinterest] = useState(false);
   
+  // Page selection
+  const [facebookPages, setFacebookPages] = useState<FacebookPage[]>([]);
+  const [linkedInOrganizations, setLinkedInOrganizations] = useState<LinkedInOrganization[]>([]);
+  const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string>(bucketImage.facebook_page_id || '');
+  const [selectedLinkedInOrgUrn, setSelectedLinkedInOrgUrn] = useState<string>(bucketImage.linkedin_organization_urn || '');
+  const [loadingPages, setLoadingPages] = useState(false);
+  
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -67,6 +89,47 @@ export default function ImageEditorModal({ bucketImage, bucketId: _bucketId, onC
     setPostToInstagram((postTo & SOCIAL_PLATFORMS.INSTAGRAM) !== 0);
     setPostToPinterest((postTo & SOCIAL_PLATFORMS.PINTEREST) !== 0);
   }, [bucketImage.post_to]);
+
+  // Fetch pages when Facebook or LinkedIn is checked
+  useEffect(() => {
+    const fetchPages = async () => {
+      if (postToFacebook && facebookPages.length === 0) {
+        try {
+          setLoadingPages(true);
+          const response = await api.get('/user_info/facebook_pages');
+          setFacebookPages(response.data.pages || []);
+          // Auto-select first page if none selected
+          if (!selectedFacebookPageId && response.data.pages?.length > 0) {
+            setSelectedFacebookPageId(response.data.pages[0].id);
+          }
+        } catch (err: any) {
+          console.error('Error fetching Facebook pages:', err);
+          // Don't show error to user, just log it
+        } finally {
+          setLoadingPages(false);
+        }
+      }
+      
+      if (postToLinkedIn && linkedInOrganizations.length === 0) {
+        try {
+          setLoadingPages(true);
+          const response = await api.get('/user_info/linkedin_organizations');
+          setLinkedInOrganizations(response.data.organizations || []);
+          // Auto-select first organization if none selected
+          if (!selectedLinkedInOrgUrn && response.data.organizations?.length > 0) {
+            setSelectedLinkedInOrgUrn(response.data.organizations[0].urn);
+          }
+        } catch (err: any) {
+          console.error('Error fetching LinkedIn organizations:', err);
+          // Don't show error to user, just log it
+        } finally {
+          setLoadingPages(false);
+        }
+      }
+    };
+
+    fetchPages();
+  }, [postToFacebook, postToLinkedIn]);
 
   const handleSave = async () => {
     try {
@@ -90,6 +153,8 @@ export default function ImageEditorModal({ bucketImage, bucketId: _bucketId, onC
         repeat: repeat,
         force_send_date: forceSendDate || null,
         post_to: postTo,
+        facebook_page_id: postToFacebook ? selectedFacebookPageId || null : null,
+        linkedin_organization_urn: postToLinkedIn ? selectedLinkedInOrgUrn || null : null,
       };
 
       await onSave(updatedData);
@@ -188,6 +253,31 @@ export default function ImageEditorModal({ bucketImage, bucketId: _bucketId, onC
                   />
                   <span>📘 Facebook</span>
                 </label>
+                {postToFacebook && (
+                  <div className="page-selection" style={{ marginLeft: '20px', marginTop: '8px' }}>
+                    <select
+                      value={selectedFacebookPageId}
+                      onChange={(e) => setSelectedFacebookPageId(e.target.value)}
+                      disabled={loadingPages}
+                      style={{ width: '100%', padding: '6px', fontSize: '14px' }}
+                    >
+                      {loadingPages ? (
+                        <option>Loading pages...</option>
+                      ) : facebookPages.length === 0 ? (
+                        <option>No pages available</option>
+                      ) : (
+                        <>
+                          <option value="">Select a page...</option>
+                          {facebookPages.map((page) => (
+                            <option key={page.id} value={page.id}>
+                              {page.name}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                  </div>
+                )}
                 <label className="checkbox-label">
                   <input
                     type="checkbox"
@@ -204,6 +294,31 @@ export default function ImageEditorModal({ bucketImage, bucketId: _bucketId, onC
                   />
                   <span>💼 LinkedIn</span>
                 </label>
+                {postToLinkedIn && (
+                  <div className="page-selection" style={{ marginLeft: '20px', marginTop: '8px' }}>
+                    <select
+                      value={selectedLinkedInOrgUrn}
+                      onChange={(e) => setSelectedLinkedInOrgUrn(e.target.value)}
+                      disabled={loadingPages}
+                      style={{ width: '100%', padding: '6px', fontSize: '14px' }}
+                    >
+                      {loadingPages ? (
+                        <option>Loading organizations...</option>
+                      ) : linkedInOrganizations.length === 0 ? (
+                        <option>No organizations available</option>
+                      ) : (
+                        <>
+                          <option value="">Select an organization...</option>
+                          {linkedInOrganizations.map((org) => (
+                            <option key={org.urn} value={org.urn}>
+                              {org.name}
+                            </option>
+                          ))}
+                        </>
+                      )}
+                    </select>
+                  </div>
+                )}
                 <label className="checkbox-label">
                   <input
                     type="checkbox"
