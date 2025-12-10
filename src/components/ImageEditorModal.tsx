@@ -93,35 +93,43 @@ export default function ImageEditorModal({ bucketImage, bucketId: _bucketId, onC
   // Fetch pages when Facebook or LinkedIn is checked
   useEffect(() => {
     const fetchPages = async () => {
-      if (postToFacebook && facebookPages.length === 0) {
+      if (postToFacebook && facebookPages.length === 0 && !loadingPages) {
         try {
           setLoadingPages(true);
+          console.log('Fetching Facebook pages...');
           const response = await api.get('/user_info/facebook_pages');
-          setFacebookPages(response.data.pages || []);
+          console.log('Facebook pages response:', response.data);
+          const pages = response.data.pages || [];
+          setFacebookPages(pages);
           // Auto-select first page if none selected
-          if (!selectedFacebookPageId && response.data.pages?.length > 0) {
-            setSelectedFacebookPageId(response.data.pages[0].id);
+          if (!selectedFacebookPageId && pages.length > 0) {
+            setSelectedFacebookPageId(pages[0].id);
           }
         } catch (err: any) {
           console.error('Error fetching Facebook pages:', err);
-          // Don't show error to user, just log it
+          console.error('Error response:', err.response?.data);
+          setError(err.response?.data?.error || 'Failed to load Facebook pages');
         } finally {
           setLoadingPages(false);
         }
       }
       
-      if (postToLinkedIn && linkedInOrganizations.length === 0) {
+      if (postToLinkedIn && linkedInOrganizations.length === 0 && !loadingPages) {
         try {
           setLoadingPages(true);
+          console.log('Fetching LinkedIn organizations...');
           const response = await api.get('/user_info/linkedin_organizations');
-          setLinkedInOrganizations(response.data.organizations || []);
+          console.log('LinkedIn organizations response:', response.data);
+          const organizations = response.data.organizations || [];
+          setLinkedInOrganizations(organizations);
           // Auto-select first organization if none selected
-          if (!selectedLinkedInOrgUrn && response.data.organizations?.length > 0) {
-            setSelectedLinkedInOrgUrn(response.data.organizations[0].urn);
+          if (!selectedLinkedInOrgUrn && organizations.length > 0) {
+            setSelectedLinkedInOrgUrn(organizations[0].urn);
           }
         } catch (err: any) {
           console.error('Error fetching LinkedIn organizations:', err);
-          // Don't show error to user, just log it
+          console.error('Error response:', err.response?.data);
+          setError(err.response?.data?.error || 'Failed to load LinkedIn organizations');
         } finally {
           setLoadingPages(false);
         }
@@ -129,6 +137,7 @@ export default function ImageEditorModal({ bucketImage, bucketId: _bucketId, onC
     };
 
     fetchPages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postToFacebook, postToLinkedIn]);
 
   const handleSave = async () => {
