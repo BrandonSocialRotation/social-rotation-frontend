@@ -44,13 +44,25 @@ function Dashboard() {
   const schedulesCount = schedulesData?.length || 0
   const subAccountsCount = subAccountsData?.sub_accounts?.length || 0
 
-  // Instagram analytics summary (mock until live creds)
+  // Instagram analytics summary (optional - don't block dashboard if it fails)
   const { data: igSummary } = useQuery({
     queryKey: ['analytics_instagram_summary', '7d'],
     queryFn: async () => {
-      const response = await api.get('/analytics/instagram/summary', { params: { range: '7d' } })
-      return response.data?.metrics
+      try {
+        const response = await api.get('/analytics/instagram/summary', { params: { range: '7d' } })
+        return response.data?.metrics
+      } catch (error: any) {
+        // Don't throw - just return null so dashboard still loads
+        // If it's a subscription error, analytics will just show "—"
+        if (error.response?.status === 403 && error.response?.data?.subscription_required) {
+          // Silently fail - user can still use dashboard without analytics
+          return null
+        }
+        // For other errors, also fail silently
+        return null
+      }
     },
+    retry: false, // Don't retry if it fails
   })
 
   return (

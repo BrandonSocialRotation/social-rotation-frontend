@@ -48,15 +48,22 @@ api.interceptors.response.use(
       window.location.href = '/login'
     } else if (error.response?.status === 403 && error.response?.data?.subscription_required) {
       // Subscription required or suspended - redirect appropriately
-      // Don't logout, just redirect so they can manage subscription
-      if (error.response.data.subscription_suspended) {
-        // Suspended account - redirect to profile to manage subscription
-        window.location.href = '/profile'
-      } else {
-        // No subscription - redirect to register to complete payment
-        const redirectTo = error.response.data.redirect_to || '/register'
-        window.location.href = redirectTo
+      // BUT: Don't redirect for analytics endpoints - let React Query handle those errors
+      const url = error.config?.url || ''
+      const isAnalyticsEndpoint = url.includes('/analytics/')
+      
+      if (!isAnalyticsEndpoint) {
+        // Don't logout, just redirect so they can manage subscription
+        if (error.response.data.subscription_suspended) {
+          // Suspended account - redirect to profile to manage subscription
+          window.location.href = '/profile'
+        } else {
+          // No subscription - redirect to register to complete payment
+          const redirectTo = error.response.data.redirect_to || '/register'
+          window.location.href = redirectTo
+        }
       }
+      // If it's an analytics endpoint, let the error pass through so React Query can handle it
     }
     return Promise.reject(error)
   }
