@@ -77,39 +77,13 @@ function Dashboard() {
         <div className="stat-card">
           <div className="stat-card-header">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-            </svg>
-            <h3>Instagram Reach</h3>
-          </div>
-          <p className="stat-number">{igSummary?.reach ?? '—'}</p>
-          <p className="stat-label">Last 7 days</p>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3h18v4H3z"/>
-              <path d="M8 7v14"/>
-              <path d="M16 7v14"/>
-            </svg>
-            <h3>Impressions</h3>
-          </div>
-          <p className="stat-number">{igSummary?.impressions ?? '—'}</p>
-          <p className="stat-label">Last 7 days</p>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
             <h3>Engagement</h3>
           </div>
-          <p className="stat-number">{igSummary?.engagement ?? '—'}</p>
+          <p className="stat-number">{igSummary?.engagement ? igSummary.engagement.toLocaleString() : '—'}</p>
           <p className="stat-label">Last 7 days</p>
         </div>
 
@@ -121,8 +95,26 @@ function Dashboard() {
             </svg>
             <h3>Followers</h3>
           </div>
-          <p className="stat-number">{igSummary?.followers ?? '—'}</p>
+          <p className="stat-number">{igSummary?.followers ? igSummary.followers.toLocaleString() : '—'}</p>
           <p className="stat-label">Current total</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h3>New Followers</h3>
+          </div>
+          <p className="stat-number">
+            {igSummary?.new_followers !== undefined 
+              ? (igSummary.new_followers > 0 ? '+' : '') + igSummary.new_followers.toLocaleString()
+              : '—'}
+          </p>
+          <p className="stat-label">Last 7 days</p>
         </div>
         {/* Buckets Card - Click to go to Buckets page */}
         <div 
