@@ -1,9 +1,7 @@
 // Dashboard page - Hootsuite-style analytics overview
 import React from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useQuery } from '@tanstack/react-query'
-import { bucketsAPI, schedulesAPI } from '../services/api'
 import api from '../services/api'
 import './Dashboard.css'
 
@@ -183,10 +181,10 @@ function Dashboard() {
                   <line x1="16" y1="17" x2="8" y2="17"/>
                   <polyline points="10 9 9 9 8 9"/>
                 </svg>
-                <h3>Total Posts</h3>
+                <h3>Posts via Social Rotation</h3>
               </div>
               <p className="stat-number">{formatNumber(overallAnalytics.posts?.total)}</p>
-              <p className="stat-label">Across all platforms</p>
+              <p className="stat-label">Posts scheduled through this platform</p>
             </div>
 
             <div className="stat-card large">
@@ -199,7 +197,7 @@ function Dashboard() {
                 <h3>Total Engagement</h3>
               </div>
               <p className="stat-number">{formatNumber(overallAnalytics.engagement?.total)}</p>
-              <p className="stat-label">Likes, comments, shares</p>
+              <p className="stat-label">All account engagement (all posts)</p>
             </div>
 
             <div className="stat-card large">
@@ -267,7 +265,7 @@ function Dashboard() {
                 
                 <div className="platform-metrics">
                   <div className="metric-row">
-                    <span className="metric-label">Posts</span>
+                    <span className="metric-label">Posts (via Social Rotation)</span>
                     <span className="metric-value">{formatNumber(data.posts)}</span>
                   </div>
                   <div className="metric-row">
@@ -307,68 +305,6 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="quick-actions">
-        <h2>Quick Actions</h2>
-        <div className="stats-grid">
-          <div 
-            className="stat-card clickable"
-            onClick={() => navigate('/buckets')}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="stat-card-header">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
-              </svg>
-              <h3>Buckets</h3>
-            </div>
-            <p className="stat-number">{bucketsCount}</p>
-            <p className="stat-label">Content collections</p>
-            <div className="card-arrow">→</div>
-          </div>
-          
-          <div 
-            className="stat-card clickable"
-            onClick={() => navigate('/schedule')}
-            role="button"
-            tabIndex={0}
-          >
-            <div className="stat-card-header">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
-              </svg>
-              <h3>Schedules</h3>
-            </div>
-            <p className="stat-number">{schedulesCount}</p>
-            <p className="stat-label">Active schedules</p>
-            <div className="card-arrow">→</div>
-          </div>
-          
-          {user?.reseller && (
-            <div 
-              className="stat-card clickable"
-              onClick={() => navigate('/sub-accounts')}
-              role="button"
-              tabIndex={0}
-            >
-              <div className="stat-card-header">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                <h3>Sub-Accounts</h3>
-              </div>
-              <p className="stat-number">{subAccountsCount}</p>
-              <p className="stat-label">Client accounts</p>
-              <div className="card-arrow">→</div>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   )
 }
