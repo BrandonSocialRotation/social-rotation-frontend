@@ -55,36 +55,7 @@ interface OverallAnalytics {
 
 function Dashboard() {
   const user = useAuthStore((state) => state.user)
-  const navigate = useNavigate()
   const [selectedRange, setSelectedRange] = React.useState<'7d' | '28d' | '90d'>('7d')
-
-  // Fetch buckets count
-  const { data: bucketsData } = useQuery({
-    queryKey: ['buckets'],
-    queryFn: async () => {
-      const response = await bucketsAPI.getAll()
-      return response.data.buckets
-    },
-  })
-
-  // Fetch schedules count
-  const { data: schedulesData } = useQuery({
-    queryKey: ['schedules'],
-    queryFn: async () => {
-      const response = await schedulesAPI.getAll()
-      return response.data.bucket_schedules
-    },
-  })
-
-  // Fetch sub-accounts count (for resellers)
-  const { data: subAccountsData } = useQuery({
-    queryKey: ['sub_accounts'],
-    queryFn: async () => {
-      const response = await api.get('/sub_accounts')
-      return response.data
-    },
-    enabled: !!user?.reseller,
-  })
 
   // Fetch overall analytics
   const { data: overallAnalytics } = useQuery<OverallAnalytics>({
@@ -120,10 +91,6 @@ function Dashboard() {
       retry: false,
     })
   }))
-
-  const bucketsCount = bucketsData?.length || 0
-  const schedulesCount = schedulesData?.length || 0
-  const subAccountsCount = subAccountsData?.sub_accounts?.length || 0
 
   const formatNumber = (num: number | undefined | null): string => {
     if (num === undefined || num === null) return '—'
