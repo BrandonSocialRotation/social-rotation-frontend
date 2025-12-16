@@ -3,6 +3,7 @@ import React from 'react'
 import { useAuthStore } from '../store/authStore'
 import { useQuery } from '@tanstack/react-query'
 import api from '../services/api'
+import InfoIcon from '../components/InfoIcon'
 import './Dashboard.css'
 
 interface PlatformAnalytics {
@@ -107,7 +108,13 @@ function Dashboard() {
     <div className="dashboard">
       <div className="dashboard-header">
         <div>
-          <h1>Analytics Overview</h1>
+          <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
+            Analytics Overview
+            <InfoIcon 
+              title="Analytics Overview"
+              content="View comprehensive analytics across all your social media accounts. See total posts made through Social Rotation, overall engagement metrics (likes, comments, shares), follower counts, and new follower growth. Data is aggregated from Facebook, Instagram, Twitter, and LinkedIn."
+            />
+          </h1>
           <p style={{ color: '#666', marginTop: '0.5rem' }}>
             {user?.reseller ? 'Manage your agency and sub-accounts' : "Track your social media performance"}
           </p>

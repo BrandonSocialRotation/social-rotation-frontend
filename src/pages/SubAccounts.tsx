@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
+import InfoIcon from '../components/InfoIcon';
 import './SubAccounts.css';
 
 interface SubAccount {
@@ -119,7 +120,13 @@ export default function SubAccounts() {
   return (
     <div className="sub-accounts-page">
       <div className="page-header">
-        <h1>Sub-Accounts</h1>
+        <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
+          Sub-Accounts
+          <InfoIcon 
+            title="Sub-Accounts"
+            content="Manage client accounts as a reseller/agency. Create sub-accounts for your clients, switch between accounts to manage their content, and view their buckets and schedules. This feature is only available for agency/reseller accounts."
+          />
+        </h1>
         <button onClick={() => setShowCreateModal(true)} className="create-btn">
           + Create Sub-Account
         </button>

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
+import InfoIcon from '../components/InfoIcon';
 import './Profile.css';
 
 // interface User {
@@ -481,7 +482,13 @@ export default function Profile() {
 
   return (
     <div className="profile-page">
-      <h1>Profile Settings</h1>
+      <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
+        Profile Settings
+        <InfoIcon 
+          title="Profile Settings"
+          content="Manage your account information, timezone settings, and social media connections. Connect your Facebook, Instagram, Twitter, LinkedIn, and other accounts to enable posting. View and manage your subscription, update your profile details, and configure account settings."
+        />
+      </h1>
 
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}

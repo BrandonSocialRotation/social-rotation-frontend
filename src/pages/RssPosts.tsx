@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
+import InfoIcon from '../components/InfoIcon';
 import './RssPosts.css';
 
 interface RssPost {
@@ -265,7 +266,13 @@ const RssPosts: React.FC = () => {
             ← Back to RSS Feeds
           </button>
           <div className="feed-info">
-            <h1>{feed?.name || 'RSS Posts'}</h1>
+            <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
+              {feed?.name || 'RSS Posts'}
+              <InfoIcon 
+                title="RSS Posts"
+                content="View and manage posts imported from your RSS feeds. Review posts, mark them as viewed, and create buckets from selected posts. You can schedule these posts to your social media accounts or organize them into buckets for later use."
+              />
+            </h1>
             {feed?.description && <p>{feed.description}</p>}
           </div>
         </div>

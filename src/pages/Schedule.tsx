@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import InfoIcon from '../components/InfoIcon';
 import './Schedule.css';
 
 interface Bucket {
@@ -483,7 +484,13 @@ export default function Schedule() {
   return (
     <div className="schedule-page">
       <div className="page-header">
-        <h1>Schedules</h1>
+        <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
+          Schedules
+          <InfoIcon 
+            title="Schedules"
+            content="Create and manage posting schedules for your content. Choose from Rotation (posts daily at a set time), Once (one-time post), or Annually (posts once per year). Select which social media platforms to post to, add descriptions, and choose specific pages or organizations for Facebook and LinkedIn."
+          />
+        </h1>
         <button onClick={() => setShowCreateModal(true)} className="create-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>

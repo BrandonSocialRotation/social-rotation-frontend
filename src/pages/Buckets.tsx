@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bucketsAPI } from '../services/api'
+import InfoIcon from '../components/InfoIcon'
 import './Buckets.css'
 
 // TypeScript interface for Bucket data
@@ -102,7 +103,13 @@ function Buckets() {
   return (
     <div className="buckets-page">
       <div className="page-header">
-        <h1>Buckets</h1>
+        <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
+          Buckets
+          <InfoIcon 
+            title="Buckets"
+            content="Buckets are content collections where you organize images and videos for scheduling. Create buckets to group related content together, then schedule them to post automatically to your social media accounts. Each bucket can contain multiple images and have multiple schedules."
+          />
+        </h1>
         <button onClick={() => setShowCreateModal(true)} className="create-btn">
           + Create New Bucket
         </button>
