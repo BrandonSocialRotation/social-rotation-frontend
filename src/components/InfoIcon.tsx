@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './InfoIcon.css'
 
+// InfoIcon component - displays tooltip with page information
 interface InfoIconProps {
   content: string
   title?: string
