@@ -4,7 +4,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useQuery } from '@tanstack/react-query'
-import { bucketsAPI, schedulesAPI } from '../services/api'
 import api from '../services/api'
 import './Dashboard.css'
 
@@ -158,43 +157,6 @@ function Dashboard() {
           <p className="stat-number">{igSummary?.followers?.toLocaleString() ?? '—'}</p>
           <p className="stat-label">Current total</p>
         </div>
-        {/* Buckets Card - Click to go to Buckets page */}
-        <div 
-          className="stat-card clickable"
-          onClick={() => navigate('/buckets')}
-          role="button"
-          tabIndex={0}
-        >
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
-            </svg>
-            <h3>Buckets</h3>
-          </div>
-          <p className="stat-number">{bucketsCount}</p>
-          <p className="stat-label">Content collections</p>
-          <div className="card-arrow">→</div>
-        </div>
-        
-        {/* Schedules Card - Click to go to Schedule page */}
-        <div 
-          className="stat-card clickable"
-          onClick={() => navigate('/schedule')}
-          role="button"
-          tabIndex={0}
-        >
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
-            </svg>
-            <h3>Schedules</h3>
-          </div>
-          <p className="stat-number">{schedulesCount}</p>
-          <p className="stat-label">Active schedules</p>
-          <div className="card-arrow">→</div>
-        </div>
-        
         {/* Sub-Accounts Card - Only for resellers */}
         {user?.reseller && (
           <div 
