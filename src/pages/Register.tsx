@@ -101,15 +101,26 @@ function Register() {
 
     try {
       const response = await authAPI.register(name, email, password, accountType, companyName)
-      const { token } = response.data
       
-      setUserToken(token)
-      // Set token temporarily for API calls
-      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      // New flow: registration returns pending_registration_id (no token yet)
+      const pendingId = response.data.pending_registration_id
+      const checkoutUrl = response.data.checkout_url
       
-      // Move to payment step
-      setStep(2)
-      setLoading(false) // Reset loading before moving to next step
+      if (checkoutUrl) {
+        // If checkout_url is provided, redirect immediately (plan was selected during registration)
+        window.location.href = checkoutUrl
+        return
+      }
+      
+      if (pendingId) {
+        // Store pending registration ID for plan selection step
+        setPendingRegistrationId(pendingId)
+        // Move to payment step
+        setStep(2)
+        setLoading(false) // Reset loading before moving to next step
+      } else {
+        throw new Error('Registration failed - no pending registration ID received')
+      }
     } catch (err: any) {
       // Show detailed error messages
       console.error('=== Registration Error Debug ===')
@@ -186,13 +197,15 @@ function Register() {
         throw new Error('No plan found for your account type. Please refresh the page and try again.')
       }
 
-      // Create checkout session
-      // Pass registration info so account can be created in webhook after payment
-      const checkoutResponse = await api.post('/subscriptions/checkout_session', {
+      if (!pendingRegistrationId) {
+        throw new Error('Registration session expired. Please register again.')
+      }
+
+      // Create checkout session using pending registration
+      const checkoutResponse = await api.post('/subscriptions/checkout_session_for_pending', {
+        pending_registration_id: pendingRegistrationId,
         plan_id: plan.id,
         billing_period: billingPeriod,
-        account_type: accountType,
-        company_name: companyName || undefined,
         user_count: accountType === 'personal' ? 1 : subAccountCount
       })
 
