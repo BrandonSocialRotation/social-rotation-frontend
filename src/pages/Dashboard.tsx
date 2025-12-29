@@ -39,8 +39,6 @@ function Dashboard() {
     enabled: !!user?.reseller,
   })
 
-  const bucketsCount = bucketsData?.length || 0
-  const schedulesCount = schedulesData?.length || 0
   const subAccountsCount = subAccountsData?.sub_accounts?.length || 0
 
   // Instagram analytics summary (mock until live creds)
