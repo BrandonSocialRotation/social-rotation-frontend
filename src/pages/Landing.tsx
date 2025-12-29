@@ -187,7 +187,8 @@ export default function Landing() {
               </div>
               <div className="step-image">
                 <div className="image-placeholder">
-                  <span>⏰ Schedule</span>
+                  <ClockIcon />
+                  <span>Schedule</span>
                 </div>
               </div>
             </div>
@@ -199,7 +200,8 @@ export default function Landing() {
               </div>
               <div className="step-image">
                 <div className="image-placeholder">
-                  <span>📈 Analyze</span>
+                  <TrendingUpIcon />
+                  <span>Analyze</span>
                 </div>
               </div>
             </div>
