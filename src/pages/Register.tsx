@@ -466,7 +466,7 @@ function Register() {
                           <li>+ $10/user (after 10 users)</li>
                         </ul>
                         <p style={{ margin: '15px 0 0 0', fontSize: '0.9em', fontWeight: 'bold', color: '#333' }}>
-                          Starting at: {formatPrice(calculatePrice())}
+                          Starting at: $49/month
                         </p>
                       </div>
                     </div>
@@ -534,7 +534,7 @@ function Register() {
                           <li>+ $10/user (after 10 users)</li>
                         </ul>
                         <p style={{ margin: '15px 0 0 0', fontSize: '0.9em', fontWeight: 'bold', color: '#333' }}>
-                          Starting at: {formatPrice(calculatePrice())}
+                          Starting at: $490/year
                         </p>
                         <p style={{ margin: '10px 0 0 0', fontSize: '0.85em', color: '#28a745', fontWeight: 'bold' }}>
                           💰 Save $98/year vs monthly!
@@ -634,7 +634,16 @@ function Register() {
                           <li>Full scheduling features</li>
                         </ul>
                         <p style={{ margin: '15px 0 0 0', fontSize: '0.9em', fontWeight: 'bold', color: '#333' }}>
-                          Price: {formatPrice(calculatePrice())}
+                          {(() => {
+                            const plan = plans.find((p: any) => {
+                              if (p.plan_type === 'agency') {
+                                return subAccountCount <= (p.max_users || 999)
+                              }
+                              return false
+                            })
+                            const price = plan?.price_cents || 9900
+                            return `Starting at: $${(price / 100).toFixed(0)}/month`
+                          })()}
                         </p>
                       </div>
                     </div>
@@ -725,7 +734,17 @@ function Register() {
                           <li>Full scheduling features</li>
                         </ul>
                         <p style={{ margin: '15px 0 0 0', fontSize: '0.9em', fontWeight: 'bold', color: '#333' }}>
-                          Price: {formatPrice(calculatePrice())}
+                          {(() => {
+                            const plan = plans.find((p: any) => {
+                              if (p.plan_type === 'agency') {
+                                return subAccountCount <= (p.max_users || 999)
+                              }
+                              return false
+                            })
+                            const monthlyPrice = plan?.price_cents || 9900
+                            const annualPrice = Math.round(monthlyPrice * 10)
+                            return `Starting at: $${(annualPrice / 100).toFixed(0)}/year`
+                          })()}
                         </p>
                         <p style={{ margin: '10px 0 0 0', fontSize: '0.85em', color: '#28a745', fontWeight: 'bold' }}>
                           💰 Save {(() => {
