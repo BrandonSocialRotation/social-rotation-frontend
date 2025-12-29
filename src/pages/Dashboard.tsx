@@ -32,6 +32,15 @@ function Dashboard() {
     },
   })
 
+  // Fetch posts count
+  const { data: postsData } = useQuery({
+    queryKey: ['analytics_posts_count'],
+    queryFn: async () => {
+      const response = await api.get('/analytics/posts_count')
+      return response.data
+    },
+  })
+
   return (
     <div className="dashboard">
       <h1>Welcome back, {user?.name}!</h1>
