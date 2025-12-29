@@ -404,7 +404,7 @@ function Register() {
                       />
                       Monthly
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '5px' }}>
                       <input
                         type="radio"
                         value="annual"
@@ -412,7 +412,8 @@ function Register() {
                         onChange={(e) => setBillingPeriod(e.target.value as 'monthly' | 'annual')}
                         style={{ marginRight: '8px' }}
                       />
-                      Annual <span style={{ color: '#28a745', marginLeft: '5px' }}>(2 months free!)</span>
+                      <span>Annual</span>
+                      <span style={{ color: '#28a745' }}>(2 months free!)</span>
                     </label>
                   </div>
                 </div>
@@ -432,18 +433,26 @@ function Register() {
                       <p style={{ margin: '5px 0', fontSize: '0.9em', color: '#28a745' }}>
                         (Save 2 months - pay for 10, get 12!)
                       </p>
+                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
+                        + $15/user (first 10 users)
+                      </p>
+                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
+                        + $10/user (after 10 users)
+                      </p>
                     </>
                   ) : (
-                    <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                      Base: $49/month
-                    </p>
+                    <>
+                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
+                        Base: $49/month
+                      </p>
+                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
+                        + $15/user (first 10 users)
+                      </p>
+                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
+                        + $10/user (after 10 users)
+                      </p>
+                    </>
                   )}
-                  <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                    + $15/user (first 10 users)
-                  </p>
-                  <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                    + $10/user (after 10 users)
-                  </p>
                   <p style={{ margin: '10px 0 0 0', fontWeight: 'bold', fontSize: '1.1em' }}>
                     Starting at: {formatPrice(calculatePrice())}
                   </p>

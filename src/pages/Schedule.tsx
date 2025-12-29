@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import InfoIcon from '../components/InfoIcon';
 import './Schedule.css';
 
 interface Bucket {
@@ -32,8 +31,6 @@ interface BucketSchedule {
   created_at: string;
   updated_at: string;
   bucket_name?: string;
-  facebook_page_id?: string;
-  linkedin_organization_urn?: string;
 }
 
 // Schedule types
@@ -54,7 +51,6 @@ const PLATFORMS = {
 export default function Schedule() {
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingSchedule, setEditingSchedule] = useState<BucketSchedule | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
   const [scheduleType, setScheduleType] = useState<number>(SCHEDULE_TYPE_ROTATION);
@@ -69,13 +65,6 @@ export default function Schedule() {
   const [linkedin, setLinkedin] = useState(false);
   const [gmb, setGmb] = useState(false);
   const [pinterest, setPinterest] = useState(false);
-  
-  // Page selection for Facebook and LinkedIn
-  const [facebookPages, setFacebookPages] = useState<Array<{id: string; name: string}>>([]);
-  const [linkedInOrganizations, setLinkedInOrganizations] = useState<Array<{urn: string; name: string}>>([]);
-  const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string>('');
-  const [selectedLinkedInOrgUrn, setSelectedLinkedInOrgUrn] = useState<string>('');
-  const [loadingPages, setLoadingPages] = useState(false);
   
   const [error, setError] = useState('');
 
@@ -123,21 +112,6 @@ export default function Schedule() {
     },
   });
 
-  // Update schedule mutation
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      return await api.patch(`/bucket_schedules/${id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['bucket_schedules'] });
-      setEditingSchedule(null);
-      resetForm();
-    },
-    onError: (err: any) => {
-      setError(err.response?.data?.errors?.join(', ') || 'Failed to update schedule');
-    },
-  });
-
   // Delete schedule mutation
   const deleteMutation = useMutation({
     mutationFn: (id: number) => api.delete(`/bucket_schedules/${id}`),
@@ -171,135 +145,13 @@ export default function Schedule() {
     setLinkedin(false);
     setGmb(false);
     setPinterest(false);
-    setFacebookPages([]);
-    setLinkedInOrganizations([]);
-    setSelectedFacebookPageId('');
-    setSelectedLinkedInOrgUrn('');
     setError('');
-    setEditingSchedule(null);
-  };
-
-  // Load schedule data into form for editing
-  const loadScheduleForEdit = async (schedule: BucketSchedule) => {
-    setEditingSchedule(schedule);
-    setSelectedBucket(schedule.bucket_id);
-    setSelectedImage(schedule.bucket_image_id);
-    setScheduleType(schedule.schedule_type);
-    
-    // Parse cron string to get time
-    const cronParts = schedule.schedule.split(' ');
-    if (cronParts.length >= 2) {
-      const minute = cronParts[0].padStart(2, '0');
-      const hour = cronParts[1].padStart(2, '0');
-      setTime(`${hour}:${minute}`);
-    }
-    
-    setDescription(schedule.description || '');
-    setTwitterDescription(schedule.twitter_description || schedule.description || '');
-    
-    // Set platform checkboxes based on post_to flags
-    const hasFacebook = (schedule.post_to & PLATFORMS.FACEBOOK) !== 0;
-    const hasLinkedIn = (schedule.post_to & PLATFORMS.LINKEDIN) !== 0;
-    
-    setFacebook(hasFacebook);
-    setTwitter((schedule.post_to & PLATFORMS.TWITTER) !== 0);
-    setInstagram((schedule.post_to & PLATFORMS.INSTAGRAM) !== 0);
-    setLinkedin(hasLinkedIn);
-    setGmb((schedule.post_to & PLATFORMS.GMB) !== 0);
-    setPinterest((schedule.post_to & PLATFORMS.PINTEREST) !== 0);
-    
-    // Fetch pages/organizations if needed, then set the selected IDs
-    if (hasFacebook) {
-      try {
-        setLoadingPages(true);
-        const response = await api.get('/user_info/facebook_pages');
-        const pages = response.data.pages || [];
-        setFacebookPages(pages);
-        if (schedule.facebook_page_id) {
-          setSelectedFacebookPageId(schedule.facebook_page_id);
-        } else if (pages.length > 0) {
-          setSelectedFacebookPageId(pages[0].id);
-        }
-      } catch (err) {
-        console.error('Error fetching Facebook pages:', err);
-      } finally {
-        setLoadingPages(false);
-      }
-    }
-    
-    if (hasLinkedIn) {
-      try {
-        setLoadingPages(true);
-        const response = await api.get('/user_info/linkedin_organizations');
-        const organizations = response.data.organizations || [];
-        setLinkedInOrganizations(organizations);
-        if (schedule.linkedin_organization_urn) {
-          setSelectedLinkedInOrgUrn(schedule.linkedin_organization_urn);
-        } else if (organizations.length > 0) {
-          setSelectedLinkedInOrgUrn(organizations[0].urn);
-        }
-      } catch (err) {
-        console.error('Error fetching LinkedIn organizations:', err);
-      } finally {
-        setLoadingPages(false);
-      }
-    }
   };
 
   // Reset image selection when bucket changes
   useEffect(() => {
     setSelectedImage(null);
   }, [selectedBucket]);
-
-  // Fetch pages when Facebook or LinkedIn is checked
-  useEffect(() => {
-    const fetchPages = async () => {
-      if (facebook && facebookPages.length === 0 && !loadingPages) {
-        try {
-          setLoadingPages(true);
-          console.log('Fetching Facebook pages...');
-          const response = await api.get('/user_info/facebook_pages');
-          console.log('Facebook pages response:', response.data);
-          const pages = response.data.pages || [];
-          setFacebookPages(pages);
-          // Auto-select first page if none selected
-          if (!selectedFacebookPageId && pages.length > 0) {
-            setSelectedFacebookPageId(pages[0].id);
-          }
-        } catch (err: any) {
-          console.error('Error fetching Facebook pages:', err);
-          console.error('Error response:', err.response?.data);
-          // Don't block the form if pages can't be loaded
-        } finally {
-          setLoadingPages(false);
-        }
-      }
-      
-      if (linkedin && linkedInOrganizations.length === 0 && !loadingPages) {
-        try {
-          setLoadingPages(true);
-          console.log('Fetching LinkedIn organizations...');
-          const response = await api.get('/user_info/linkedin_organizations');
-          console.log('LinkedIn organizations response:', response.data);
-          const organizations = response.data.organizations || [];
-          setLinkedInOrganizations(organizations);
-          // Auto-select first organization if none selected
-          if (!selectedLinkedInOrgUrn && organizations.length > 0) {
-            setSelectedLinkedInOrgUrn(organizations[0].urn);
-          }
-        } catch (err: any) {
-          console.error('Error fetching LinkedIn organizations:', err);
-          console.error('Error response:', err.response?.data);
-          // Don't block the form if organizations can't be loaded
-        } finally {
-          setLoadingPages(false);
-        }
-      }
-    };
-
-    fetchPages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [facebook, linkedin]);
 
   const calculatePostTo = () => {
     let postTo = 0;
@@ -366,75 +218,8 @@ export default function Schedule() {
       scheduleData.bucket_image_id = selectedImage;
     }
 
-    // Include page IDs if Facebook or LinkedIn is selected
-    if (facebook && selectedFacebookPageId) {
-      scheduleData.facebook_page_id = selectedFacebookPageId;
-    }
-    if (linkedin && selectedLinkedInOrgUrn) {
-      scheduleData.linkedin_organization_urn = selectedLinkedInOrgUrn;
-    }
-
     createMutation.mutate({
       bucket_schedule: scheduleData,
-    });
-  };
-
-  const handleUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!editingSchedule) return;
-
-    if (!selectedBucket) {
-      setError('Please select a bucket');
-      return;
-    }
-
-    // For ONCE and ANNUALLY schedules, require image selection
-    if ((scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY) && !selectedImage) {
-      setError('Please select an image for "Once" or "Annually" schedules');
-      return;
-    }
-
-    const postTo = calculatePostTo();
-    if (postTo === 0) {
-      setError('Please select at least one social media platform');
-      return;
-    }
-
-    const cronString = generateCronString();
-
-    const scheduleData: any = {
-      schedule: cronString,
-      schedule_type: scheduleType,
-      post_to: postTo,
-      description: description,
-      twitter_description: twitterDescription || description,
-    };
-
-    // Include bucket_image_id if a specific image is selected
-    if (selectedImage) {
-      scheduleData.bucket_image_id = selectedImage;
-    } else {
-      // If switching to rotation, clear the image
-      scheduleData.bucket_image_id = null;
-    }
-
-    // Include page IDs if Facebook or LinkedIn is selected
-    if (facebook && selectedFacebookPageId) {
-      scheduleData.facebook_page_id = selectedFacebookPageId;
-    } else {
-      scheduleData.facebook_page_id = null;
-    }
-    if (linkedin && selectedLinkedInOrgUrn) {
-      scheduleData.linkedin_organization_urn = selectedLinkedInOrgUrn;
-    } else {
-      scheduleData.linkedin_organization_urn = null;
-    }
-
-    updateMutation.mutate({
-      id: editingSchedule.id,
-      data: { bucket_schedule: scheduleData },
     });
   };
 
@@ -484,13 +269,7 @@ export default function Schedule() {
   return (
     <div className="schedule-page">
       <div className="page-header">
-        <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
-          Schedules
-          <InfoIcon 
-            title="Schedules"
-            content="Create and manage posting schedules for your content. Choose from Rotation (posts daily at a set time), Once (one-time post), or Annually (posts once per year). Select which social media platforms to post to, add descriptions, and choose specific pages or organizations for Facebook and LinkedIn."
-          />
-        </h1>
+        <h1>Schedules</h1>
         <button onClick={() => setShowCreateModal(true)} className="create-btn">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -513,16 +292,6 @@ export default function Schedule() {
                   {getScheduleTypeName(schedule.schedule_type)}
                 </div>
                 <div className="schedule-actions">
-                  <button
-                    onClick={() => loadScheduleForEdit(schedule)}
-                    className="edit-btn"
-                    title="Edit schedule"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                  </button>
                   <button
                     onClick={() => handlePostNow(schedule.id)}
                     className="post-now-btn"
@@ -576,13 +345,13 @@ export default function Schedule() {
         </div>
       )}
 
-      {/* Create/Edit Schedule Modal */}
-      {(showCreateModal || editingSchedule) && (
-        <div className="modal-overlay" onClick={() => { setShowCreateModal(false); setEditingSchedule(null); resetForm(); }}>
+      {/* Create Schedule Modal */}
+      {showCreateModal && (
+        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>{editingSchedule ? 'Edit Schedule' : 'Create New Schedule'}</h2>
-              <button onClick={() => { setShowCreateModal(false); setEditingSchedule(null); resetForm(); }} className="close-btn">
+              <h2>Create New Schedule</h2>
+              <button onClick={() => setShowCreateModal(false)} className="close-btn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -592,7 +361,7 @@ export default function Schedule() {
 
             {error && <div className="error-message">{error}</div>}
 
-            <form onSubmit={editingSchedule ? handleUpdate : handleCreate}>
+            <form onSubmit={handleCreate}>
               <div className="form-group">
                 <label htmlFor="bucket">Bucket *</label>
                 <select
@@ -600,7 +369,6 @@ export default function Schedule() {
                   value={selectedBucket || ''}
                   onChange={(e) => setSelectedBucket(Number(e.target.value))}
                   required
-                  disabled={!!editingSchedule}
                 >
                   <option value="">Select a bucket</option>
                   {buckets.map((bucket) => (
@@ -609,7 +377,6 @@ export default function Schedule() {
                     </option>
                   ))}
                 </select>
-                {editingSchedule && <small style={{ color: '#666', marginTop: '4px', display: 'block' }}>Bucket cannot be changed after creation</small>}
               </div>
 
               {selectedBucket && (
@@ -680,31 +447,6 @@ export default function Schedule() {
                     <input type="checkbox" checked={facebook} onChange={(e) => setFacebook(e.target.checked)} />
                     <span>Facebook</span>
                   </label>
-                  {facebook && (
-                    <div className="page-selection" style={{ marginLeft: '20px', marginTop: '8px', marginBottom: '8px' }}>
-                      <select
-                        value={selectedFacebookPageId}
-                        onChange={(e) => setSelectedFacebookPageId(e.target.value)}
-                        disabled={loadingPages}
-                        style={{ width: '100%', padding: '6px', fontSize: '14px' }}
-                      >
-                        {loadingPages ? (
-                          <option>Loading pages...</option>
-                        ) : facebookPages.length === 0 ? (
-                          <option>No pages available</option>
-                        ) : (
-                          <>
-                            <option value="">Select a page...</option>
-                            {facebookPages.map((page) => (
-                              <option key={page.id} value={page.id}>
-                                {page.name}
-                              </option>
-                            ))}
-                          </>
-                        )}
-                      </select>
-                    </div>
-                  )}
                   <label className="checkbox-label">
                     <input type="checkbox" checked={twitter} onChange={(e) => setTwitter(e.target.checked)} />
                     <span>X</span>
@@ -717,31 +459,6 @@ export default function Schedule() {
                     <input type="checkbox" checked={linkedin} onChange={(e) => setLinkedin(e.target.checked)} />
                     <span>LinkedIn</span>
                   </label>
-                  {linkedin && (
-                    <div className="page-selection" style={{ marginLeft: '20px', marginTop: '8px', marginBottom: '8px' }}>
-                      <select
-                        value={selectedLinkedInOrgUrn}
-                        onChange={(e) => setSelectedLinkedInOrgUrn(e.target.value)}
-                        disabled={loadingPages}
-                        style={{ width: '100%', padding: '6px', fontSize: '14px' }}
-                      >
-                        {loadingPages ? (
-                          <option>Loading organizations...</option>
-                        ) : linkedInOrganizations.length === 0 ? (
-                          <option>No organizations available</option>
-                        ) : (
-                          <>
-                            <option value="">Select an organization...</option>
-                            {linkedInOrganizations.map((org) => (
-                              <option key={org.urn} value={org.urn}>
-                                {org.name}
-                              </option>
-                            ))}
-                          </>
-                        )}
-                      </select>
-                    </div>
-                  )}
                   <label className="checkbox-label">
                     <input type="checkbox" checked={gmb} onChange={(e) => setGmb(e.target.checked)} />
                     <span>Google My Business</span>
@@ -778,14 +495,11 @@ export default function Schedule() {
               </div>
 
               <div className="modal-actions">
-                <button type="button" onClick={() => { setShowCreateModal(false); setEditingSchedule(null); resetForm(); }} className="cancel-btn">
+                <button type="button" onClick={() => setShowCreateModal(false)} className="cancel-btn">
                   Cancel
                 </button>
-                <button type="submit" disabled={editingSchedule ? updateMutation.isPending : createMutation.isPending} className="submit-btn">
-                  {editingSchedule 
-                    ? (updateMutation.isPending ? 'Updating...' : 'Update Schedule')
-                    : (createMutation.isPending ? 'Creating...' : 'Create Schedule')
-                  }
+                <button type="submit" disabled={createMutation.isPending} className="submit-btn">
+                  {createMutation.isPending ? 'Creating...' : 'Create Schedule'}
                 </button>
               </div>
             </form>

@@ -99,7 +99,6 @@
   color: #f57c00;
 }
 
-.edit-btn,
 .post-now-btn,
 .delete-btn {
   background: none;
@@ -108,14 +107,6 @@
   padding: 0.5rem;
   border-radius: 4px;
   transition: all 0.2s;
-}
-
-.edit-btn {
-  color: #007bff;
-}
-
-.edit-btn:hover {
-  background: #e3f2fd;
 }
 
 .post-now-btn {

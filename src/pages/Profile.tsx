@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import { useAuthStore } from '../store/authStore';
-import InfoIcon from '../components/InfoIcon';
+// import { useAuthStore } from '../store/authStore';
 import './Profile.css';
 
 // interface User {
@@ -30,8 +28,6 @@ interface ConnectedAccounts {
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
-  const logout = useAuthStore((state) => state.logout);
   // const _authUser = useAuthStore((state) => state.user);
   
   const [name, setName] = useState('');
@@ -40,7 +36,6 @@ export default function Profile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Check for success message from URL params (Stripe redirect)
   useEffect(() => {
@@ -161,20 +156,6 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('Pinterest disconnected successfully!');
       setTimeout(() => setSuccess(''), 3000);
-    },
-  });
-
-  // Delete account mutation
-  const deleteAccountMutation = useMutation({
-    mutationFn: () => api.delete('/user_info/delete_account'),
-    onSuccess: () => {
-      // Logout and redirect to landing page
-      logout();
-      navigate('/');
-    },
-    onError: (err: any) => {
-      setError(err.response?.data?.error || 'Failed to delete account. Please try again.');
-      setShowDeleteConfirm(false);
     },
   });
 
@@ -482,13 +463,7 @@ export default function Profile() {
 
   return (
     <div className="profile-page">
-      <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
-        Profile Settings
-        <InfoIcon 
-          title="Profile Settings"
-          content="Manage your account information, timezone settings, and social media connections. Connect your Facebook, Instagram, Twitter, LinkedIn, and other accounts to enable posting. View and manage your subscription, update your profile details, and configure account settings."
-        />
-      </h1>
+      <h1>Profile Settings</h1>
 
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
@@ -955,78 +930,6 @@ export default function Profile() {
               </button>
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Delete Account Section */}
-      <div className="profile-section" style={{ borderTop: '2px solid #e74c3c', marginTop: '2rem' }}>
-        <h2 style={{ color: '#e74c3c' }}>Danger Zone</h2>
-        <div style={{ padding: '1.5rem', background: '#fff5f5', borderRadius: '8px', border: '1px solid #fed7d7' }}>
-          <h3 style={{ marginBottom: '0.5rem', color: '#c53030' }}>Delete Account</h3>
-          <p style={{ marginBottom: '1rem', color: '#666', fontSize: '0.9em' }}>
-            Once you delete your account, there is no going back. This will permanently delete your account, 
-            all your data, buckets, schedules, and cancel your subscription. Please be certain.
-          </p>
-          {!showDeleteConfirm ? (
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              style={{
-                background: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                padding: '0.75rem 1.5rem',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontWeight: '600',
-                fontSize: '0.95rem'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#c53030'}
-              onMouseOut={(e) => e.currentTarget.style.background = '#e74c3c'}
-            >
-              Delete My Account
-            </button>
-          ) : (
-            <div>
-              <p style={{ marginBottom: '1rem', color: '#c53030', fontWeight: '600' }}>
-                Are you absolutely sure? This action cannot be undone.
-              </p>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  onClick={() => deleteAccountMutation.mutate()}
-                  disabled={deleteAccountMutation.isPending}
-                  style={{
-                    background: '#e74c3c',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '6px',
-                    cursor: deleteAccountMutation.isPending ? 'not-allowed' : 'pointer',
-                    fontWeight: '600',
-                    fontSize: '0.95rem',
-                    opacity: deleteAccountMutation.isPending ? 0.6 : 1
-                  }}
-                >
-                  {deleteAccountMutation.isPending ? 'Deleting...' : 'Yes, Delete My Account'}
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={deleteAccountMutation.isPending}
-                  style={{
-                    background: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    padding: '0.75rem 1.5rem',
-                    borderRadius: '6px',
-                    cursor: deleteAccountMutation.isPending ? 'not-allowed' : 'pointer',
-                    fontWeight: '600',
-                    fontSize: '0.95rem'
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

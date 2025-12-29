@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import ImageEditor from '../components/ImageEditor';
-import InfoIcon from '../components/InfoIcon';
 import './BucketImages.css';
 
 interface Image {
@@ -20,8 +19,6 @@ interface BucketImage {
   repeat: boolean;
   post_to: number;
   use_watermark: boolean;
-  facebook_page_id?: string | null;
-  linkedin_organization_urn?: string | null;
   image: Image;
   created_at: string;
   updated_at: string;
@@ -210,13 +207,7 @@ export default function BucketImages() {
         <button className="back-button" onClick={() => navigate('/buckets')}>
           ← Back to Buckets
         </button>
-        <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
-          {bucket.name}
-          <InfoIcon 
-            title="Bucket Images"
-            content="Manage images in this bucket. Upload new images, edit existing ones (crop, rotate, apply filters), set descriptions for social media posts, and configure which platforms each image should post to. Images in this bucket can be scheduled for automatic posting."
-          />
-        </h1>
+        <h1>{bucket.name}</h1>
         {bucket.description && <p className="bucket-description">{bucket.description}</p>}
       </div>
 

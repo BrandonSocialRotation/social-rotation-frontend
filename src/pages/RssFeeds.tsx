@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
-import InfoIcon from '../components/InfoIcon';
 import './RssFeeds.css';
 
 interface RssFeed {
@@ -176,13 +175,7 @@ const RssFeeds: React.FC = () => {
     <div className="rss-feeds-container">
       <div className="rss-feeds-header">
         <div>
-          <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
-            RSS Feeds
-            <InfoIcon 
-              title="RSS Feeds"
-              content="RSS Feeds allow you to automatically import content from blogs, news sites, and other RSS sources. Add RSS feed URLs to automatically fetch new posts, which you can then review and schedule to your social media accounts. Perfect for content curation and automated posting."
-            />
-          </h1>
+          <h1>RSS Feeds</h1>
           <p>Manage RSS feeds for automated content posting</p>
         </div>
         <div style={{ display: 'flex', gap: '1rem' }}>
