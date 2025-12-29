@@ -418,109 +418,333 @@ function Register() {
             {accountType === 'personal' && (
               <>
                 <div className="form-group">
-                  <label>Billing Period</label>
-                  <div style={{ display: 'flex', gap: '15px', marginTop: '10px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                      <input
-                        type="radio"
-                        value="monthly"
-                        checked={billingPeriod === 'monthly'}
-                        onChange={(e) => setBillingPeriod(e.target.value as 'monthly' | 'annual')}
-                        style={{ marginRight: '8px' }}
-                      />
-                      Monthly
-                    </label>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                      <input
-                        type="radio"
-                        value="annual"
-                        checked={billingPeriod === 'annual'}
-                        onChange={(e) => setBillingPeriod(e.target.value as 'monthly' | 'annual')}
-                        style={{ marginRight: '8px' }}
-                      />
-                      <span>Annual <span style={{ color: '#28a745' }}>(2 months free!)</span></span>
-                    </label>
-                  </div>
-                </div>
+                  <label style={{ marginBottom: '15px', display: 'block', fontWeight: 'bold' }}>Select Billing Period</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                    {/* Monthly Card */}
+                    <div
+                      onClick={() => setBillingPeriod('monthly')}
+                      style={{
+                        padding: '20px',
+                        border: billingPeriod === 'monthly' ? '3px solid #007bff' : '2px solid #ddd',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        background: billingPeriod === 'monthly' ? '#f0f7ff' : '#fff',
+                        transition: 'all 0.2s',
+                        boxShadow: billingPeriod === 'monthly' ? '0 4px 12px rgba(0,123,255,0.15)' : '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.3em', color: '#007bff' }}>Monthly</h3>
+                        {billingPeriod === 'monthly' && (
+                          <div style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            borderRadius: '50%', 
+                            background: '#007bff', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}>✓</div>
+                        )}
+                      </div>
+                      <div style={{ marginBottom: '15px' }}>
+                        <p style={{ margin: '0 0 5px 0', fontSize: '2em', fontWeight: 'bold', color: '#333' }}>
+                          $49<span style={{ fontSize: '0.5em', fontWeight: 'normal', color: '#666' }}>/month</span>
+                        </p>
+                        <p style={{ margin: '5px 0 0 0', fontSize: '0.85em', color: '#666' }}>
+                          Base price
+                        </p>
+                      </div>
+                      <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '0.9em', fontWeight: 'bold' }}>Pricing Structure:</p>
+                        <ul style={{ margin: '0', paddingLeft: '20px', fontSize: '0.85em', color: '#666', lineHeight: '1.6' }}>
+                          <li>Base: $49/month</li>
+                          <li>+ $15/user (first 10 users)</li>
+                          <li>+ $10/user (after 10 users)</li>
+                        </ul>
+                        <p style={{ margin: '15px 0 0 0', fontSize: '0.9em', fontWeight: 'bold', color: '#333' }}>
+                          Starting at: {formatPrice(calculatePrice())}
+                        </p>
+                      </div>
+                    </div>
 
-                <div style={{ 
-                  padding: '15px', 
-                  background: '#f5f5f5', 
-                  borderRadius: '8px', 
-                  marginBottom: '20px' 
-                }}>
-                  <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>Pricing:</p>
-                  {billingPeriod === 'annual' ? (
-                    <>
-                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                        Base: $49/month × 10 months = $490/year
-                      </p>
-                      <p style={{ margin: '5px 0', fontSize: '0.9em', color: '#28a745' }}>
-                        (Save 2 months - pay for 10, get 12!)
-                      </p>
-                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                        + $15/user (first 10 users)
-                      </p>
-                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                        + $10/user (after 10 users)
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                        Base: $49/month
-                      </p>
-                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                        + $15/user (first 10 users)
-                      </p>
-                      <p style={{ margin: '5px 0', fontSize: '0.9em' }}>
-                        + $10/user (after 10 users)
-                      </p>
-                    </>
-                  )}
-                  <p style={{ margin: '10px 0 0 0', fontWeight: 'bold', fontSize: '1.1em' }}>
-                    Starting at: {formatPrice(calculatePrice())}
-                  </p>
+                    {/* Annual Card */}
+                    <div
+                      onClick={() => setBillingPeriod('annual')}
+                      style={{
+                        padding: '20px',
+                        border: billingPeriod === 'annual' ? '3px solid #28a745' : '2px solid #ddd',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        background: billingPeriod === 'annual' ? '#f0fff4' : '#fff',
+                        transition: 'all 0.2s',
+                        boxShadow: billingPeriod === 'annual' ? '0 4px 12px rgba(40,167,69,0.15)' : '0 2px 4px rgba(0,0,0,0.1)',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        background: '#28a745',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.75em',
+                        fontWeight: 'bold'
+                      }}>
+                        BEST VALUE
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', marginTop: '10px' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.3em', color: '#28a745' }}>Annual</h3>
+                        {billingPeriod === 'annual' && (
+                          <div style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            borderRadius: '50%', 
+                            background: '#28a745', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}>✓</div>
+                        )}
+                      </div>
+                      <div style={{ marginBottom: '15px' }}>
+                        <p style={{ margin: '0 0 5px 0', fontSize: '2em', fontWeight: 'bold', color: '#333' }}>
+                          $490<span style={{ fontSize: '0.5em', fontWeight: 'normal', color: '#666' }}>/year</span>
+                        </p>
+                        <p style={{ margin: '5px 0 0 0', fontSize: '0.85em', color: '#28a745', fontWeight: 'bold' }}>
+                          Save 2 months! (Pay for 10, get 12)
+                        </p>
+                        <p style={{ margin: '5px 0 0 0', fontSize: '0.8em', color: '#666' }}>
+                          Equivalent to $40.83/month
+                        </p>
+                      </div>
+                      <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '0.9em', fontWeight: 'bold' }}>Pricing Structure:</p>
+                        <ul style={{ margin: '0', paddingLeft: '20px', fontSize: '0.85em', color: '#666', lineHeight: '1.6' }}>
+                          <li>Base: $49/month × 10 = $490/year</li>
+                          <li>+ $15/user (first 10 users)</li>
+                          <li>+ $10/user (after 10 users)</li>
+                        </ul>
+                        <p style={{ margin: '15px 0 0 0', fontSize: '0.9em', fontWeight: 'bold', color: '#333' }}>
+                          Starting at: {formatPrice(calculatePrice())}
+                        </p>
+                        <p style={{ margin: '10px 0 0 0', fontSize: '0.85em', color: '#28a745', fontWeight: 'bold' }}>
+                          💰 Save $98/year vs monthly!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
 
             {accountType === 'agency' && (
-              <div className="form-group">
-                <label htmlFor="subAccountCount">Number of Sub-Accounts</label>
-                <select
-                  id="subAccountCount"
-                  value={subAccountCount}
-                  onChange={(e) => setSubAccountCount(parseInt(e.target.value))}
-                  required
-                >
-                  <option value="5">5 sub-accounts - Agency Starter ($99/month)</option>
-                  <option value="15">15 sub-accounts - Agency Professional ($249/month)</option>
-                  <option value="50">50 sub-accounts - Agency Enterprise ($499/month)</option>
-                </select>
-                <small style={{color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block'}}>
-                  You can add more sub-accounts later by upgrading your plan
-                </small>
-                {plans.length > 0 && (
-                  <div style={{ 
-                    padding: '15px', 
-                    background: '#f5f5f5', 
-                    borderRadius: '8px', 
-                    marginTop: '10px' 
-                  }}>
-                    <p style={{ margin: '0', fontWeight: 'bold' }}>
-                      Selected Plan: {
-                        plans.find((p: any) => {
-                          if (p.plan_type === 'agency') {
-                            return subAccountCount <= (p.max_users || 999)
-                          }
-                          return false
-                        })?.name || 'Agency Starter'
-                      }
-                    </p>
+              <>
+                <div className="form-group">
+                  <label htmlFor="subAccountCount" style={{ marginBottom: '15px', display: 'block', fontWeight: 'bold' }}>Number of Sub-Accounts</label>
+                  <select
+                    id="subAccountCount"
+                    value={subAccountCount}
+                    onChange={(e) => setSubAccountCount(parseInt(e.target.value))}
+                    required
+                    style={{ marginBottom: '20px' }}
+                  >
+                    <option value="5">5 sub-accounts - Agency Starter</option>
+                    <option value="15">15 sub-accounts - Agency Professional</option>
+                    <option value="50">50 sub-accounts - Agency Enterprise</option>
+                  </select>
+                  <small style={{color: '#666', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block', marginBottom: '15px'}}>
+                    You can add more sub-accounts later by upgrading your plan
+                  </small>
+                </div>
+
+                <div className="form-group">
+                  <label style={{ marginBottom: '15px', display: 'block', fontWeight: 'bold' }}>Select Billing Period</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                    {/* Monthly Card */}
+                    <div
+                      onClick={() => setBillingPeriod('monthly')}
+                      style={{
+                        padding: '20px',
+                        border: billingPeriod === 'monthly' ? '3px solid #007bff' : '2px solid #ddd',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        background: billingPeriod === 'monthly' ? '#f0f7ff' : '#fff',
+                        transition: 'all 0.2s',
+                        boxShadow: billingPeriod === 'monthly' ? '0 4px 12px rgba(0,123,255,0.15)' : '0 2px 4px rgba(0,0,0,0.1)'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.3em', color: '#007bff' }}>Monthly</h3>
+                        {billingPeriod === 'monthly' && (
+                          <div style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            borderRadius: '50%', 
+                            background: '#007bff', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}>✓</div>
+                        )}
+                      </div>
+                      <div style={{ marginBottom: '15px' }}>
+                        <p style={{ margin: '0 0 5px 0', fontSize: '2em', fontWeight: 'bold', color: '#333' }}>
+                          {(() => {
+                            const plan = plans.find((p: any) => {
+                              if (p.plan_type === 'agency') {
+                                return subAccountCount <= (p.max_users || 999)
+                              }
+                              return false
+                            })
+                            const price = plan?.price_cents || 9900
+                            return `$${(price / 100).toFixed(0)}`
+                          })()}
+                          <span style={{ fontSize: '0.5em', fontWeight: 'normal', color: '#666' }}>/month</span>
+                        </p>
+                        <p style={{ margin: '5px 0 0 0', fontSize: '0.85em', color: '#666' }}>
+                          {(() => {
+                            const plan = plans.find((p: any) => {
+                              if (p.plan_type === 'agency') {
+                                return subAccountCount <= (p.max_users || 999)
+                              }
+                              return false
+                            })
+                            return plan?.name || 'Agency Starter'
+                          })()}
+                        </p>
+                      </div>
+                      <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '0.9em', fontWeight: 'bold' }}>What's Included:</p>
+                        <ul style={{ margin: '0', paddingLeft: '20px', fontSize: '0.85em', color: '#666', lineHeight: '1.6' }}>
+                          <li>Up to {subAccountCount} sub-accounts</li>
+                          <li>Manage multiple client accounts</li>
+                          <li>All social media platforms</li>
+                          <li>Full scheduling features</li>
+                        </ul>
+                        <p style={{ margin: '15px 0 0 0', fontSize: '0.9em', fontWeight: 'bold', color: '#333' }}>
+                          Price: {formatPrice(calculatePrice())}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Annual Card */}
+                    <div
+                      onClick={() => setBillingPeriod('annual')}
+                      style={{
+                        padding: '20px',
+                        border: billingPeriod === 'annual' ? '3px solid #28a745' : '2px solid #ddd',
+                        borderRadius: '12px',
+                        cursor: 'pointer',
+                        background: billingPeriod === 'annual' ? '#f0fff4' : '#fff',
+                        transition: 'all 0.2s',
+                        boxShadow: billingPeriod === 'annual' ? '0 4px 12px rgba(40,167,69,0.15)' : '0 2px 4px rgba(0,0,0,0.1)',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{
+                        position: 'absolute',
+                        top: '10px',
+                        right: '10px',
+                        background: '#28a745',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '0.75em',
+                        fontWeight: 'bold'
+                      }}>
+                        BEST VALUE
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', marginTop: '10px' }}>
+                        <h3 style={{ margin: 0, fontSize: '1.3em', color: '#28a745' }}>Annual</h3>
+                        {billingPeriod === 'annual' && (
+                          <div style={{ 
+                            width: '24px', 
+                            height: '24px', 
+                            borderRadius: '50%', 
+                            background: '#28a745', 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '14px',
+                            fontWeight: 'bold'
+                          }}>✓</div>
+                        )}
+                      </div>
+                      <div style={{ marginBottom: '15px' }}>
+                        <p style={{ margin: '0 0 5px 0', fontSize: '2em', fontWeight: 'bold', color: '#333' }}>
+                          {(() => {
+                            const plan = plans.find((p: any) => {
+                              if (p.plan_type === 'agency') {
+                                return subAccountCount <= (p.max_users || 999)
+                              }
+                              return false
+                            })
+                            const monthlyPrice = plan?.price_cents || 9900
+                            const annualPrice = Math.round(monthlyPrice * 10)
+                            return `$${(annualPrice / 100).toFixed(0)}`
+                          })()}
+                          <span style={{ fontSize: '0.5em', fontWeight: 'normal', color: '#666' }}>/year</span>
+                        </p>
+                        <p style={{ margin: '5px 0 0 0', fontSize: '0.85em', color: '#28a745', fontWeight: 'bold' }}>
+                          Save 2 months! (Pay for 10, get 12)
+                        </p>
+                        <p style={{ margin: '5px 0 0 0', fontSize: '0.8em', color: '#666' }}>
+                          {(() => {
+                            const plan = plans.find((p: any) => {
+                              if (p.plan_type === 'agency') {
+                                return subAccountCount <= (p.max_users || 999)
+                              }
+                              return false
+                            })
+                            const monthlyPrice = plan?.price_cents || 9900
+                            const annualPrice = Math.round(monthlyPrice * 10)
+                            const monthlyEquivalent = (annualPrice / 12 / 100).toFixed(2)
+                            return `Equivalent to $${monthlyEquivalent}/month`
+                          })()}
+                        </p>
+                      </div>
+                      <div style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
+                        <p style={{ margin: '0 0 8px 0', fontSize: '0.9em', fontWeight: 'bold' }}>What's Included:</p>
+                        <ul style={{ margin: '0', paddingLeft: '20px', fontSize: '0.85em', color: '#666', lineHeight: '1.6' }}>
+                          <li>Up to {subAccountCount} sub-accounts</li>
+                          <li>Manage multiple client accounts</li>
+                          <li>All social media platforms</li>
+                          <li>Full scheduling features</li>
+                        </ul>
+                        <p style={{ margin: '15px 0 0 0', fontSize: '0.9em', fontWeight: 'bold', color: '#333' }}>
+                          Price: {formatPrice(calculatePrice())}
+                        </p>
+                        <p style={{ margin: '10px 0 0 0', fontSize: '0.85em', color: '#28a745', fontWeight: 'bold' }}>
+                          💰 Save {(() => {
+                            const plan = plans.find((p: any) => {
+                              if (p.plan_type === 'agency') {
+                                return subAccountCount <= (p.max_users || 999)
+                              }
+                              return false
+                            })
+                            const monthlyPrice = plan?.price_cents || 9900
+                            const savings = Math.round(monthlyPrice * 2)
+                            return `$${(savings / 100).toFixed(0)}/year vs monthly!`
+                          })()}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
+                </div>
+              </>
             )}
 
             <div style={{ 
