@@ -21,7 +21,7 @@ function Register() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [processingPayment, setProcessingPayment] = useState(false)
-  const [_userToken, setUserToken] = useState<string | null>(null) // Store token after account creation
+  const [pendingRegistrationId, setPendingRegistrationId] = useState<number | null>(null) // Store pending registration ID
 
   // Fetch plans to calculate pricing
   const [plans, setPlans] = useState<any[]>([])
