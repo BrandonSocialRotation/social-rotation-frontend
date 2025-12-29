@@ -42,10 +42,225 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Coming Soon Section */}
-      <section className="landing-coming-soon">
-        <div className="landing-coming-soon-content">
-          <h3>Coming Soon</h3>
+      {/* What is Social Rotation Section */}
+      <section className="landing-about">
+        <div className="landing-about-content">
+          <div className="about-text">
+            <h2>What is Social Rotation?</h2>
+            <p className="lead">
+              Social Rotation is an all-in-one social media management platform that helps you schedule, 
+              publish, and manage content across multiple social networks from one central dashboard.
+            </p>
+            <p>
+              Whether you're a small business owner, content creator, or marketing agency, Social Rotation 
+              simplifies your social media workflow by automating posting, organizing content into buckets, 
+              and providing powerful scheduling tools.
+            </p>
+          </div>
+          <div className="about-image">
+            <div className="image-placeholder">
+              <span>📱 Dashboard Preview</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="landing-features">
+        <div className="landing-features-content">
+          <h3>Powerful Features for Social Media Success</h3>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon">📅</div>
+              <h4>Smart Scheduling</h4>
+              <p>
+                Schedule posts across all your social media platforms in advance. Set up recurring schedules 
+                and never miss a post again.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📦</div>
+              <h4>Content Buckets</h4>
+              <p>
+                Organize your images and videos into buckets for easy management. Create themed collections 
+                and reuse content efficiently.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🌐</div>
+              <h4>Multi-Platform Publishing</h4>
+              <p>
+                Post to Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube, Pinterest, and Google My Business 
+                all from one place.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">📊</div>
+              <h4>Analytics & Insights</h4>
+              <p>
+                Track your performance with detailed analytics. Monitor engagement, reach, impressions, 
+                and follower growth across platforms.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">🔄</div>
+              <h4>RSS Feed Automation</h4>
+              <p>
+                Automatically import and schedule content from RSS feeds. Keep your social media active 
+                with fresh content from your favorite sources.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon">👥</div>
+              <h4>Team Collaboration</h4>
+              <p>
+                Manage multiple client accounts with sub-accounts. Perfect for agencies and teams 
+                working with multiple brands.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="landing-how-it-works">
+        <div className="landing-how-it-works-content">
+          <h3>How It Works</h3>
+          <div className="steps-container">
+            <div className="step">
+              <div className="step-number">1</div>
+              <div className="step-content">
+                <h4>Connect Your Accounts</h4>
+                <p>Link your social media accounts securely with OAuth. We support Facebook, Instagram, Twitter, LinkedIn, and more.</p>
+              </div>
+              <div className="step-image">
+                <div className="image-placeholder">
+                  <span>🔗 Connect</span>
+                </div>
+              </div>
+            </div>
+            <div className="step">
+              <div className="step-number">2</div>
+              <div className="step-content">
+                <h4>Organize Your Content</h4>
+                <p>Upload images and videos to buckets. Organize by theme, campaign, or content type for easy access.</p>
+              </div>
+              <div className="step-image">
+                <div className="image-placeholder">
+                  <span>📁 Organize</span>
+                </div>
+              </div>
+            </div>
+            <div className="step">
+              <div className="step-number">3</div>
+              <div className="step-content">
+                <h4>Schedule & Publish</h4>
+                <p>Create schedules for your content. Set specific times, dates, and platforms. Let Social Rotation handle the rest.</p>
+              </div>
+              <div className="step-image">
+                <div className="image-placeholder">
+                  <span>⏰ Schedule</span>
+                </div>
+              </div>
+            </div>
+            <div className="step">
+              <div className="step-number">4</div>
+              <div className="step-content">
+                <h4>Analyze & Optimize</h4>
+                <p>Review your analytics to see what's working. Track engagement and optimize your content strategy.</p>
+              </div>
+              <div className="step-image">
+                <div className="image-placeholder">
+                  <span>📈 Analyze</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Support Section */}
+      <section className="landing-platforms">
+        <div className="landing-platforms-content">
+          <h3>Connect All Your Social Platforms</h3>
+          <p className="platforms-subtitle">
+            Manage all your social media accounts from one powerful dashboard
+          </p>
+          <div className="platforms-grid">
+            <div className="platform-item">
+              <div className="platform-icon">📘</div>
+              <span>Facebook</span>
+            </div>
+            <div className="platform-item">
+              <div className="platform-icon">📷</div>
+              <span>Instagram</span>
+            </div>
+            <div className="platform-item">
+              <div className="platform-icon">🐦</div>
+              <span>Twitter</span>
+            </div>
+            <div className="platform-item">
+              <div className="platform-icon">💼</div>
+              <span>LinkedIn</span>
+            </div>
+            <div className="platform-item">
+              <div className="platform-icon">🎵</div>
+              <span>TikTok</span>
+            </div>
+            <div className="platform-item">
+              <div className="platform-icon">📺</div>
+              <span>YouTube</span>
+            </div>
+            <div className="platform-item">
+              <div className="platform-icon">📌</div>
+              <span>Pinterest</span>
+            </div>
+            <div className="platform-item">
+              <div className="platform-icon">🏢</div>
+              <span>Google My Business</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="landing-benefits">
+        <div className="landing-benefits-content">
+          <h3>Why Choose Social Rotation?</h3>
+          <div className="benefits-grid">
+            <div className="benefit-item">
+              <h4>⏱️ Save Time</h4>
+              <p>Schedule weeks of content in minutes instead of posting manually every day.</p>
+            </div>
+            <div className="benefit-item">
+              <h4>📈 Grow Your Audience</h4>
+              <p>Consistent posting helps you build and engage with your audience more effectively.</p>
+            </div>
+            <div className="benefit-item">
+              <h4>💰 Affordable Pricing</h4>
+              <p>Professional social media management tools at a fraction of the cost of competitors.</p>
+            </div>
+            <div className="benefit-item">
+              <h4>🔒 Secure & Reliable</h4>
+              <p>Your data is encrypted and secure. We use industry-standard OAuth for account connections.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA Section */}
+      <section className="landing-cta-section">
+        <div className="landing-cta-section-content">
+          <h2>Ready to Transform Your Social Media?</h2>
+          <p>Join thousands of businesses and creators using Social Rotation to streamline their social media management.</p>
+          <div className="landing-cta">
+            <Link to="/register" className="cta-button primary">
+              Start Free Trial
+            </Link>
+            <Link to="/login" className="cta-button secondary">
+              Sign In
+            </Link>
+          </div>
         </div>
       </section>
 
