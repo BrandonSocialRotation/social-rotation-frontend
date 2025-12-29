@@ -61,33 +61,7 @@ function Dashboard() {
       </p>
       
       <div className="stats-grid">
-        {/* Instagram Analytics */}
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-            </svg>
-            <h3>Instagram Reach</h3>
-          </div>
-          <p className="stat-number">{igSummary?.reach ?? '—'}</p>
-          <p className="stat-label">Last 7 days</p>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3h18v4H3z"/>
-              <path d="M8 7v14"/>
-              <path d="M16 7v14"/>
-            </svg>
-            <h3>Impressions</h3>
-          </div>
-          <p className="stat-number">{igSummary?.impressions ?? '—'}</p>
-          <p className="stat-label">Last 7 days</p>
-        </div>
-
+        {/* Hootsuite-style Analytics */}
         <div className="stat-card">
           <div className="stat-card-header">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -95,9 +69,81 @@ function Dashboard() {
               <polyline points="7 10 12 15 17 10"/>
               <line x1="12" y1="15" x2="12" y2="3"/>
             </svg>
-            <h3>Engagement</h3>
+            <h3>Engagement Rate</h3>
           </div>
-          <p className="stat-number">{igSummary?.engagement ?? '—'}</p>
+          <p className="stat-number">{igSummary?.engagement_rate ? `${igSummary.engagement_rate}%` : '—'}</p>
+          <p className="stat-label">Last 7 days</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <h3>Likes</h3>
+          </div>
+          <p className="stat-number">{igSummary?.likes?.toLocaleString() ?? '—'}</p>
+          <p className="stat-label">Last 7 days</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <h3>Comments</h3>
+          </div>
+          <p className="stat-number">{igSummary?.comments?.toLocaleString() ?? '—'}</p>
+          <p className="stat-label">Last 7 days</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+              <polyline points="16 6 12 2 8 6"/>
+              <line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+            <h3>Shares</h3>
+          </div>
+          <p className="stat-number">{igSummary?.shares?.toLocaleString() ?? '—'}</p>
+          <p className="stat-label">Last 7 days</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <h3>Clicks</h3>
+          </div>
+          <p className="stat-number">{igSummary?.clicks?.toLocaleString() ?? '—'}</p>
+          <p className="stat-label">Last 7 days</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <h3>Saves</h3>
+          </div>
+          <p className="stat-number">{igSummary?.saves?.toLocaleString() ?? '—'}</p>
+          <p className="stat-label">Last 7 days</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            <h3>Profile Visits</h3>
+          </div>
+          <p className="stat-number">{igSummary?.profile_visits?.toLocaleString() ?? '—'}</p>
           <p className="stat-label">Last 7 days</p>
         </div>
 
@@ -109,7 +155,7 @@ function Dashboard() {
             </svg>
             <h3>Followers</h3>
           </div>
-          <p className="stat-number">{igSummary?.followers ?? '—'}</p>
+          <p className="stat-number">{igSummary?.followers?.toLocaleString() ?? '—'}</p>
           <p className="stat-label">Current total</p>
         </div>
         {/* Buckets Card - Click to go to Buckets page */}
