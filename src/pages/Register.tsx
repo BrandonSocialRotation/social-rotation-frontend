@@ -53,18 +53,31 @@ function Register() {
         // For personal, we start with 1 user (base price only)
         let total = basePrice
         if (billingPeriod === 'annual') {
-          total = Math.round(total * 10 / 12) // 2 months free
+          // Annual: pay for 10 months, get 12 (2 months free)
+          // Return the TOTAL annual price, not monthly equivalent
+          total = Math.round(total * 10) // $49/month × 10 months = $490/year
         }
         return total
       }
-      return 4900 // Default $49
+      // Default fallback
+      if (billingPeriod === 'annual') {
+        return 49000 // $490/year (49 * 10)
+      }
+      return 4900 // Default $49/month
     } else {
       // Agency - find appropriate plan based on sub-account count
       const plan = plans.find((p: any) => p.plan_type === 'agency')
       if (plan) {
-        return plan.price_cents || 9900 // Default to Agency Starter
+        const price = plan.price_cents || 9900
+        if (billingPeriod === 'annual') {
+          return Math.round(price * 10) // 2 months free
+        }
+        return price
       }
-      return 9900
+      if (billingPeriod === 'annual') {
+        return 99000 // $990/year
+      }
+      return 9900 // Default to Agency Starter
     }
   }
 
@@ -404,7 +417,7 @@ function Register() {
                       />
                       Monthly
                     </label>
-                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', gap: '5px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                       <input
                         type="radio"
                         value="annual"
@@ -412,8 +425,7 @@ function Register() {
                         onChange={(e) => setBillingPeriod(e.target.value as 'monthly' | 'annual')}
                         style={{ marginRight: '8px' }}
                       />
-                      <span>Annual</span>
-                      <span style={{ color: '#28a745' }}>(2 months free!)</span>
+                      <span>Annual <span style={{ color: '#28a745' }}>(2 months free!)</span></span>
                     </label>
                   </div>
                 </div>
