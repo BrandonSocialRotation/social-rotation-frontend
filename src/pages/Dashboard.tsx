@@ -11,24 +11,6 @@ function Dashboard() {
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
 
-  // Fetch buckets count
-  const { data: bucketsData } = useQuery({
-    queryKey: ['buckets'],
-    queryFn: async () => {
-      const response = await bucketsAPI.getAll()
-      return response.data.buckets
-    },
-  })
-
-  // Fetch schedules count
-  const { data: schedulesData } = useQuery({
-    queryKey: ['schedules'],
-    queryFn: async () => {
-      const response = await schedulesAPI.getAll()
-      return response.data.bucket_schedules
-    },
-  })
-
   // Fetch sub-accounts count (for resellers)
   const { data: subAccountsData } = useQuery({
     queryKey: ['sub_accounts'],
