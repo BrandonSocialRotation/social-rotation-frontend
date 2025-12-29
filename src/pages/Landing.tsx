@@ -1,5 +1,18 @@
 import { Link } from 'react-router-dom'
 import './Landing.css'
+import {
+  CalendarIcon,
+  BucketIcon,
+  GlobeIcon,
+  ChartIcon,
+  RefreshIcon,
+  UsersIcon,
+  LinkIcon,
+  FolderIcon,
+  ClockIcon,
+  TrendingUpIcon,
+  DashboardIcon
+} from '../components/LandingIcons'
 
 export default function Landing() {
   return (
@@ -59,7 +72,8 @@ export default function Landing() {
           </div>
           <div className="about-image">
             <div className="image-placeholder">
-              <span>📱 Dashboard Preview</span>
+              <DashboardIcon />
+              <span>Dashboard Preview</span>
             </div>
           </div>
         </div>
@@ -71,7 +85,9 @@ export default function Landing() {
           <h3>Powerful Features for Social Media Success</h3>
           <div className="features-grid">
             <div className="feature-card">
-              <div className="feature-icon">📅</div>
+              <div className="feature-icon">
+                <CalendarIcon />
+              </div>
               <h4>Smart Scheduling</h4>
               <p>
                 Schedule posts across all your social media platforms in advance. Set up recurring schedules 
@@ -79,7 +95,9 @@ export default function Landing() {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">📦</div>
+              <div className="feature-icon">
+                <BucketIcon />
+              </div>
               <h4>Content Buckets</h4>
               <p>
                 Organize your images and videos into buckets for easy management. Create themed collections 
@@ -87,7 +105,9 @@ export default function Landing() {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🌐</div>
+              <div className="feature-icon">
+                <GlobeIcon />
+              </div>
               <h4>Multi-Platform Publishing</h4>
               <p>
                 Post to Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube, Pinterest, and Google My Business 
@@ -95,7 +115,9 @@ export default function Landing() {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">📊</div>
+              <div className="feature-icon">
+                <ChartIcon />
+              </div>
               <h4>Analytics & Insights</h4>
               <p>
                 Track your performance with detailed analytics. Monitor engagement, reach, impressions, 
@@ -103,7 +125,9 @@ export default function Landing() {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">🔄</div>
+              <div className="feature-icon">
+                <RefreshIcon />
+              </div>
               <h4>RSS Feed Automation</h4>
               <p>
                 Automatically import and schedule content from RSS feeds. Keep your social media active 
@@ -111,7 +135,9 @@ export default function Landing() {
               </p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">👥</div>
+              <div className="feature-icon">
+                <UsersIcon />
+              </div>
               <h4>Team Collaboration</h4>
               <p>
                 Manage multiple client accounts with sub-accounts. Perfect for agencies and teams 
@@ -135,7 +161,8 @@ export default function Landing() {
               </div>
               <div className="step-image">
                 <div className="image-placeholder">
-                  <span>🔗 Connect</span>
+                  <LinkIcon />
+                  <span>Connect</span>
                 </div>
               </div>
             </div>
@@ -147,7 +174,8 @@ export default function Landing() {
               </div>
               <div className="step-image">
                 <div className="image-placeholder">
-                  <span>📁 Organize</span>
+                  <FolderIcon />
+                  <span>Organize</span>
                 </div>
               </div>
             </div>

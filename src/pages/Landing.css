@@ -134,11 +134,20 @@
   background: rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 1rem;
   border: 2px dashed rgba(255, 255, 255, 0.3);
-  font-size: 1.5rem;
+  font-size: 1rem;
   backdrop-filter: blur(10px);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.image-placeholder svg {
+  width: 64px;
+  height: 64px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* How It Works Section */
@@ -211,6 +220,18 @@
   width: 100%;
   height: 200px;
   max-width: 300px;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.step-image .image-placeholder svg {
+  width: 48px;
+  height: 48px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.step-image .image-placeholder span {
+  font-size: 0.9rem;
 }
 
 /* Final CTA Section */
@@ -317,8 +338,13 @@
 }
 
 .feature-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .feature-card h4 {
