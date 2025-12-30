@@ -192,24 +192,8 @@ export default function Profile() {
           response = await api.get('/oauth/twitter/login');
           break;
         case 'Instagram':
-          // Instagram uses Facebook API - check if Facebook is connected first
-          if (!connectedAccounts?.facebook_connected) {
-            setError('Please connect Facebook first. Instagram uses Facebook\'s API and requires a connected Facebook account.');
-            setConnectingPlatform(null);
-            return;
-          }
-          // Call Instagram connect endpoint (fetches Instagram account from Facebook)
-          response = await api.get('/oauth/instagram/connect');
-          // Instagram connect doesn't use OAuth popup, so handle it directly
-          if (response.data?.success) {
-            queryClient.invalidateQueries({ queryKey: ['user_info'] });
-            setSuccess('Instagram connected successfully!');
-            setTimeout(() => setSuccess(''), 3000);
-            setConnectingPlatform(null);
-            return;
-          } else {
-            throw new Error(response.data?.message || 'Failed to connect Instagram');
-          }
+          response = await api.get('/oauth/instagram/login');
+          break;
         case 'TikTok':
           response = await api.get('/oauth/tiktok/login');
           break;
