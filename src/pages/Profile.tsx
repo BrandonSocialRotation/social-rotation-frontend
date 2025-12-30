@@ -805,11 +805,11 @@ export default function Profile() {
                 )}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
-                    onClick={() => handleConnectPlatform('TikTok')}
                     className="connect-btn"
-                    disabled={connectingPlatform === 'TikTok'}
+                    disabled={true}
+                    style={{ opacity: 0.6, cursor: 'not-allowed' }}
                   >
-                    {connectingPlatform === 'TikTok' ? 'Connecting...' : 'Change TikTok Account'}
+                    Coming Soon
                   </button>
                   <button
                     onClick={() => disconnectTikTokMutation.mutate()}
@@ -822,11 +822,11 @@ export default function Profile() {
               </div>
             ) : (
               <button
-                onClick={() => handleConnectPlatform('TikTok')}
                 className="connect-btn"
-                disabled={connectingPlatform === 'TikTok'}
+                disabled={true}
+                style={{ opacity: 0.6, cursor: 'not-allowed' }}
               >
-                {connectingPlatform === 'TikTok' ? 'Connecting...' : 'Connect TikTok'}
+                Coming Soon
               </button>
             )}
           </div>
