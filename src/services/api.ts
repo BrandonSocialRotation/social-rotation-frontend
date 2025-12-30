@@ -47,15 +47,20 @@ api.interceptors.response.use(
       useAuthStore.getState().logout()
       window.location.href = '/login'
     } else if (error.response?.status === 403 && error.response?.data?.subscription_required) {
-      // Subscription required or suspended - redirect appropriately
+      // Subscription required, canceled, or suspended - redirect appropriately
       // Don't logout, just redirect so they can manage subscription
-      if (error.response.data.subscription_suspended) {
-        // Suspended account - redirect to profile to manage subscription
-        window.location.href = '/profile'
-      } else {
-        // No subscription - redirect to register to complete payment
-        const redirectTo = error.response.data.redirect_to || '/register'
+      const subscriptionStatus = error.response.data.subscription_status
+      const redirectTo = error.response.data.redirect_to
+      
+      if (subscriptionStatus === 'canceled' || subscriptionStatus === 'suspended' || subscriptionStatus === 'past_due' || subscriptionStatus === 'unpaid') {
+        // Subscription is canceled/suspended - redirect to profile to resubscribe
+        window.location.href = redirectTo || '/profile'
+      } else if (redirectTo) {
+        // Use the redirect_to from the backend response
         window.location.href = redirectTo
+      } else {
+        // Default: redirect to register to complete payment
+        window.location.href = '/register'
       }
     }
     return Promise.reject(error)

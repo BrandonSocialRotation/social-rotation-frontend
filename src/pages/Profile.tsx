@@ -855,11 +855,11 @@ export default function Profile() {
                 )}
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
-                    onClick={() => handleConnectPlatform('YouTube')}
                     className="connect-btn"
-                    disabled={connectingPlatform === 'YouTube'}
+                    disabled={true}
+                    style={{ opacity: 0.6, cursor: 'not-allowed' }}
                   >
-                    {connectingPlatform === 'YouTube' ? 'Connecting...' : 'Change YouTube Account'}
+                    Coming Soon
                   </button>
                   <button
                     onClick={() => disconnectYouTubeMutation.mutate()}
@@ -872,11 +872,11 @@ export default function Profile() {
               </div>
             ) : (
               <button
-                onClick={() => handleConnectPlatform('YouTube')}
                 className="connect-btn"
-                disabled={connectingPlatform === 'YouTube'}
+                disabled={true}
+                style={{ opacity: 0.6, cursor: 'not-allowed' }}
               >
-                {connectingPlatform === 'YouTube' ? 'Connecting...' : 'Connect YouTube'}
+                Coming Soon
               </button>
             )}
           </div>
