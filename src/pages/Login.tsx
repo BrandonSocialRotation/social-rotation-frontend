@@ -1,10 +1,11 @@
 // Login page - user authentication
 // Form fields: email, password (with show/hide toggle)
-// On success: saves token and redirects to dashboard
+// On success: saves token and redirects to dashboard or profile based on subscription status
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { authAPI } from '../services/api'
+import api from '../services/api'
 import './Auth.css'
 
 function Login() {
@@ -27,7 +28,28 @@ function Login() {
       const { user, token } = response.data
       
       login(user, token)
-      navigate('/dashboard')
+      
+      // Check subscription status before redirecting
+      // Skip subscription check for user_info endpoint so we can check status
+      try {
+        const subscriptionResponse = await api.get('/subscriptions')
+        const subscription = subscriptionResponse.data?.subscription
+        
+        // If subscription is canceled or inactive, redirect to profile to resubscribe
+        if (subscription && (subscription.status === 'canceled' || subscription.status === 'past_due' || subscription.status === 'unpaid' || subscription.status === 'incomplete' || subscription.status === 'incomplete_expired')) {
+          navigate('/profile')
+        } else if (!subscription) {
+          // No subscription - redirect to register
+          navigate('/register')
+        } else {
+          // Active subscription - go to dashboard
+          navigate('/dashboard')
+        }
+      } catch (subErr: any) {
+        // If subscription check fails, try to go to dashboard
+        // The API interceptor will handle 403 errors and redirect appropriately
+        navigate('/dashboard')
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed. Please try again.')
     } finally {
