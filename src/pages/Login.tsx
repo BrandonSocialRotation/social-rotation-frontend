@@ -28,28 +28,8 @@ function Login() {
       const { user, token } = response.data
       
       login(user, token)
-      
-      // Check subscription status before redirecting
-      // Skip subscription check for user_info endpoint so we can check status
-      try {
-        const subscriptionResponse = await api.get('/subscriptions')
-        const subscription = subscriptionResponse.data?.subscription
-        
-        // If subscription is canceled or inactive, redirect to profile to resubscribe
-        if (subscription && (subscription.status === 'canceled' || subscription.status === 'past_due' || subscription.status === 'unpaid' || subscription.status === 'incomplete' || subscription.status === 'incomplete_expired')) {
-          navigate('/profile')
-        } else if (!subscription) {
-          // No subscription - redirect to register
-          navigate('/register')
-        } else {
-          // Active subscription - go to dashboard
-          navigate('/dashboard')
-        }
-      } catch (subErr: any) {
-        // If subscription check fails, try to go to dashboard
-        // The API interceptor will handle 403 errors and redirect appropriately
-        navigate('/dashboard')
-      }
+      // Always redirect to dashboard - users can view app but posting/scheduling will be blocked if subscription is canceled
+      navigate('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed. Please try again.')
     } finally {
