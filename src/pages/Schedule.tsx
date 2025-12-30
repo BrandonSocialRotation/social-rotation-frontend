@@ -108,7 +108,8 @@ export default function Schedule() {
       resetForm();
     },
     onError: (err: any) => {
-      setError(err.response?.data?.errors?.join(', ') || 'Failed to create schedule');
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.response?.data?.errors?.join(', ') || 'Failed to create schedule';
+      setError(errorMessage);
     },
   });
 
@@ -128,7 +129,8 @@ export default function Schedule() {
       alert(`Post sent successfully!\n\nResults:\n${JSON.stringify(response.data.results, null, 2)}`);
     },
     onError: (err: any) => {
-      alert(`Failed to post: ${err.response?.data?.details || err.response?.data?.error || 'Unknown error'}`);
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || 'Unknown error';
+      alert(`Failed to post: ${errorMessage}`);
     },
   });
 
