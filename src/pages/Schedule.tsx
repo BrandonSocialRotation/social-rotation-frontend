@@ -97,6 +97,35 @@ export default function Schedule() {
     },
   });
 
+  // Fetch Facebook pages (with Instagram accounts)
+  const { data: facebookPagesData } = useQuery({
+    queryKey: ['facebook_pages'],
+    queryFn: async () => {
+      const response = await api.get('/user_info/facebook_pages');
+      return response.data.pages as Array<{
+        id: string;
+        name: string;
+        access_token: string;
+        instagram_account?: { id: string; username: string };
+      }>;
+    },
+    enabled: facebook || instagram, // Only fetch if Facebook or Instagram is selected
+  });
+
+  // Fetch LinkedIn organizations
+  const { data: linkedinOrgsData } = useQuery({
+    queryKey: ['linkedin_organizations'],
+    queryFn: async () => {
+      const response = await api.get('/user_info/linkedin_organizations');
+      return response.data.organizations as Array<{
+        id: string;
+        name: string;
+        urn: string;
+      }>;
+    },
+    enabled: linkedin, // Only fetch if LinkedIn is selected
+  });
+
   // Create schedule mutation
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -147,6 +176,9 @@ export default function Schedule() {
     setLinkedin(false);
     setGmb(false);
     setPinterest(false);
+    setSelectedFacebookPage('');
+    setSelectedLinkedInOrg('');
+    setSelectedInstagramAccount('');
     setError('');
   };
 
@@ -218,6 +250,23 @@ export default function Schedule() {
     // Include bucket_image_id if a specific image is selected
     if (selectedImage) {
       scheduleData.bucket_image_id = selectedImage;
+    }
+
+    // Include page/organization selections
+    if (facebook && selectedFacebookPage) {
+      scheduleData.facebook_page_id = selectedFacebookPage;
+    }
+    if (linkedin && selectedLinkedInOrg) {
+      scheduleData.linkedin_organization_urn = selectedLinkedInOrg;
+    }
+    // For Instagram, use the Facebook page that has the Instagram account
+    // Instagram posts through Facebook pages, so we need the page ID
+    if (instagram && selectedInstagramAccount) {
+      // Find the page that has this Instagram account
+      const pageWithInstagram = facebookPagesData?.find(p => p.instagram_account?.id === selectedInstagramAccount);
+      if (pageWithInstagram) {
+        scheduleData.facebook_page_id = pageWithInstagram.id;
+      }
     }
 
     createMutation.mutate({
@@ -449,6 +498,30 @@ export default function Schedule() {
                     <input type="checkbox" checked={facebook} onChange={(e) => setFacebook(e.target.checked)} />
                     <span>Facebook</span>
                   </label>
+                  {facebook && facebookPagesData && facebookPagesData.length > 0 && (
+                    <div className="platform-select" style={{ marginLeft: '20px', marginTop: '5px', marginBottom: '10px' }}>
+                      <select
+                        value={selectedFacebookPage}
+                        onChange={(e) => {
+                          setSelectedFacebookPage(e.target.value);
+                          // Auto-select Instagram if this page has an Instagram account
+                          const page = facebookPagesData.find(p => p.id === e.target.value);
+                          if (page?.instagram_account && !instagram) {
+                            setInstagram(true);
+                            setSelectedInstagramAccount(page.instagram_account.id);
+                          }
+                        }}
+                        style={{ width: '100%', padding: '5px' }}
+                      >
+                        <option value="">Select Facebook Page</option>
+                        {facebookPagesData.map((page) => (
+                          <option key={page.id} value={page.id}>
+                            {page.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <label className="checkbox-label">
                     <input type="checkbox" checked={twitter} onChange={(e) => setTwitter(e.target.checked)} />
                     <span>X</span>
@@ -457,10 +530,52 @@ export default function Schedule() {
                     <input type="checkbox" checked={instagram} onChange={(e) => setInstagram(e.target.checked)} />
                     <span>Instagram</span>
                   </label>
+                  {instagram && facebookPagesData && facebookPagesData.some(p => p.instagram_account) && (
+                    <div className="platform-select" style={{ marginLeft: '20px', marginTop: '5px', marginBottom: '10px' }}>
+                      <select
+                        value={selectedInstagramAccount}
+                        onChange={(e) => {
+                          setSelectedInstagramAccount(e.target.value);
+                          // Find the page with this Instagram account and select it
+                          const page = facebookPagesData.find(p => p.instagram_account?.id === e.target.value);
+                          if (page) {
+                            setSelectedFacebookPage(page.id);
+                            if (!facebook) setFacebook(true);
+                          }
+                        }}
+                        style={{ width: '100%', padding: '5px' }}
+                      >
+                        <option value="">Select Instagram Account</option>
+                        {facebookPagesData
+                          .filter(page => page.instagram_account)
+                          .map((page) => (
+                            <option key={page.instagram_account!.id} value={page.instagram_account!.id}>
+                              @{page.instagram_account!.username} (via {page.name})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
                   <label className="checkbox-label">
                     <input type="checkbox" checked={linkedin} onChange={(e) => setLinkedin(e.target.checked)} />
                     <span>LinkedIn</span>
                   </label>
+                  {linkedin && linkedinOrgsData && linkedinOrgsData.length > 0 && (
+                    <div className="platform-select" style={{ marginLeft: '20px', marginTop: '5px', marginBottom: '10px' }}>
+                      <select
+                        value={selectedLinkedInOrg}
+                        onChange={(e) => setSelectedLinkedInOrg(e.target.value)}
+                        style={{ width: '100%', padding: '5px' }}
+                      >
+                        <option value="">Select LinkedIn Organization (or use personal profile)</option>
+                        {linkedinOrgsData.map((org) => (
+                          <option key={org.urn} value={org.urn}>
+                            {org.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <label className="checkbox-label">
                     <input type="checkbox" checked={gmb} onChange={(e) => setGmb(e.target.checked)} />
                     <span>Google My Business</span>
