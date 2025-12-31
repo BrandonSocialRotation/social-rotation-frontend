@@ -66,6 +66,11 @@ export default function Schedule() {
   const [gmb, setGmb] = useState(false);
   const [pinterest, setPinterest] = useState(false);
   
+  // Selected pages/organizations
+  const [selectedFacebookPage, setSelectedFacebookPage] = useState<string>('');
+  const [selectedLinkedInOrg, setSelectedLinkedInOrg] = useState<string>('');
+  const [selectedInstagramAccount, setSelectedInstagramAccount] = useState<string>('');
+  
   const [error, setError] = useState('');
 
   // Fetch bucket images when bucket is selected
@@ -506,7 +511,7 @@ export default function Schedule() {
                         <small>Loading pages...</small>
                       ) : facebookPagesError ? (
                         <small style={{ color: '#d32f2f' }}>
-                          {facebookPagesError.response?.data?.error || 'Failed to load Facebook pages'}
+                          {(facebookPagesError as any).response?.data?.error || 'Failed to load Facebook pages'}
                         </small>
                       ) : facebookPagesData && facebookPagesData.length > 0 ? (
                         <select
@@ -548,7 +553,7 @@ export default function Schedule() {
                         <small>Loading Instagram accounts...</small>
                       ) : facebookPagesError ? (
                         <small style={{ color: '#d32f2f' }}>
-                          {facebookPagesError.response?.data?.error || 'Failed to load Instagram accounts'}
+                          {(facebookPagesError as any).response?.data?.error || 'Failed to load Instagram accounts'}
                         </small>
                       ) : facebookPagesData && facebookPagesData.some(p => p.instagram_account) ? (
                         <select
@@ -588,7 +593,7 @@ export default function Schedule() {
                         <small>Loading organizations...</small>
                       ) : linkedinOrgsError ? (
                         <small style={{ color: '#d32f2f' }}>
-                          {linkedinOrgsError.response?.data?.error || 'Failed to load LinkedIn organizations'}
+                          {(linkedinOrgsError as any).response?.data?.error || 'Failed to load LinkedIn organizations'}
                         </small>
                       ) : linkedinOrgsData && linkedinOrgsData.length > 0 ? (
                         <select
