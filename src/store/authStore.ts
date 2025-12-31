@@ -45,13 +45,13 @@ export const useAuthStore = create<AuthState>()(
       
       // Login function - saves user and token
       login: (user, token) =>
-        set({
+        set((state) => ({
           user,
           token,
-          isAuthenticated: true,
+          isAuthenticated: !!(user && token),
           originalUser: null,
           originalToken: null,
-        }),
+        })),
       
       // Logout function - clears all auth data
       logout: () =>
@@ -104,6 +104,20 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage', // localStorage key
+      // Rehydrate isAuthenticated from user and token on load
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        originalUser: state.originalUser,
+        originalToken: state.originalToken,
+        // Don't persist isAuthenticated - derive it from user/token
+      }),
+      // On rehydrate, set isAuthenticated based on stored user/token
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.isAuthenticated = !!(state.user && state.token)
+        }
+      },
     }
   )
 )
