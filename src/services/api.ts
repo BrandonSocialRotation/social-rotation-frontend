@@ -43,16 +43,10 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Check if we have a token in localStorage - if so, it might just be expired, don't redirect on page load
-      const authStorage = localStorage.getItem('auth-storage')
-      const hasToken = authStorage && JSON.parse(authStorage)?.state?.token
-      
-      // Only redirect if we don't have a token (user was never logged in)
-      // If we have a token but got 401, it's expired - let the ProtectedRoute handle it
-      if (!hasToken) {
-        useAuthStore.getState().logout()
-        window.location.href = '/login'
-      }
+      // Don't redirect on 401 - let the page stay where it is
+      // Components can handle the error and show login if needed
+      useAuthStore.getState().logout()
+      // Don't redirect - just clear the auth state
     } else if (error.response?.status === 403 && error.response?.data?.subscription_required) {
       // Subscription required, canceled, or suspended - redirect appropriately
       // Don't logout, just redirect so they can manage subscription
