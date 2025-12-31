@@ -23,7 +23,6 @@ interface AuthState {
   user: User | null
   token: string | null
   isAuthenticated: boolean
-  hasHydrated: boolean  // Track if state has been rehydrated from localStorage
   originalUser: User | null  // Store original reseller when switching
   originalToken: string | null  // Store original token when switching
   login: (user: User, token: string) => void
@@ -32,7 +31,6 @@ interface AuthState {
   setToken: (token: string) => void
   switchToSubAccount: (user: User, token: string) => void
   switchBackToOriginal: () => void
-  setHasHydrated: (hasHydrated: boolean) => void
 }
 
 // Create auth store with persistence (saves to localStorage)
@@ -42,13 +40,8 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      hasHydrated: false,
       originalUser: null,
       originalToken: null,
-      
-      // Set hydration status
-      setHasHydrated: (hasHydrated) =>
-        set({ hasHydrated }),
       
       // Login function - saves user and token
       login: (user, token) =>
@@ -123,7 +116,6 @@ export const useAuthStore = create<AuthState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.isAuthenticated = !!(state.user && state.token)
-          state.hasHydrated = true
         }
       },
     }
