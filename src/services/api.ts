@@ -44,9 +44,9 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Don't redirect on 401 - let the page stay where it is
-      // Components can handle the error and show login if needed
+      // Just clear the auth state silently
       useAuthStore.getState().logout()
-      // Don't redirect - just clear the auth state
+      // Return the error so components can handle it
     } else if (error.response?.status === 403 && error.response?.data?.subscription_required) {
       // Subscription required, canceled, or suspended - redirect appropriately
       // Don't logout, just redirect so they can manage subscription

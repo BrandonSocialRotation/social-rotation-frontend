@@ -73,8 +73,8 @@ function App() {
         <Route path="profile" element={<Profile />} />
       </Route>
       
-      {/* Catch all - redirect authenticated users to dashboard, others to landing */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Catch all - only redirect if it's a real 404, not a client-side route */}
+      {/* Removed automatic redirect to prevent interfering with client-side routing */}
     </Routes>
   )
 }
