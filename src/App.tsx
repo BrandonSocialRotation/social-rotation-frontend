@@ -9,7 +9,7 @@
 //   /marketplace - Marketplace browsing (protected)
 //   /profile - User profile (protected)
 import React from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
