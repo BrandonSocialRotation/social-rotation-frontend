@@ -97,7 +97,7 @@ export default function Schedule() {
     },
   });
 
-  // Fetch Facebook pages (with Instagram accounts)
+  // Fetch Facebook pages (with Instagram accounts) - always fetch so we can show them
   const { data: facebookPagesData, isLoading: facebookPagesLoading, error: facebookPagesError } = useQuery({
     queryKey: ['facebook_pages'],
     queryFn: async () => {
@@ -109,11 +109,11 @@ export default function Schedule() {
         instagram_account?: { id: string; username: string };
       }>;
     },
-    enabled: facebook || instagram, // Only fetch if Facebook or Instagram is selected
     retry: 1,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch LinkedIn organizations
+  // Fetch LinkedIn organizations - always fetch so we can show them
   const { data: linkedinOrgsData, isLoading: linkedinOrgsLoading, error: linkedinOrgsError } = useQuery({
     queryKey: ['linkedin_organizations'],
     queryFn: async () => {
@@ -124,8 +124,8 @@ export default function Schedule() {
         urn: string;
       }>;
     },
-    enabled: linkedin, // Only fetch if LinkedIn is selected
     retry: 1,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
   // Create schedule mutation
@@ -500,28 +500,38 @@ export default function Schedule() {
                     <input type="checkbox" checked={facebook} onChange={(e) => setFacebook(e.target.checked)} />
                     <span>Facebook</span>
                   </label>
-                  {facebook && facebookPagesData && facebookPagesData.length > 0 && (
+                  {facebook && (
                     <div className="platform-select" style={{ marginLeft: '20px', marginTop: '5px', marginBottom: '10px' }}>
-                      <select
-                        value={selectedFacebookPage}
-                        onChange={(e) => {
-                          setSelectedFacebookPage(e.target.value);
-                          // Auto-select Instagram if this page has an Instagram account
-                          const page = facebookPagesData.find(p => p.id === e.target.value);
-                          if (page?.instagram_account && !instagram) {
-                            setInstagram(true);
-                            setSelectedInstagramAccount(page.instagram_account.id);
-                          }
-                        }}
-                        style={{ width: '100%', padding: '5px' }}
-                      >
-                        <option value="">Select Facebook Page</option>
-                        {facebookPagesData.map((page) => (
-                          <option key={page.id} value={page.id}>
-                            {page.name}
-                          </option>
-                        ))}
-                      </select>
+                      {facebookPagesLoading ? (
+                        <small>Loading pages...</small>
+                      ) : facebookPagesError ? (
+                        <small style={{ color: '#d32f2f' }}>
+                          {facebookPagesError.response?.data?.error || 'Failed to load Facebook pages'}
+                        </small>
+                      ) : facebookPagesData && facebookPagesData.length > 0 ? (
+                        <select
+                          value={selectedFacebookPage}
+                          onChange={(e) => {
+                            setSelectedFacebookPage(e.target.value);
+                            // Auto-select Instagram if this page has an Instagram account
+                            const page = facebookPagesData.find(p => p.id === e.target.value);
+                            if (page?.instagram_account && !instagram) {
+                              setInstagram(true);
+                              setSelectedInstagramAccount(page.instagram_account.id);
+                            }
+                          }}
+                          style={{ width: '100%', padding: '5px' }}
+                        >
+                          <option value="">Select Facebook Page</option>
+                          {facebookPagesData.map((page) => (
+                            <option key={page.id} value={page.id}>
+                              {page.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <small style={{ color: '#666' }}>No Facebook pages found. Please connect Facebook first.</small>
+                      )}
                     </div>
                   )}
                   <label className="checkbox-label">
@@ -532,50 +542,70 @@ export default function Schedule() {
                     <input type="checkbox" checked={instagram} onChange={(e) => setInstagram(e.target.checked)} />
                     <span>Instagram</span>
                   </label>
-                  {instagram && facebookPagesData && facebookPagesData.some(p => p.instagram_account) && (
+                  {instagram && (
                     <div className="platform-select" style={{ marginLeft: '20px', marginTop: '5px', marginBottom: '10px' }}>
-                      <select
-                        value={selectedInstagramAccount}
-                        onChange={(e) => {
-                          setSelectedInstagramAccount(e.target.value);
-                          // Find the page with this Instagram account and select it
-                          const page = facebookPagesData.find(p => p.instagram_account?.id === e.target.value);
-                          if (page) {
-                            setSelectedFacebookPage(page.id);
-                            if (!facebook) setFacebook(true);
-                          }
-                        }}
-                        style={{ width: '100%', padding: '5px' }}
-                      >
-                        <option value="">Select Instagram Account</option>
-                        {facebookPagesData
-                          .filter(page => page.instagram_account)
-                          .map((page) => (
-                            <option key={page.instagram_account!.id} value={page.instagram_account!.id}>
-                              @{page.instagram_account!.username} (via {page.name})
-                            </option>
-                          ))}
-                      </select>
+                      {facebookPagesLoading ? (
+                        <small>Loading Instagram accounts...</small>
+                      ) : facebookPagesError ? (
+                        <small style={{ color: '#d32f2f' }}>
+                          {facebookPagesError.response?.data?.error || 'Failed to load Instagram accounts'}
+                        </small>
+                      ) : facebookPagesData && facebookPagesData.some(p => p.instagram_account) ? (
+                        <select
+                          value={selectedInstagramAccount}
+                          onChange={(e) => {
+                            setSelectedInstagramAccount(e.target.value);
+                            // Find the page with this Instagram account and select it
+                            const page = facebookPagesData.find(p => p.instagram_account?.id === e.target.value);
+                            if (page) {
+                              setSelectedFacebookPage(page.id);
+                              if (!facebook) setFacebook(true);
+                            }
+                          }}
+                          style={{ width: '100%', padding: '5px' }}
+                        >
+                          <option value="">Select Instagram Account</option>
+                          {facebookPagesData
+                            .filter(page => page.instagram_account)
+                            .map((page) => (
+                              <option key={page.instagram_account!.id} value={page.instagram_account!.id}>
+                                @{page.instagram_account!.username} (via {page.name})
+                              </option>
+                            ))}
+                        </select>
+                      ) : (
+                        <small style={{ color: '#666' }}>No Instagram accounts found. Please connect Facebook with an Instagram Business account.</small>
+                      )}
                     </div>
                   )}
                   <label className="checkbox-label">
                     <input type="checkbox" checked={linkedin} onChange={(e) => setLinkedin(e.target.checked)} />
                     <span>LinkedIn</span>
                   </label>
-                  {linkedin && linkedinOrgsData && linkedinOrgsData.length > 0 && (
+                  {linkedin && (
                     <div className="platform-select" style={{ marginLeft: '20px', marginTop: '5px', marginBottom: '10px' }}>
-                      <select
-                        value={selectedLinkedInOrg}
-                        onChange={(e) => setSelectedLinkedInOrg(e.target.value)}
-                        style={{ width: '100%', padding: '5px' }}
-                      >
-                        <option value="">Select LinkedIn Organization (or use personal profile)</option>
-                        {linkedinOrgsData.map((org) => (
-                          <option key={org.urn} value={org.urn}>
-                            {org.name}
-                          </option>
-                        ))}
-                      </select>
+                      {linkedinOrgsLoading ? (
+                        <small>Loading organizations...</small>
+                      ) : linkedinOrgsError ? (
+                        <small style={{ color: '#d32f2f' }}>
+                          {linkedinOrgsError.response?.data?.error || 'Failed to load LinkedIn organizations'}
+                        </small>
+                      ) : linkedinOrgsData && linkedinOrgsData.length > 0 ? (
+                        <select
+                          value={selectedLinkedInOrg}
+                          onChange={(e) => setSelectedLinkedInOrg(e.target.value)}
+                          style={{ width: '100%', padding: '5px' }}
+                        >
+                          <option value="">Select LinkedIn Organization (or use personal profile)</option>
+                          {linkedinOrgsData.map((org) => (
+                            <option key={org.urn} value={org.urn}>
+                              {org.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <small style={{ color: '#666' }}>No LinkedIn organizations found. Will post to personal profile.</small>
+                      )}
                     </div>
                   )}
                   <label className="checkbox-label">
