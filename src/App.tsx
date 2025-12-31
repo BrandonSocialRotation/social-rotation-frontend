@@ -9,7 +9,6 @@
 //   /marketplace - Marketplace browsing (protected)
 //   /profile - User profile (protected)
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { useAuthStore } from './store/authStore'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
@@ -27,12 +26,21 @@ import Privacy from './pages/Privacy'
 import OAuthCallback from './pages/OAuthCallback'
 
 // Protected Route wrapper - redirects to login if not authenticated
-// Checks user and token directly (which are persisted) instead of isAuthenticated
+// Checks localStorage directly (synchronous) to avoid async hydration issues
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const user = useAuthStore((state) => state.user)
-  const token = useAuthStore((state) => state.token)
-  // Check user and token directly - these are persisted in localStorage
-  const isAuthenticated = !!(user && token)
+  // Check localStorage directly - this is synchronous and works immediately
+  const authStorage = typeof window !== 'undefined' ? localStorage.getItem('auth-storage') : null
+  let isAuthenticated = false
+  
+  if (authStorage) {
+    try {
+      const parsed = JSON.parse(authStorage)
+      const state = parsed.state || parsed
+      isAuthenticated = !!(state?.user && state?.token)
+    } catch (e) {
+      // If parsing fails, user is not authenticated
+    }
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
