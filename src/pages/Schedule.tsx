@@ -31,6 +31,7 @@ interface BucketSchedule {
   created_at: string;
   updated_at: string;
   bucket_name?: string;
+  name?: string;
 }
 
 // Schedule types
@@ -62,6 +63,7 @@ export default function Schedule() {
     now.setHours(12, 0, 0, 0);
     return now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
   });
+  const [scheduleName, setScheduleName] = useState('');
   const [description, setDescription] = useState('');
   const [twitterDescription, setTwitterDescription] = useState('');
   
@@ -185,6 +187,7 @@ export default function Schedule() {
     const now = new Date();
     now.setHours(12, 0, 0, 0);
     setDateTime(now.toISOString().slice(0, 16));
+    setScheduleName('');
     setDescription('');
     setTwitterDescription('');
     setFacebook(true);
@@ -269,6 +272,7 @@ export default function Schedule() {
       schedule: cronString,
       schedule_type: scheduleType,
       post_to: postTo,
+      name: scheduleName || `Schedule ${new Date().toLocaleDateString()}`,
       description: description,
       twitter_description: twitterDescription || description,
     };
@@ -393,6 +397,43 @@ export default function Schedule() {
     return platforms.join(', ');
   };
 
+  // Parse cron string to readable date/time
+  const getScheduledDateTime = (schedule: string, scheduleType: number): string => {
+    if (!schedule) return 'Not scheduled';
+    
+    const parts = schedule.split(' ');
+    if (parts.length !== 5) return schedule; // Return as-is if invalid format
+    
+    const [minute, hour, day, month] = parts;
+    
+    if (scheduleType === SCHEDULE_TYPE_ROTATION) {
+      // Daily rotation - show time only
+      const hourNum = parseInt(hour);
+      const minNum = parseInt(minute);
+      const period = hourNum >= 12 ? 'PM' : 'AM';
+      const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
+      return `Daily at ${displayHour}:${minNum.toString().padStart(2, '0')} ${period}`;
+    } else {
+      // Once or Multiple - show date and time
+      const now = new Date();
+      const year = now.getFullYear();
+      const monthNum = month === '*' ? now.getMonth() + 1 : parseInt(month);
+      const dayNum = day === '*' ? now.getDate() : parseInt(day);
+      const hourNum = parseInt(hour);
+      const minNum = parseInt(minute);
+      
+      const scheduleDate = new Date(year, monthNum - 1, dayNum, hourNum, minNum);
+      const period = hourNum >= 12 ? 'PM' : 'AM';
+      const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
+      
+      return scheduleDate.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      }) + ` at ${displayHour}:${minNum.toString().padStart(2, '0')} ${period}`;
+    }
+  };
+
   if (schedulesLoading) {
     return <div className="loading">Loading schedules...</div>;
   }
@@ -422,8 +463,16 @@ export default function Schedule() {
           {schedules.map((schedule) => (
             <div key={schedule.id} className="schedule-card">
               <div className="schedule-header">
-                <div className="schedule-type-badge" data-type={schedule.schedule_type}>
-                  {getScheduleTypeName(schedule.schedule_type)}
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: '600' }}>
+                    {schedule.name || `Schedule #${schedule.id}`}
+                  </h3>
+                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                    {getScheduledDateTime(schedule.schedule, schedule.schedule_type)}
+                  </div>
+                  <div className="schedule-type-badge" data-type={schedule.schedule_type} style={{ display: 'inline-block' }}>
+                    {getScheduleTypeName(schedule.schedule_type)}
+                  </div>
                 </div>
                 <div className="schedule-actions">
                   <button
@@ -454,10 +503,6 @@ export default function Schedule() {
                 <div className="info-row">
                   <span className="label">Bucket:</span>
                   <span className="value">{schedule.bucket_name || `Bucket #${schedule.bucket_id}`}</span>
-                </div>
-                <div className="info-row">
-                  <span className="label">Schedule:</span>
-                  <span className="value">{schedule.schedule}</span>
                 </div>
                 <div className="info-row">
                   <span className="label">Platforms:</span>
@@ -496,6 +541,18 @@ export default function Schedule() {
             {error && <div className="error-message">{error}</div>}
 
             <form onSubmit={handleCreate}>
+              <div className="form-group">
+                <label htmlFor="scheduleName">Schedule Name *</label>
+                <input
+                  id="scheduleName"
+                  type="text"
+                  value={scheduleName}
+                  onChange={(e) => setScheduleName(e.target.value)}
+                  placeholder="e.g., Morning Posts, Weekly Update"
+                  required
+                />
+              </div>
+
               <div className="form-group">
                 <label htmlFor="bucket">Bucket *</label>
                 <select
