@@ -26,28 +26,10 @@ import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import OAuthCallback from './pages/OAuthCallback'
 
-// Protected Route wrapper - only redirects if definitely not authenticated
+// Protected Route wrapper - allows page to load, API will handle auth
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  // Check localStorage synchronously on render
-  const authStorage = typeof window !== 'undefined' ? localStorage.getItem('auth-storage') : null
-  let hasToken = false
-  
-  if (authStorage) {
-    try {
-      const parsed = JSON.parse(authStorage)
-      const state = parsed.state || parsed
-      hasToken = !!(state?.user && state?.token)
-    } catch (e) {
-      // If parsing fails, no token
-    }
-  }
-  
-  // Only redirect if we're sure there's no token
-  // If there's a token (even if expired), let the page load and API calls will handle it
-  if (!hasToken) {
-    return <Navigate to="/login" replace />
-  }
-  
+  // Just render the children - let the page load
+  // API calls will handle authentication and redirect if needed
   return <>{children}</>
 }
 
