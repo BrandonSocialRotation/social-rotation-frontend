@@ -45,13 +45,13 @@ export const useAuthStore = create<AuthState>()(
       
       // Login function - saves user and token
       login: (user, token) =>
-        set((state) => ({
+        set({
           user,
           token,
           isAuthenticated: !!(user && token),
           originalUser: null,
           originalToken: null,
-        })),
+        }),
       
       // Logout function - clears all auth data
       logout: () =>
