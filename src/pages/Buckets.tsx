@@ -102,7 +102,7 @@ function Buckets() {
   return (
     <div className="buckets-page">
       <div className="page-header">
-        <h1>Buckets</h1>
+        <h1>Content Buckets</h1>
         <button onClick={() => setShowCreateModal(true)} className="create-btn">
           + Create New Bucket
         </button>

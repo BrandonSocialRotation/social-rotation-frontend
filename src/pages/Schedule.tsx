@@ -37,6 +37,7 @@ interface BucketSchedule {
 const SCHEDULE_TYPE_ROTATION = 1;
 const SCHEDULE_TYPE_ONCE = 2;
 const SCHEDULE_TYPE_ANNUALLY = 3;
+const SCHEDULE_TYPE_MULTIPLE = 4;
 
 // Social media platforms
 const PLATFORMS = {
@@ -53,8 +54,14 @@ export default function Schedule() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
   const [selectedImage, setSelectedImage] = useState<number | null>(null);
+  const [selectedImages, setSelectedImages] = useState<number[]>([]); // For multiple images
   const [scheduleType, setScheduleType] = useState<number>(SCHEDULE_TYPE_ROTATION);
-  const [time, setTime] = useState('12:00');
+  const [dateTime, setDateTime] = useState(() => {
+    // Default to today at 12:00 PM
+    const now = new Date();
+    now.setHours(12, 0, 0, 0);
+    return now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+  });
   const [description, setDescription] = useState('');
   const [twitterDescription, setTwitterDescription] = useState('');
   
@@ -173,8 +180,11 @@ export default function Schedule() {
   const resetForm = () => {
     setSelectedBucket(null);
     setSelectedImage(null);
+    setSelectedImages([]);
     setScheduleType(SCHEDULE_TYPE_ROTATION);
-    setTime('12:00');
+    const now = new Date();
+    now.setHours(12, 0, 0, 0);
+    setDateTime(now.toISOString().slice(0, 16));
     setDescription('');
     setTwitterDescription('');
     setFacebook(true);
@@ -206,19 +216,22 @@ export default function Schedule() {
   };
 
   const generateCronString = () => {
-    const [hour, minute] = time.split(':');
+    // Parse dateTime (format: YYYY-MM-DDTHH:mm)
+    const dateTimeObj = new Date(dateTime);
+    const minute = dateTimeObj.getMinutes();
+    const hour = dateTimeObj.getHours();
+    const day = dateTimeObj.getDate();
+    const month = dateTimeObj.getMonth() + 1;
     
     if (scheduleType === SCHEDULE_TYPE_ROTATION) {
       // Daily at specified time
       return `${minute} ${hour} * * *`;
-    } else if (scheduleType === SCHEDULE_TYPE_ONCE) {
-      // Once at specified time (today)
-      const now = new Date();
-      return `${minute} ${hour} ${now.getDate()} ${now.getMonth() + 1} *`;
+    } else if (scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_MULTIPLE) {
+      // Once at specified date and time
+      return `${minute} ${hour} ${day} ${month} *`;
     } else {
-      // Annually (every year on today's date)
-      const now = new Date();
-      return `${minute} ${hour} ${now.getDate()} ${now.getMonth() + 1} *`;
+      // Annually (every year on specified date)
+      return `${minute} ${hour} ${day} ${month} *`;
     }
   };
 
@@ -233,7 +246,13 @@ export default function Schedule() {
 
     // For ONCE and ANNUALLY schedules, require image selection
     if ((scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY) && !selectedImage) {
-      setError('Please select an image for "Once" or "Annually" schedules');
+      setError('Please select an image for "One Image" or "Annually" schedules');
+      return;
+    }
+
+    // For MULTIPLE schedules, require at least one image selection
+    if (scheduleType === SCHEDULE_TYPE_MULTIPLE && selectedImages.length === 0) {
+      setError('Please select at least one image for "Multiple Images" schedule');
       return;
     }
 
@@ -260,25 +279,80 @@ export default function Schedule() {
     }
 
     // Include page/organization selections
+    // Edge case: If Facebook is selected but no page is chosen, warn user
+    if (facebook && !selectedFacebookPage && facebookPagesData && facebookPagesData.length > 0) {
+      setError('Please select a Facebook page when posting to Facebook');
+      return;
+    }
+    
     if (facebook && selectedFacebookPage) {
       scheduleData.facebook_page_id = selectedFacebookPage;
     }
+    
+    // Edge case: If LinkedIn is selected but no organization is chosen, warn user
+    if (linkedin && !selectedLinkedInOrg && linkedinOrgsData && linkedinOrgsData.length > 0) {
+      setError('Please select a LinkedIn organization when posting to LinkedIn');
+      return;
+    }
+    
     if (linkedin && selectedLinkedInOrg) {
       scheduleData.linkedin_organization_urn = selectedLinkedInOrg;
     }
+    
     // For Instagram, use the Facebook page that has the Instagram account
     // Instagram posts through Facebook pages, so we need the page ID
+    // Edge case: If Instagram is selected but no account is chosen, warn user
+    if (instagram && !selectedInstagramAccount) {
+      const hasInstagramAccounts = facebookPagesData?.some(p => p.instagram_account);
+      if (hasInstagramAccounts) {
+        setError('Please select an Instagram account when posting to Instagram');
+        return;
+      } else if (!facebookPagesData || facebookPagesData.length === 0) {
+        setError('Please connect Facebook with an Instagram Business account first');
+        return;
+      }
+    }
+    
     if (instagram && selectedInstagramAccount) {
       // Find the page that has this Instagram account
       const pageWithInstagram = facebookPagesData?.find(p => p.instagram_account?.id === selectedInstagramAccount);
       if (pageWithInstagram) {
         scheduleData.facebook_page_id = pageWithInstagram.id;
+      } else {
+        // Edge case: Selected Instagram account not found in pages data
+        setError('Selected Instagram account is no longer available. Please refresh and try again.');
+        return;
       }
     }
 
-    createMutation.mutate({
-      bucket_schedule: scheduleData,
-    });
+    // For multiple images, create separate schedules for each image (each as SCHEDULE_TYPE_ONCE)
+    if (scheduleType === SCHEDULE_TYPE_MULTIPLE && selectedImages.length > 0) {
+      // Create a schedule for each selected image (each will be a separate post)
+      const createPromises = selectedImages.map((imageId) => {
+        const imageScheduleData = {
+          ...scheduleData,
+          schedule_type: SCHEDULE_TYPE_ONCE, // Each image gets posted once
+          bucket_image_id: imageId,
+        };
+        return api.post('/bucket_schedules', { bucket_schedule: imageScheduleData });
+      });
+
+      Promise.all(createPromises)
+        .then(() => {
+          queryClient.invalidateQueries({ queryKey: ['bucket_schedules'] });
+          setShowCreateModal(false);
+          resetForm();
+        })
+        .catch((err: any) => {
+          const errorMessage = err.response?.data?.message || err.response?.data?.error || err.response?.data?.errors?.join(', ') || 'Failed to create schedules';
+          setError(errorMessage);
+        });
+    } else {
+      // Single schedule creation
+      createMutation.mutate({
+        bucket_schedule: scheduleData,
+      });
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -296,11 +370,13 @@ export default function Schedule() {
   const getScheduleTypeName = (type: number) => {
     switch (type) {
       case SCHEDULE_TYPE_ROTATION:
-        return 'Rotation';
+        return 'All Images';
       case SCHEDULE_TYPE_ONCE:
-        return 'Once';
+        return 'One Image';
       case SCHEDULE_TYPE_ANNUALLY:
         return 'Annually';
+      case SCHEDULE_TYPE_MULTIPLE:
+        return 'Multiple Images';
       default:
         return 'Unknown';
     }
@@ -439,27 +515,62 @@ export default function Schedule() {
 
               {selectedBucket && (
                 <div className="form-group">
-                  <label htmlFor="image">Select Image *</label>
-                  {imagesLoading ? (
-                    <div>Loading images...</div>
+                  {scheduleType === SCHEDULE_TYPE_MULTIPLE ? (
+                    <>
+                      <label>Select Images * (Multiple)</label>
+                      {imagesLoading ? (
+                        <div>Loading images...</div>
+                      ) : (
+                        <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '10px' }}>
+                          {(bucketImagesData || []).map((image) => (
+                            <label key={image.id} style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
+                              <input
+                                type="checkbox"
+                                checked={selectedImages.includes(image.id)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedImages([...selectedImages, image.id]);
+                                  } else {
+                                    setSelectedImages(selectedImages.filter(id => id !== image.id));
+                                  }
+                                }}
+                              />
+                              <span style={{ marginLeft: '8px' }}>{image.friendly_name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      {selectedImages.length > 0 && (
+                        <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                          {selectedImages.length} image{selectedImages.length !== 1 ? 's' : ''} selected. Each will be posted separately.
+                        </small>
+                      )}
+                    </>
                   ) : (
-                    <select
-                      id="image"
-                      value={selectedImage || ''}
-                      onChange={(e) => setSelectedImage(e.target.value ? Number(e.target.value) : null)}
-                      required={scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY}
-                    >
-                      <option value="">
-                        {scheduleType === SCHEDULE_TYPE_ROTATION 
-                          ? 'All Images (Rotation)' 
-                          : 'Select an image'}
-                      </option>
-                      {(bucketImagesData || []).map((image) => (
-                        <option key={image.id} value={image.id}>
-                          {image.friendly_name}
-                        </option>
-                      ))}
-                    </select>
+                    <>
+                      <label htmlFor="image">Select Image *</label>
+                      {imagesLoading ? (
+                        <div>Loading images...</div>
+                      ) : (
+                        <select
+                          id="image"
+                          value={selectedImage || ''}
+                          onChange={(e) => setSelectedImage(e.target.value ? Number(e.target.value) : null)}
+                          required={scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY}
+                        >
+                          <option value="">
+                            {scheduleType === SCHEDULE_TYPE_ROTATION 
+                              ? 'All Images (Rotation)' 
+                              : 'Select an image'}
+                          </option>
+                          {(bucketImagesData || []).map((image) => (
+                            <option key={image.id} value={image.id}>
+                              {image.friendly_name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </>
                   )}
                   {selectedBucket && !imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) && (
                     <small className="error-text">This bucket has no images. Please add images first.</small>
@@ -473,27 +584,34 @@ export default function Schedule() {
                   id="scheduleType"
                   value={scheduleType}
                   onChange={(e) => {
-                    setScheduleType(Number(e.target.value));
-                    // Clear image selection when switching to rotation
-                    if (Number(e.target.value) === SCHEDULE_TYPE_ROTATION) {
+                    const newType = Number(e.target.value);
+                    setScheduleType(newType);
+                    // Clear image selections when switching types
+                    if (newType === SCHEDULE_TYPE_ROTATION) {
                       setSelectedImage(null);
+                      setSelectedImages([]);
+                    } else if (newType === SCHEDULE_TYPE_MULTIPLE) {
+                      setSelectedImage(null);
+                    } else {
+                      setSelectedImages([]);
                     }
                   }}
                   required
                 >
-                  <option value={SCHEDULE_TYPE_ROTATION}>Rotation (Daily) - All Images</option>
-                  <option value={SCHEDULE_TYPE_ONCE}>Once - Single Image</option>
+                  <option value={SCHEDULE_TYPE_ROTATION}>All Images (Daily Rotation)</option>
+                  <option value={SCHEDULE_TYPE_ONCE}>One Image</option>
+                  <option value={SCHEDULE_TYPE_MULTIPLE}>Multiple Images (Separate Posts)</option>
                   <option value={SCHEDULE_TYPE_ANNUALLY}>Annually - Single Image</option>
                 </select>
               </div>
 
               <div className="form-group">
-                <label htmlFor="time">Time *</label>
+                <label htmlFor="dateTime">Date & Time *</label>
                 <input
-                  id="time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
+                  id="dateTime"
+                  type="datetime-local"
+                  value={dateTime}
+                  onChange={(e) => setDateTime(e.target.value)}
                   required
                 />
               </div>
