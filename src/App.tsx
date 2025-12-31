@@ -26,36 +26,25 @@ import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 import OAuthCallback from './pages/OAuthCallback'
 
-// Protected Route wrapper - redirects to login if not authenticated
-// Uses useState to check localStorage on mount (prevents redirect before check)
+// Protected Route wrapper - only redirects if definitely not authenticated
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = React.useState<boolean | null>(null)
+  // Check localStorage synchronously on render
+  const authStorage = typeof window !== 'undefined' ? localStorage.getItem('auth-storage') : null
+  let hasToken = false
   
-  React.useEffect(() => {
-    // Check localStorage on mount
-    const authStorage = localStorage.getItem('auth-storage')
-    let authenticated = false
-    
-    if (authStorage) {
-      try {
-        const parsed = JSON.parse(authStorage)
-        // Zustand persist stores as { state: { ... }, version: 0 }
-        const state = parsed.state || parsed
-        authenticated = !!(state?.user && state?.token)
-      } catch (e) {
-        // If parsing fails, user is not authenticated
-      }
+  if (authStorage) {
+    try {
+      const parsed = JSON.parse(authStorage)
+      const state = parsed.state || parsed
+      hasToken = !!(state?.user && state?.token)
+    } catch (e) {
+      // If parsing fails, no token
     }
-    
-    setIsAuthenticated(authenticated)
-  }, [])
-  
-  // Don't redirect until we've checked localStorage
-  if (isAuthenticated === null) {
-    return null // Wait for check to complete
   }
   
-  if (!isAuthenticated) {
+  // Only redirect if we're sure there's no token
+  // If there's a token (even if expired), let the page load and API calls will handle it
+  if (!hasToken) {
     return <Navigate to="/login" replace />
   }
   
