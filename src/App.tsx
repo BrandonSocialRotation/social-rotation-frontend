@@ -1,4 +1,5 @@
 // Main App component - handles routing and layout
+// Updated: Removed all redirects to preserve URL on refresh
 // Routes:
 //   / - Landing page (public)
 //   /dashboard - Dashboard (protected)
