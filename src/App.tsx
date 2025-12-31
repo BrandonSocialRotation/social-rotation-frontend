@@ -27,8 +27,17 @@ import Privacy from './pages/Privacy'
 import OAuthCallback from './pages/OAuthCallback'
 
 // Protected Route wrapper - redirects to login if not authenticated
+// Waits for auth state to be rehydrated from localStorage before checking
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated)
+  const hasHydrated = useAuthStore((state) => state.hasHydrated)
+  
+  // Wait for hydration to complete before checking auth
+  // This prevents redirecting to login on page refresh
+  if (!hasHydrated) {
+    // Return null or a loading spinner while hydrating
+    return null
+  }
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />
@@ -77,8 +86,8 @@ function App() {
         <Route path="profile" element={<Profile />} />
       </Route>
       
-      {/* Catch all - redirect authenticated users to dashboard, others to landing */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* Catch all - only redirect if route doesn't match any above */}
+      {/* Removed automatic redirect to prevent interfering with valid routes */}
     </Routes>
   )
 }
