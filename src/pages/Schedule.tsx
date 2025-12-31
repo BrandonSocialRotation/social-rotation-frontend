@@ -98,7 +98,7 @@ export default function Schedule() {
   });
 
   // Fetch Facebook pages (with Instagram accounts)
-  const { data: facebookPagesData } = useQuery({
+  const { data: facebookPagesData, isLoading: facebookPagesLoading, error: facebookPagesError } = useQuery({
     queryKey: ['facebook_pages'],
     queryFn: async () => {
       const response = await api.get('/user_info/facebook_pages');
@@ -110,10 +110,11 @@ export default function Schedule() {
       }>;
     },
     enabled: facebook || instagram, // Only fetch if Facebook or Instagram is selected
+    retry: 1,
   });
 
   // Fetch LinkedIn organizations
-  const { data: linkedinOrgsData } = useQuery({
+  const { data: linkedinOrgsData, isLoading: linkedinOrgsLoading, error: linkedinOrgsError } = useQuery({
     queryKey: ['linkedin_organizations'],
     queryFn: async () => {
       const response = await api.get('/user_info/linkedin_organizations');
@@ -124,6 +125,7 @@ export default function Schedule() {
       }>;
     },
     enabled: linkedin, // Only fetch if LinkedIn is selected
+    retry: 1,
   });
 
   // Create schedule mutation
