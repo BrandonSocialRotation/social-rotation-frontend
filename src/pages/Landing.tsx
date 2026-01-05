@@ -10,8 +10,7 @@ import {
   LinkIcon,
   FolderIcon,
   ClockIcon,
-  TrendingUpIcon,
-  DashboardIcon
+  TrendingUpIcon
 } from '../components/LandingIcons'
 
 export default function Landing() {
@@ -71,10 +70,11 @@ export default function Landing() {
             </p>
           </div>
           <div className="about-image">
-            <div className="image-placeholder">
-              <DashboardIcon />
-              <span>Dashboard Preview</span>
-            </div>
+            <img 
+              src="/dashboard-preview.png" 
+              alt="Social Rotation Dashboard Preview" 
+              className="dashboard-preview-image"
+            />
           </div>
         </div>
       </section>
