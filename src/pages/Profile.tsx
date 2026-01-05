@@ -74,7 +74,7 @@ export default function Profile() {
   // Update user mutation
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await api.patch('/user_info', data);
+      return await api.patch('/user_info', { user: data });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
