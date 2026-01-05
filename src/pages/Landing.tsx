@@ -181,7 +181,7 @@ export default function Landing() {
               <div className="step-number">3</div>
               <div className="step-content">
                 <h4>Schedule & Publish</h4>
-                <p>Create schedules for your content. Set specific times, dates, and platforms. Let Social Rotation handle the rest.</p>
+                <p>Create schedules for your content. Set specific times, dates, and platforms. Let us handle the posting and metric collection.</p>
               </div>
               <div className="step-image">
                 <img 
