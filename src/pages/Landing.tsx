@@ -213,7 +213,7 @@ export default function Landing() {
       <section className="landing-cta-section">
         <div className="landing-cta-section-content">
           <h2>Ready to Transform Your Social Media?</h2>
-          <p>Join thousands of businesses and creators using Social Rotation to streamline their social media management.</p>
+          <p>Join businesses and creators using Social Rotation to streamline their social media management.</p>
           <div className="landing-cta">
             <Link to="/register" className="cta-button primary">
               Start Free Trial
