@@ -170,10 +170,11 @@ export default function Landing() {
                 <p>Upload images and videos to buckets. Organize by theme, campaign, or content type for easy access.</p>
               </div>
               <div className="step-image">
-                <div className="image-placeholder">
-                  <FolderIcon />
-                  <span>Organize</span>
-                </div>
+                <img 
+                  src="/organize-preview.png" 
+                  alt="Organize Your Content" 
+                  className="step-preview-image"
+                />
               </div>
             </div>
             <div className="step">
@@ -183,10 +184,11 @@ export default function Landing() {
                 <p>Create schedules for your content. Set specific times, dates, and platforms. Let Social Rotation handle the rest.</p>
               </div>
               <div className="step-image">
-                <div className="image-placeholder">
-                  <ClockIcon />
-                  <span>Schedule</span>
-                </div>
+                <img 
+                  src="/schedule-preview.png" 
+                  alt="Schedule & Publish" 
+                  className="step-preview-image"
+                />
               </div>
             </div>
             <div className="step">
@@ -196,10 +198,11 @@ export default function Landing() {
                 <p>Review your analytics to see what's working. Track engagement and optimize your content strategy.</p>
               </div>
               <div className="step-image">
-                <div className="image-placeholder">
-                  <TrendingUpIcon />
-                  <span>Analyze</span>
-                </div>
+                <img 
+                  src="/analyze-preview.png" 
+                  alt="Analyze & Optimize" 
+                  className="step-preview-image"
+                />
               </div>
             </div>
           </div>
