@@ -70,9 +70,9 @@
 }
 
 .sidebar-toggle-in-header {
-  background-color: transparent;
+  background-color: rgba(255, 255, 255, 0.15);
   color: white;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   width: 32px;
   height: 32px;
   border-radius: 4px;
@@ -80,17 +80,19 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.2s;
   flex-shrink: 0;
   margin-left: auto;
 }
 
 .sidebar-toggle-in-header:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.5);
 }
 
 .sidebar-toggle-in-header svg {
   stroke: white;
+  stroke-width: 2.5;
 }
 
 .sidebar-nav {
