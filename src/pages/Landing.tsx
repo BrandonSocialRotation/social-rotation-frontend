@@ -61,7 +61,7 @@ export default function Landing() {
             </p>
             <p>
               Whether you're a small business owner, content creator, or marketing agency, Social Rotation 
-              simplifies your social media workflow by automating posting, organizing content into buckets, 
+              simplifies your social media workflow by automating posts, organizing content into buckets, 
               and providing powerful scheduling tools.
             </p>
           </div>
