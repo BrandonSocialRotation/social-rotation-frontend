@@ -106,7 +106,7 @@ export default function Landing() {
               </div>
               <h4>Multi-Platform Publishing</h4>
               <p>
-                Post to Facebook, Instagram, Twitter, LinkedIn, TikTok, YouTube, Pinterest, and Google My Business 
+                Post to Facebook, Google My Business, Instagram, LinkedIn, Pinterest, TikTok, Twitter, and YouTube 
                 all from one place.
               </p>
             </div>
