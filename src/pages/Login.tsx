@@ -39,6 +39,9 @@ function Login() {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        <Link to="/" className="back-to-home">
+          ← Back to Home
+        </Link>
         <h1>Social Rotation</h1>
         <h2>Login</h2>
         
