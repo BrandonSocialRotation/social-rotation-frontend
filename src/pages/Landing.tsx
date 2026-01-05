@@ -216,7 +216,7 @@ export default function Landing() {
           <p>Join businesses and creators using Social Rotation to streamline their social media management.</p>
           <div className="landing-cta">
             <Link to="/register" className="cta-button primary">
-              Start Free Trial
+              Get Started
             </Link>
             <Link to="/login" className="cta-button secondary">
               Sign In
