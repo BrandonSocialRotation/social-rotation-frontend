@@ -2,9 +2,69 @@
   max-width: 1200px;
 }
 
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.dashboard-header > div:first-child {
+  flex: 1;
+  min-width: 300px;
+}
+
 .dashboard h1 {
   font-size: 2rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-header p {
+  margin-top: 0.5rem;
+  line-height: 1.6;
+}
+
+.time-range-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px;
+  max-width: 25%;
+}
+
+.time-range-label {
+  color: #666;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.time-range-label strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.time-range-dropdown {
+  padding: 0.625rem 1rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.time-range-dropdown:hover {
+  border-color: #667eea;
+}
+
+.time-range-dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .stats-grid {
