@@ -7,6 +7,7 @@ static_sites:
     branch: main
   build_command: npm ci --legacy-peer-deps && npm run build
   output_dir: dist
+  environment_slug: node-js
   catchall_document: index.html
   routes:
   - path: /
