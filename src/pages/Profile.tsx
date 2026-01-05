@@ -387,7 +387,8 @@ export default function Profile() {
           }
         }, 500);
       } else {
-        setError(`No OAuth URL received from server for ${platform}. Please check backend configuration.`);
+        const errorMsg = response.data?.error || `No OAuth URL received from server for ${platform}. Please check backend configuration.`;
+        setError(errorMsg);
         console.error('Missing oauth_url in response:', response.data);
       }
     } catch (err: any) {
@@ -925,15 +926,23 @@ export default function Profile() {
                     Disconnect
                   </button>
                 </div>
+                <small style={{ color: '#666', marginTop: '8px', display: 'block', fontSize: '0.85em' }}>
+                  Note: To use a different Pinterest account, log out of Pinterest in your browser first, then click "Change Pinterest Account".
+                </small>
               </div>
             ) : (
-              <button
-                onClick={() => handleConnectPlatform('Pinterest')}
-                className="connect-btn"
-                disabled={connectingPlatform === 'Pinterest'}
-              >
-                {connectingPlatform === 'Pinterest' ? 'Connecting...' : 'Connect Pinterest'}
-              </button>
+              <>
+                <button
+                  onClick={() => handleConnectPlatform('Pinterest')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'Pinterest'}
+                >
+                  {connectingPlatform === 'Pinterest' ? 'Connecting...' : 'Connect Pinterest'}
+                </button>
+                <small style={{ color: '#666', marginTop: '8px', display: 'block', fontSize: '0.85em' }}>
+                  Note: Pinterest will use the account you're currently logged into. To use a different account, log out of Pinterest first.
+                </small>
+              </>
             )}
           </div>
         </div>
