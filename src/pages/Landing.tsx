@@ -6,11 +6,7 @@ import {
   GlobeIcon,
   ChartIcon,
   RefreshIcon,
-  UsersIcon,
-  LinkIcon,
-  FolderIcon,
-  ClockIcon,
-  TrendingUpIcon
+  UsersIcon
 } from '../components/LandingIcons'
 
 export default function Landing() {
