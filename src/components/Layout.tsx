@@ -108,7 +108,7 @@ function Layout() {
       </aside>
       
       {/* Main content area */}
-      <main className="main-content">
+      <main className={`main-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <Outlet />
       </main>
     </div>
