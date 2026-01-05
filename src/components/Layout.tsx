@@ -45,16 +45,16 @@ function Layout() {
       {/* Sidebar navigation */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
+          <h1>Social Rotation</h1>
           <button 
             className="sidebar-toggle-in-header"
             onClick={toggleSidebar}
             aria-label="Close sidebar"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-          <h1>Social Rotation</h1>
         </div>
         
         <nav className="sidebar-nav">
