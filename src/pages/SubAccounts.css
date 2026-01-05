@@ -261,3 +261,91 @@
   cursor: not-allowed;
 }
 
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sub-accounts-page {
+    max-width: 100%;
+    padding: 0 1rem;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .create-btn {
+    width: 100%;
+  }
+
+  .sub-accounts-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .sub-account-card {
+    padding: 1.25rem;
+  }
+
+  .sub-account-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .sub-account-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .sub-account-stats {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .modal {
+    width: 95%;
+    padding: 1.5rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .cancel-btn,
+  .submit-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .sub-accounts-page {
+    padding: 0 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .sub-account-card {
+    padding: 1rem;
+  }
+
+  .sub-account-header h3 {
+    font-size: 1.1rem;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+
+  .modal {
+    padding: 1rem;
+  }
+}
+

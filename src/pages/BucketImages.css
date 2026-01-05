@@ -302,14 +302,33 @@
     padding: 1rem;
   }
 
+  .page-header h1 {
+    font-size: 1.5rem;
+  }
+
   .upload-section,
   .images-section {
     padding: 1rem;
   }
 
+  .upload-section h2,
+  .images-section h2 {
+    font-size: 1.25rem;
+  }
+
   .images-grid {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
+  }
+
+  .file-input-label {
+    padding: 1.5rem 2rem;
+    font-size: 1rem;
+  }
+
+  .file-input-label svg {
+    width: 40px;
+    height: 40px;
   }
 
   .button-group {
@@ -320,6 +339,33 @@
   .btn-upload,
   .btn-cancel {
     width: 100%;
+  }
+
+  .image-actions {
+    flex-direction: column;
+  }
+
+  .btn-edit,
+  .btn-delete {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .bucket-images-page {
+    padding: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.25rem;
+  }
+
+  .images-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .file-input-label {
+    padding: 1rem 1.5rem;
   }
 }
 
