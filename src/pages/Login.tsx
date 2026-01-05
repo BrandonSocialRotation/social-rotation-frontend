@@ -38,10 +38,10 @@ function Login() {
 
   return (
     <div className="auth-container">
+      <Link to="/" className="back-to-home">
+        ← Back to Home
+      </Link>
       <div className="auth-card">
-        <Link to="/" className="back-to-home">
-          ← Back to Home
-        </Link>
         <h1>Social Rotation</h1>
         <h2>Login</h2>
         
