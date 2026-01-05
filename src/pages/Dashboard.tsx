@@ -1,6 +1,7 @@
 // Dashboard page - overview of user's content and activity
 // Shows: clickable stat cards that navigate to their respective pages
 // Cards: Buckets → /buckets, Schedules → /schedule, Marketplace → /marketplace
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useQuery } from '@tanstack/react-query'
@@ -10,6 +11,7 @@ import './Dashboard.css'
 function Dashboard() {
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
+  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
 
   // Fetch sub-accounts count (for resellers)
   const { data: subAccountsData } = useQuery({
@@ -25,12 +27,25 @@ function Dashboard() {
 
   // Instagram analytics summary (mock until live creds)
   const { data: igSummary } = useQuery({
-    queryKey: ['analytics_instagram_summary', '7d'],
+    queryKey: ['analytics_instagram_summary', timeRange],
     queryFn: async () => {
-      const response = await api.get('/analytics/instagram/summary', { params: { range: '7d' } })
+      const response = await api.get('/analytics/instagram/summary', { params: { range: timeRange } })
       return response.data?.metrics
     },
   })
+
+  const getTimeRangeLabel = (range: string) => {
+    switch (range) {
+      case '24h':
+        return 'Last 24 hours'
+      case '7d':
+        return 'Last 7 days'
+      case '30d':
+        return 'Last 30 days'
+      default:
+        return 'Last 7 days'
+    }
+  }
 
   // Fetch posts count
   const { data: postsData } = useQuery({
@@ -77,7 +92,6 @@ function Dashboard() {
             <h3>Engagement Rate</h3>
           </div>
           <p className="stat-number">{igSummary?.engagement_rate ? `${igSummary.engagement_rate}%` : '—'}</p>
-          <p className="stat-label">Last 7 days</p>
         </div>
 
         <div className="stat-card">
@@ -88,7 +102,6 @@ function Dashboard() {
             <h3>Likes</h3>
           </div>
           <p className="stat-number">{igSummary?.likes?.toLocaleString() ?? '—'}</p>
-          <p className="stat-label">Last 7 days</p>
         </div>
 
         <div className="stat-card">
@@ -99,7 +112,6 @@ function Dashboard() {
             <h3>Comments</h3>
           </div>
           <p className="stat-number">{igSummary?.comments?.toLocaleString() ?? '—'}</p>
-          <p className="stat-label">Last 7 days</p>
         </div>
 
         <div className="stat-card">
@@ -112,7 +124,6 @@ function Dashboard() {
             <h3>Shares</h3>
           </div>
           <p className="stat-number">{igSummary?.shares?.toLocaleString() ?? '—'}</p>
-          <p className="stat-label">Last 7 days</p>
         </div>
 
         <div className="stat-card">
