@@ -156,10 +156,11 @@ export default function Landing() {
                 <p>Link your social media accounts securely with OAuth. We support Facebook, Instagram, Twitter, LinkedIn, and more.</p>
               </div>
               <div className="step-image">
-                <div className="image-placeholder">
-                  <LinkIcon />
-                  <span>Connect</span>
-                </div>
+                <img 
+                  src="/connect-preview.png" 
+                  alt="Connect Your Accounts" 
+                  className="step-preview-image"
+                />
               </div>
             </div>
             <div className="step">
