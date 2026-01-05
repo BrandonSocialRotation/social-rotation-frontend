@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-// import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../store/authStore';
 import './Profile.css';
 
 // interface User {
@@ -28,7 +28,7 @@ interface ConnectedAccounts {
 
 export default function Profile() {
   const queryClient = useQueryClient();
-  // const _authUser = useAuthStore((state) => state.user);
+  const setUser = useAuthStore((state) => state.setUser);
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -76,8 +76,18 @@ export default function Profile() {
     mutationFn: async (data: any) => {
       return await api.patch('/user_info', { user: data });
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
+      // Update authStore with the new user data
+      if (response?.data?.user) {
+        const updatedUser = response.data.user;
+        // Update authStore user with the new name (and other fields if needed)
+        setUser({
+          ...useAuthStore.getState().user!,
+          name: updatedUser.name,
+          email: updatedUser.email,
+        });
+      }
       setSuccess('Profile updated successfully!');
       setTimeout(() => setSuccess(''), 3000);
     },
