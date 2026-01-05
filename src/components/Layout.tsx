@@ -29,24 +29,31 @@ function Layout() {
 
   return (
     <div className="layout">
-      {/* Sidebar toggle button */}
-      <button 
-        className={`sidebar-toggle ${sidebarOpen ? 'open' : 'closed'}`}
-        onClick={toggleSidebar}
-        aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          {sidebarOpen ? (
-            <polyline points="15 18 9 12 15 6"/>
-          ) : (
+      {/* Sidebar toggle button - only visible when sidebar is closed */}
+      {!sidebarOpen && (
+        <button 
+          className="sidebar-toggle closed"
+          onClick={toggleSidebar}
+          aria-label="Open sidebar"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="9 18 15 12 9 6"/>
-          )}
-        </svg>
-      </button>
+          </svg>
+        </button>
+      )}
 
       {/* Sidebar navigation */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
+          <button 
+            className="sidebar-toggle-in-header"
+            onClick={toggleSidebar}
+            aria-label="Close sidebar"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
           <h1>Social Rotation</h1>
         </div>
         
