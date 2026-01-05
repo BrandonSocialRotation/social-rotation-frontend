@@ -219,6 +219,18 @@ export default function Profile() {
       
       console.log(`${platform} OAuth response:`, response.data);
       
+      if (!response.data) {
+        setError(`No response from ${platform}. Please try again.`);
+        setConnectingPlatform(null);
+        return;
+      }
+      
+      if (response.data?.error) {
+        setError(response.data.error || `Failed to connect ${platform}`);
+        setConnectingPlatform(null);
+        return;
+      }
+      
       if (response.data?.oauth_url) {
         // Open OAuth URL in popup window
         const width = 600;
