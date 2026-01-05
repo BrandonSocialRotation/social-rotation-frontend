@@ -59,27 +59,26 @@ function Dashboard() {
   return (
     <div className="dashboard">
       <div className="dashboard-header">
-        <div>
-          <h1>Welcome back, {user?.name}!</h1>
-          <p style={{ color: '#666', marginTop: '0.5rem' }}>
-            {user?.reseller ? 'Manage your agency and sub-accounts' : "Here's an overview of your content"}
-          </p>
-        </div>
-        <div className="time-range-selector">
-          <label htmlFor="time-range" className="time-range-label">
-            Showing: <strong>{getTimeRangeLabel(timeRange)}</strong>
-          </label>
-          <select
-            id="time-range"
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value as '24h' | '7d' | '30d')}
-            className="time-range-dropdown"
-          >
-            <option value="24h">Last 24 hours</option>
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-          </select>
-        </div>
+        <h1>Welcome back, {user?.name}!</h1>
+        <p style={{ color: '#666', marginTop: '0.5rem' }}>
+          {user?.reseller ? 'Manage your agency and sub-accounts' : "Here's an overview of your content"}
+        </p>
+      </div>
+      
+      <div className="time-range-selector">
+        <label htmlFor="time-range" className="time-range-label">
+          Showing: <strong>{getTimeRangeLabel(timeRange)}</strong>
+        </label>
+        <select
+          id="time-range"
+          value={timeRange}
+          onChange={(e) => setTimeRange(e.target.value as '24h' | '7d' | '30d')}
+          className="time-range-dropdown"
+        >
+          <option value="24h">Last 24 hours</option>
+          <option value="7d">Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+        </select>
       </div>
       
       <div className="stats-grid">
