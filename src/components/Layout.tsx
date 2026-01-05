@@ -1,6 +1,7 @@
 // Main layout component - sidebar navigation + content area
 // Shows: Logo, navigation links, user info, logout button
 // Content area renders child routes (Dashboard, Buckets, etc.)
+import { useState } from 'react'
 import { Outlet, Link, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import './Layout.css'
@@ -8,6 +9,7 @@ import './Layout.css'
 function Layout() {
   const { user, originalUser, logout, switchBackToOriginal } = useAuthStore()
   const navigate = useNavigate()
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const handleLogout = () => {
     logout()
@@ -19,12 +21,31 @@ function Layout() {
     navigate('/dashboard')
   }
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen)
+  }
+
   // Debug: Log user data
 
   return (
     <div className="layout">
+      {/* Sidebar toggle button */}
+      <button 
+        className={`sidebar-toggle ${sidebarOpen ? 'open' : 'closed'}`}
+        onClick={toggleSidebar}
+        aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          {sidebarOpen ? (
+            <polyline points="15 18 9 12 15 6"/>
+          ) : (
+            <polyline points="9 18 15 12 9 6"/>
+          )}
+        </svg>
+      </button>
+
       {/* Sidebar navigation */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
           <h1>Social Rotation</h1>
         </div>
