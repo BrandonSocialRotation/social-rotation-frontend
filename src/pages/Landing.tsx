@@ -153,7 +153,7 @@ export default function Landing() {
               <div className="step-number">1</div>
               <div className="step-content">
                 <h4>Connect Your Accounts</h4>
-                <p>Link your social media accounts securely with OAuth. We support Facebook, Instagram, Twitter, LinkedIn, and more.</p>
+                <p>Link your social media accounts securely with OAuth.</p>
               </div>
               <div className="step-image">
                 <img 
