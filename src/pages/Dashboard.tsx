@@ -53,9 +53,7 @@ function Dashboard() {
         <div className="stat-card">
           <div className="stat-card-header">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 9V5a3 3 0 0 0-6 0v4"/>
-              <rect x="2" y="9" width="20" height="11" rx="2" ry="2"/>
-              <path d="M7 13h10"/>
+              <path d="M7 22V11m0 0c0-2.8 2.2-5 5-5s5 2.2 5 5v11M7 11H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h3M17 22V11m0 0h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/>
             </svg>
             <h3>Engagement Rate</h3>
           </div>
