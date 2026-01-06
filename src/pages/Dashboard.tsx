@@ -54,18 +54,21 @@ function Dashboard() {
   const subAccountsCount = subAccountsData?.sub_accounts?.length || 0
 
   // Overall analytics from selected platforms
-  // Allow query to run even if no platforms selected (backend will default to all connected)
+  // When in individual mode, fetch all platforms so we can switch between them instantly
+  // When in aggregated mode, fetch only selected platforms
   const { data: overallAnalytics, isLoading: isLoadingAnalytics } = useQuery({
-    queryKey: ['analytics_overall', timeRange, Array.from(selectedPlatforms).sort().join(',')],
+    queryKey: ['analytics_overall', timeRange, viewMode, viewMode === 'aggregated' ? Array.from(selectedPlatforms).sort().join(',') : 'all'],
     queryFn: async () => {
       const params: any = { range: timeRange }
-      if (selectedPlatforms.size > 0) {
+      // In aggregated mode, use selected platforms; in individual mode, fetch all
+      if (viewMode === 'aggregated' && selectedPlatforms.size > 0) {
         params.platforms = Array.from(selectedPlatforms)
       }
+      // In individual mode, don't specify platforms - backend will return all
       const response = await api.get('/analytics/overall', { params })
       return response.data
     },
-    enabled: !!user, // Only need user to be loaded
+    enabled: !!user, // Only need user to be loaded, backend handles platform selection
   })
 
   const getTimeRangeLabel = (range: string) => {
