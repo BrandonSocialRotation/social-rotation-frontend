@@ -14,6 +14,8 @@ function Dashboard() {
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
   const [showPlatformFilter, setShowPlatformFilter] = useState(false)
   const [selectedPlatforms, setSelectedPlatforms] = useState<Set<string>>(new Set())
+  const [viewMode, setViewMode] = useState<'aggregated' | 'individual'>('aggregated')
+  const [selectedIndividualPlatform, setSelectedIndividualPlatform] = useState<string | null>(null)
 
   // Fetch user info to get connected platforms
   const { data: userInfo } = useQuery({
