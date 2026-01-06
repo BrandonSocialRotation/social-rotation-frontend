@@ -94,14 +94,36 @@ function Dashboard() {
     setSelectedPlatforms(newSelected)
   }
 
-  // Use overall analytics data
-  const analyticsData = overallAnalytics ? {
-    engagement_rate: overallAnalytics.engagement_rate,
-    likes: overallAnalytics.total_likes,
-    comments: overallAnalytics.total_comments,
-    shares: overallAnalytics.total_shares,
-    followers: overallAnalytics.total_followers,
-  } : null
+  // Use overall analytics data - either aggregated or individual platform
+  const analyticsData = overallAnalytics ? (() => {
+    if (viewMode === 'individual' && selectedIndividualPlatform && overallAnalytics.platforms?.[selectedIndividualPlatform]) {
+      // Show individual platform data
+      const platformData = overallAnalytics.platforms[selectedIndividualPlatform]
+      // Skip if it's a placeholder message
+      if (platformData.message) {
+        return null
+      }
+      return {
+        engagement_rate: platformData.engagement_rate,
+        likes: platformData.likes,
+        comments: platformData.comments,
+        shares: platformData.shares,
+        followers: platformData.followers,
+      }
+    } else {
+      // Show aggregated data
+      return {
+        engagement_rate: overallAnalytics.engagement_rate,
+        likes: overallAnalytics.total_likes,
+        comments: overallAnalytics.total_comments,
+        shares: overallAnalytics.total_shares,
+        followers: overallAnalytics.total_followers,
+      }
+    }
+  })() : null
+
+  // Check if selected platforms only have placeholder messages
+  const hasOnlyPlaceholders = overallAnalytics?.platforms && Object.values(overallAnalytics.platforms).every?.(p => p?.message) || false
 
   // Fetch posts count
   const { data: postsData } = useQuery({
