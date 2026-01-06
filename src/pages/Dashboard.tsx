@@ -127,7 +127,7 @@ function Dashboard() {
   })() : null
 
   // Check if selected platforms only have placeholder messages
-  const hasOnlyPlaceholders = overallAnalytics?.platforms && Object.values(overallAnalytics.platforms).every?.(p => p?.message) || false
+  const hasOnlyPlaceholders = overallAnalytics?.platforms && Object.values(overallAnalytics.platforms).every?.(p => (p as any)?.message) || false
 
   // Fetch posts count
   const { data: postsData } = useQuery({
@@ -236,9 +236,10 @@ function Dashboard() {
                 <div className="platform-filter-wrapper">
                   <select
                     className="platform-select-dropdown"
-                    value={selectedIndividualPlatform || ''}
+                    value={selectedIndividualPlatform || (connectedPlatforms.length > 0 ? connectedPlatforms[0].key : '')}
                     onChange={(e) => setSelectedIndividualPlatform(e.target.value)}
                   >
+                    <option value="">Select a platform</option>
                     {connectedPlatforms.map((platform) => (
                       <option key={platform.key} value={platform.key}>
                         {platform.name}
