@@ -135,53 +135,92 @@ function Dashboard() {
       <div className="dashboard-filters">
         <div className="time-range-label">
           Showing: <strong>{getTimeRangeLabel(timeRange)}</strong>
+          {viewMode === 'individual' && selectedIndividualPlatform && (
+            <span style={{ marginLeft: '0.5rem', color: '#667eea', fontWeight: 600 }}>
+              • {connectedPlatforms.find(p => p.key === selectedIndividualPlatform)?.name}
+            </span>
+          )}
         </div>
-        {connectedPlatforms.length > 0 && (
-          <div className="platform-filter-wrapper">
-            <button
-              className="platform-filter-button"
-              onClick={() => setShowPlatformFilter(!showPlatformFilter)}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="22 3 2 13 8 21 12 13 22 3"/>
-              </svg>
-              Filter Platforms
-              {selectedPlatforms.size > 0 && (
-                <span className="platform-filter-badge">{selectedPlatforms.size}</span>
-              )}
-            </button>
-            {showPlatformFilter && (
-              <div className="platform-filter-dropdown">
-                <div className="platform-filter-header">
-                  <strong>Select Platforms</strong>
-                  <button
-                    className="platform-filter-close"
-                    onClick={() => setShowPlatformFilter(false)}
-                  >
-                    ×
-                  </button>
-                </div>
-                <div className="platform-filter-options">
-                  {connectedPlatforms.map((platform) => (
-                    <label key={platform.key} className="platform-filter-option">
-                      <input
-                        type="checkbox"
-                        checked={selectedPlatforms.has(platform.key)}
-                        onChange={() => togglePlatform(platform.key)}
-                      />
-                      <span>{platform.name}</span>
-                    </label>
-                  ))}
-                </div>
-                {selectedPlatforms.size === 0 && (
-                  <div className="platform-filter-warning">
-                    Please select at least one platform
-                  </div>
-                )}
+        <div className="dashboard-controls">
+          {connectedPlatforms.length > 0 && (
+            <>
+              <div className="view-mode-toggle">
+                <button
+                  className={`view-mode-button ${viewMode === 'aggregated' ? 'active' : ''}`}
+                  onClick={() => setViewMode('aggregated')}
+                >
+                  All Platforms
+                </button>
+                <button
+                  className={`view-mode-button ${viewMode === 'individual' ? 'active' : ''}`}
+                  onClick={() => setViewMode('individual')}
+                >
+                  Individual
+                </button>
               </div>
-            )}
-          </div>
-        )}
+              {viewMode === 'aggregated' ? (
+                <div className="platform-filter-wrapper">
+                  <button
+                    className="platform-filter-button"
+                    onClick={() => setShowPlatformFilter(!showPlatformFilter)}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polygon points="22 3 2 13 8 21 12 13 22 3"/>
+                    </svg>
+                    Filter Platforms
+                    {selectedPlatforms.size > 0 && (
+                      <span className="platform-filter-badge">{selectedPlatforms.size}</span>
+                    )}
+                  </button>
+                  {showPlatformFilter && (
+                    <div className="platform-filter-dropdown">
+                      <div className="platform-filter-header">
+                        <strong>Select Platforms</strong>
+                        <button
+                          className="platform-filter-close"
+                          onClick={() => setShowPlatformFilter(false)}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="platform-filter-options">
+                        {connectedPlatforms.map((platform) => (
+                          <label key={platform.key} className="platform-filter-option">
+                            <input
+                              type="checkbox"
+                              checked={selectedPlatforms.has(platform.key)}
+                              onChange={() => togglePlatform(platform.key)}
+                            />
+                            <span>{platform.name}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {selectedPlatforms.size === 0 && (
+                        <div className="platform-filter-warning">
+                          Please select at least one platform
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="platform-filter-wrapper">
+                  <select
+                    className="platform-select-dropdown"
+                    value={selectedIndividualPlatform || ''}
+                    onChange={(e) => setSelectedIndividualPlatform(e.target.value)}
+                  >
+                    {connectedPlatforms.map((platform) => (
+                      <option key={platform.key} value={platform.key}>
+                        {platform.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
       
       <div className="stats-grid">
