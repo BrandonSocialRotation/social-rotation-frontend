@@ -12,6 +12,32 @@ function Dashboard() {
   const user = useAuthStore((state) => state.user)
   const navigate = useNavigate()
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
+  const [showPlatformFilter, setShowPlatformFilter] = useState(false)
+  const [selectedPlatforms, setSelectedPlatforms] = useState<Set<string>>(new Set())
+
+  // Fetch user info to get connected platforms
+  const { data: userInfo } = useQuery({
+    queryKey: ['user_info'],
+    queryFn: async () => {
+      const response = await api.get('/user_info')
+      return response.data
+    },
+  })
+
+  // Get connected platforms
+  const connectedPlatforms = userInfo?.user ? [
+    { key: 'instagram', name: 'Instagram', connected: userInfo.user.instagram_connected },
+    { key: 'facebook', name: 'Facebook', connected: userInfo.user.facebook_connected },
+    { key: 'twitter', name: 'Twitter', connected: userInfo.user.twitter_connected },
+    { key: 'linkedin', name: 'LinkedIn', connected: userInfo.user.linkedin_connected },
+  ].filter(p => p.connected) : []
+
+  // Initialize selected platforms to all connected platforms on first load
+  useEffect(() => {
+    if (connectedPlatforms.length > 0 && selectedPlatforms.size === 0) {
+      setSelectedPlatforms(new Set(connectedPlatforms.map(p => p.key)))
+    }
+  }, [connectedPlatforms.length])
 
   // Fetch sub-accounts count (for resellers)
   const { data: subAccountsData } = useQuery({
@@ -25,13 +51,18 @@ function Dashboard() {
 
   const subAccountsCount = subAccountsData?.sub_accounts?.length || 0
 
-  // Instagram analytics summary (mock until live creds)
-  const { data: igSummary } = useQuery({
-    queryKey: ['analytics_instagram_summary', timeRange],
+  // Overall analytics from selected platforms
+  const { data: overallAnalytics } = useQuery({
+    queryKey: ['analytics_overall', timeRange, Array.from(selectedPlatforms).sort().join(',')],
     queryFn: async () => {
-      const response = await api.get('/analytics/instagram/summary', { params: { range: timeRange } })
-      return response.data?.metrics
+      const params: any = { range: timeRange }
+      if (selectedPlatforms.size > 0) {
+        params.platforms = Array.from(selectedPlatforms)
+      }
+      const response = await api.get('/analytics/overall', { params })
+      return response.data
     },
+    enabled: connectedPlatforms.length > 0 && selectedPlatforms.size > 0,
   })
 
   const getTimeRangeLabel = (range: string) => {
@@ -98,8 +129,56 @@ function Dashboard() {
         </div>
       </div>
       
-      <div className="time-range-label">
-        Showing: <strong>{getTimeRangeLabel(timeRange)}</strong>
+      <div className="dashboard-filters">
+        <div className="time-range-label">
+          Showing: <strong>{getTimeRangeLabel(timeRange)}</strong>
+        </div>
+        {connectedPlatforms.length > 0 && (
+          <div className="platform-filter-wrapper">
+            <button
+              className="platform-filter-button"
+              onClick={() => setShowPlatformFilter(!showPlatformFilter)}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="22 3 2 13 8 21 12 13 22 3"/>
+              </svg>
+              Filter Platforms
+              {selectedPlatforms.size > 0 && (
+                <span className="platform-filter-badge">{selectedPlatforms.size}</span>
+              )}
+            </button>
+            {showPlatformFilter && (
+              <div className="platform-filter-dropdown">
+                <div className="platform-filter-header">
+                  <strong>Select Platforms</strong>
+                  <button
+                    className="platform-filter-close"
+                    onClick={() => setShowPlatformFilter(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="platform-filter-options">
+                  {connectedPlatforms.map((platform) => (
+                    <label key={platform.key} className="platform-filter-option">
+                      <input
+                        type="checkbox"
+                        checked={selectedPlatforms.has(platform.key)}
+                        onChange={() => togglePlatform(platform.key)}
+                      />
+                      <span>{platform.name}</span>
+                    </label>
+                  ))}
+                </div>
+                {selectedPlatforms.size === 0 && (
+                  <div className="platform-filter-warning">
+                    Please select at least one platform
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
       
       <div className="stats-grid">
