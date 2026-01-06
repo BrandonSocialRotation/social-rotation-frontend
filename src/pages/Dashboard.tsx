@@ -52,7 +52,8 @@ function Dashboard() {
   const subAccountsCount = subAccountsData?.sub_accounts?.length || 0
 
   // Overall analytics from selected platforms
-  const { data: overallAnalytics } = useQuery({
+  // Allow query to run even if no platforms selected (backend will default to all connected)
+  const { data: overallAnalytics, isLoading: isLoadingAnalytics } = useQuery({
     queryKey: ['analytics_overall', timeRange, Array.from(selectedPlatforms).sort().join(',')],
     queryFn: async () => {
       const params: any = { range: timeRange }
@@ -62,7 +63,7 @@ function Dashboard() {
       const response = await api.get('/analytics/overall', { params })
       return response.data
     },
-    enabled: connectedPlatforms.length > 0 && selectedPlatforms.size > 0,
+    enabled: !!user, // Only need user to be loaded
   })
 
   const getTimeRangeLabel = (range: string) => {
@@ -88,14 +89,14 @@ function Dashboard() {
     setSelectedPlatforms(newSelected)
   }
 
-  // Use overall analytics data if available, otherwise fall back to instagram summary
-  const analyticsData = overallAnalytics || {
-    engagement_rate: undefined,
-    likes: overallAnalytics?.total_likes,
-    comments: overallAnalytics?.total_comments,
-    shares: overallAnalytics?.total_shares,
-    followers: overallAnalytics?.total_followers,
-  }
+  // Use overall analytics data
+  const analyticsData = overallAnalytics ? {
+    engagement_rate: overallAnalytics.engagement_rate,
+    likes: overallAnalytics.total_likes,
+    comments: overallAnalytics.total_comments,
+    shares: overallAnalytics.total_shares,
+    followers: overallAnalytics.total_followers,
+  } : null
 
   // Fetch posts count
   const { data: postsData } = useQuery({
@@ -190,7 +191,9 @@ function Dashboard() {
             </svg>
             <h3>Engagement Rate</h3>
           </div>
-          <p className="stat-number">{analyticsData?.engagement_rate ? `${analyticsData.engagement_rate}%` : '—'}</p>
+          <p className="stat-number">
+            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.engagement_rate ? `${analyticsData.engagement_rate}%` : '—')}
+          </p>
         </div>
 
         <div className="stat-card">
@@ -200,7 +203,9 @@ function Dashboard() {
             </svg>
             <h3>Likes</h3>
           </div>
-          <p className="stat-number">{analyticsData?.likes?.toLocaleString() ?? '—'}</p>
+          <p className="stat-number">
+            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.likes?.toLocaleString() ?? '—')}
+          </p>
         </div>
 
         <div className="stat-card">
@@ -210,7 +215,9 @@ function Dashboard() {
             </svg>
             <h3>Comments</h3>
           </div>
-          <p className="stat-number">{analyticsData?.comments?.toLocaleString() ?? '—'}</p>
+          <p className="stat-number">
+            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.comments?.toLocaleString() ?? '—')}
+          </p>
         </div>
 
         <div className="stat-card">
@@ -222,7 +229,9 @@ function Dashboard() {
             </svg>
             <h3>Shares</h3>
           </div>
-          <p className="stat-number">{analyticsData?.shares?.toLocaleString() ?? '—'}</p>
+          <p className="stat-number">
+            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.shares?.toLocaleString() ?? '—')}
+          </p>
         </div>
 
         <div className="stat-card">
@@ -235,7 +244,9 @@ function Dashboard() {
             </svg>
             <h3>Followers</h3>
           </div>
-          <p className="stat-number">{analyticsData?.followers?.toLocaleString() ?? '—'}</p>
+          <p className="stat-number">
+            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.followers?.toLocaleString() ?? '—')}
+          </p>
           <p className="stat-label">Current total</p>
         </div>
 

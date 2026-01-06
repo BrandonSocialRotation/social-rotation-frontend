@@ -84,3 +84,4 @@ export const DashboardIcon = () => (
     <rect x="3" y="14" width="7" height="7"/>
   </svg>
 )
+
