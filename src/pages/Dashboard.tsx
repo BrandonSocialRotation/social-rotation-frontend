@@ -291,7 +291,6 @@ function Dashboard() {
           <p className="stat-number">
             {isLoadingAnalytics ? 'Loading...' : (analyticsData?.followers?.toLocaleString() ?? '—')}
           </p>
-          <p className="stat-label">Current total</p>
         </div>
 
         <div className="stat-card">
@@ -306,7 +305,6 @@ function Dashboard() {
             <h3>Posts</h3>
           </div>
           <p className="stat-number">{postsData?.total_posts?.toLocaleString() ?? '—'}</p>
-          <p className="stat-label">Total from app</p>
         </div>
         {/* Sub-Accounts Card - Only for resellers */}
         {user?.reseller && (
