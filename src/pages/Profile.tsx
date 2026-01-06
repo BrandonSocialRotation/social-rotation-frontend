@@ -751,7 +751,37 @@ export default function Profile() {
             <p className="account-note" style={{ fontSize: '0.85em', color: '#666', marginBottom: '10px' }}>
               Requires Facebook connection
             </p>
-            {connectedAccounts?.instagram_connected ? (
+            {!connectedAccounts?.facebook_connected ? (
+              <div style={{ marginBottom: '10px' }}>
+                <p style={{ fontSize: '0.85em', color: '#856404', backgroundColor: '#fff3cd', padding: '0.75rem', borderRadius: '4px', marginBottom: '10px' }}>
+                  <strong>Step 1:</strong> Connect Facebook first. Your Instagram Business account must be linked to a Facebook Page.
+                </p>
+                <button
+                  onClick={() => handleConnectPlatform('Facebook')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'Facebook'}
+                >
+                  {connectingPlatform === 'Facebook' ? 'Connecting...' : 'Connect Facebook First'}
+                </button>
+              </div>
+            ) : !connectedAccounts?.instagram_connected ? (
+              <div style={{ marginBottom: '10px' }}>
+                <p style={{ fontSize: '0.85em', color: '#856404', backgroundColor: '#fff3cd', padding: '0.75rem', borderRadius: '4px', marginBottom: '10px' }}>
+                  <strong>Important:</strong> Your Instagram account must be:
+                  <br />• A <strong>Business</strong> or <strong>Creator</strong> account (not Personal)
+                  <br />• Linked to a Facebook Page
+                  <br />
+                  <br />To link: Go to Instagram → Settings → Account → Linked Accounts → Facebook, then select your Page.
+                </p>
+                <button
+                  onClick={() => handleConnectPlatform('Instagram')}
+                  className="connect-btn"
+                  disabled={connectingPlatform === 'Instagram'}
+                >
+                  {connectingPlatform === 'Instagram' ? 'Connecting...' : 'Connect Instagram'}
+                </button>
+              </div>
+            ) : (
               <div>
                 {userData?.user?.instagram_account && (
                   <p style={{ fontSize: '0.9em', color: '#666', marginBottom: '10px' }}>
@@ -776,15 +806,6 @@ export default function Profile() {
                   </button>
                 </div>
               </div>
-            ) : (
-              <button
-                onClick={() => handleConnectPlatform('Instagram')}
-                className="connect-btn"
-                disabled={connectingPlatform === 'Instagram' || !connectedAccounts?.facebook_connected}
-                title={!connectedAccounts?.facebook_connected ? 'Please connect Facebook first' : ''}
-              >
-                {connectingPlatform === 'Instagram' ? 'Connecting...' : 'Connect Instagram'}
-              </button>
             )}
           </div>
 

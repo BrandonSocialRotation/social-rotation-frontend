@@ -226,6 +226,15 @@ function Dashboard() {
         </div>
       </div>
       
+      {hasOnlyPlaceholders && (
+        <div className="analytics-warning">
+          <p>
+            <strong>Analytics Not Available:</strong> The selected platforms (Facebook, Twitter, LinkedIn) don't have analytics implemented yet. 
+            Only Instagram analytics are currently available. Please select Instagram or check back later.
+          </p>
+        </div>
+      )}
+      
       <div className="stats-grid">
         {/* Hootsuite-style Analytics */}
         <div className="stat-card">
