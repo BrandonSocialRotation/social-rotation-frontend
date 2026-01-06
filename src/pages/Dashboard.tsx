@@ -167,7 +167,7 @@ function Dashboard() {
           )}
         </div>
         <div className="dashboard-controls">
-          {connectedPlatforms.length > 0 && (
+          {connectedPlatforms.length > 0 ? (
             <>
               <div className="view-mode-toggle">
                 <button
@@ -244,6 +244,10 @@ function Dashboard() {
                 </div>
               )}
             </>
+          ) : (
+            <p style={{ fontSize: '0.9rem', color: '#666' }}>
+              Connect social media accounts in Profile to view analytics
+            </p>
           )}
         </div>
       </div>
