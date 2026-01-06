@@ -47,6 +47,25 @@ function Dashboard() {
     }
   }
 
+  const togglePlatform = (platformKey: string) => {
+    const newSelected = new Set(selectedPlatforms)
+    if (newSelected.has(platformKey)) {
+      newSelected.delete(platformKey)
+    } else {
+      newSelected.add(platformKey)
+    }
+    setSelectedPlatforms(newSelected)
+  }
+
+  // Use overall analytics data if available, otherwise fall back to instagram summary
+  const analyticsData = overallAnalytics || {
+    engagement_rate: undefined,
+    likes: overallAnalytics?.total_likes,
+    comments: overallAnalytics?.total_comments,
+    shares: overallAnalytics?.total_shares,
+    followers: overallAnalytics?.total_followers,
+  }
+
   // Fetch posts count
   const { data: postsData } = useQuery({
     queryKey: ['analytics_posts_count'],
