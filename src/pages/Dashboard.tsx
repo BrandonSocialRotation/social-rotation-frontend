@@ -1,7 +1,7 @@
 // Dashboard page - overview of user's content and activity
 // Shows: clickable stat cards that navigate to their respective pages
 // Cards: Buckets → /buckets, Schedules → /schedule, Marketplace → /marketplace
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { useQuery } from '@tanstack/react-query'
@@ -111,7 +111,7 @@ function Dashboard() {
             </svg>
             <h3>Engagement Rate</h3>
           </div>
-          <p className="stat-number">{igSummary?.engagement_rate ? `${igSummary.engagement_rate}%` : '—'}</p>
+          <p className="stat-number">{analyticsData?.engagement_rate ? `${analyticsData.engagement_rate}%` : '—'}</p>
         </div>
 
         <div className="stat-card">
@@ -121,7 +121,7 @@ function Dashboard() {
             </svg>
             <h3>Likes</h3>
           </div>
-          <p className="stat-number">{igSummary?.likes?.toLocaleString() ?? '—'}</p>
+          <p className="stat-number">{analyticsData?.likes?.toLocaleString() ?? '—'}</p>
         </div>
 
         <div className="stat-card">
@@ -131,7 +131,7 @@ function Dashboard() {
             </svg>
             <h3>Comments</h3>
           </div>
-          <p className="stat-number">{igSummary?.comments?.toLocaleString() ?? '—'}</p>
+          <p className="stat-number">{analyticsData?.comments?.toLocaleString() ?? '—'}</p>
         </div>
 
         <div className="stat-card">
@@ -143,7 +143,7 @@ function Dashboard() {
             </svg>
             <h3>Shares</h3>
           </div>
-          <p className="stat-number">{igSummary?.shares?.toLocaleString() ?? '—'}</p>
+          <p className="stat-number">{analyticsData?.shares?.toLocaleString() ?? '—'}</p>
         </div>
 
         <div className="stat-card">
@@ -156,7 +156,7 @@ function Dashboard() {
             </svg>
             <h3>Followers</h3>
           </div>
-          <p className="stat-number">{igSummary?.followers?.toLocaleString() ?? '—'}</p>
+          <p className="stat-number">{analyticsData?.followers?.toLocaleString() ?? '—'}</p>
           <p className="stat-label">Current total</p>
         </div>
 
