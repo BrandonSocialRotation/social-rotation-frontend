@@ -39,7 +39,11 @@ function Dashboard() {
     if (connectedPlatforms.length > 0 && selectedPlatforms.size === 0) {
       setSelectedPlatforms(new Set(connectedPlatforms.map(p => p.key)))
     }
-  }, [connectedPlatforms.length])
+    // Set default individual platform if none selected
+    if (viewMode === 'individual' && !selectedIndividualPlatform && connectedPlatforms.length > 0) {
+      setSelectedIndividualPlatform(connectedPlatforms[0].key)
+    }
+  }, [connectedPlatforms.length, viewMode])
 
   // Fetch sub-accounts count (for resellers)
   const { data: subAccountsData } = useQuery({
@@ -138,7 +142,7 @@ function Dashboard() {
     <div className="dashboard">
       <div className="dashboard-header">
         <div>
-          <h1>Welcome back, {user?.name}!</h1>
+          <h1>Welcome back, {userInfo?.user?.name || user?.name || 'User'}!</h1>
           <p style={{ color: '#666', marginTop: '0.5rem' }}>
             {user?.reseller ? 'Manage your agency and sub-accounts' : "Here's an overview of your content"}
           </p>
