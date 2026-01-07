@@ -548,7 +548,6 @@ export default function Schedule() {
                   type="text"
                   value={scheduleName}
                   onChange={(e) => setScheduleName(e.target.value)}
-                  placeholder="e.g., Morning Posts, Weekly Update"
                   required
                 />
               </div>
@@ -572,65 +571,79 @@ export default function Schedule() {
 
               {selectedBucket && (
                 <div className="form-group">
-                  {scheduleType === SCHEDULE_TYPE_MULTIPLE ? (
-                    <>
-                      <label>Select Images * (Multiple)</label>
-                      {imagesLoading ? (
-                        <div>Loading images...</div>
-                      ) : (
-                        <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '10px' }}>
-                          {(bucketImagesData || []).map((image) => (
-                            <label key={image.id} style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
-                              <input
-                                type="checkbox"
-                                checked={selectedImages.includes(image.id)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedImages([...selectedImages, image.id]);
-                                  } else {
-                                    setSelectedImages(selectedImages.filter(id => id !== image.id));
-                                  }
-                                }}
-                              />
-                              <span style={{ marginLeft: '8px' }}>{image.friendly_name}</span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                      {selectedImages.length > 0 && (
-                        <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
-                          {selectedImages.length} image{selectedImages.length !== 1 ? 's' : ''} selected. Each will be posted separately.
-                        </small>
-                      )}
-                    </>
+                  {!imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) ? (
+                    <div style={{ 
+                      padding: '12px', 
+                      backgroundColor: '#fff3cd', 
+                      border: '1px solid #ffc107', 
+                      borderRadius: '4px',
+                      color: '#856404'
+                    }}>
+                      <strong>No images in this bucket</strong>
+                      <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                        This bucket doesn't have any images. Please add images to the bucket before creating a schedule.
+                      </p>
+                    </div>
                   ) : (
                     <>
-                      <label htmlFor="image">Select Image *</label>
-                      {imagesLoading ? (
-                        <div>Loading images...</div>
+                      {scheduleType === SCHEDULE_TYPE_MULTIPLE ? (
+                        <>
+                          <label>Select Images * (Multiple)</label>
+                          {imagesLoading ? (
+                            <div>Loading images...</div>
+                          ) : (
+                            <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '10px' }}>
+                              {(bucketImagesData || []).map((image) => (
+                                <label key={image.id} style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedImages.includes(image.id)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setSelectedImages([...selectedImages, image.id]);
+                                      } else {
+                                        setSelectedImages(selectedImages.filter(id => id !== image.id));
+                                      }
+                                    }}
+                                  />
+                                  <span style={{ marginLeft: '8px' }}>{image.friendly_name}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                          {selectedImages.length > 0 && (
+                            <small style={{ color: '#666', marginTop: '5px', display: 'block' }}>
+                              {selectedImages.length} image{selectedImages.length !== 1 ? 's' : ''} selected. Each will be posted separately.
+                            </small>
+                          )}
+                        </>
                       ) : (
-                        <select
-                          id="image"
-                          value={selectedImage || ''}
-                          onChange={(e) => setSelectedImage(e.target.value ? Number(e.target.value) : null)}
-                          required={scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY}
-                        >
-                          <option value="">
-                            {scheduleType === SCHEDULE_TYPE_ROTATION 
-                              ? 'All Images (Rotation)' 
-                              : 'Select an image'}
-                          </option>
-                          {(bucketImagesData || []).map((image) => (
-                            <option key={image.id} value={image.id}>
-                              {image.friendly_name}
-                            </option>
-                          ))}
-                        </select>
+                        <>
+                          <label htmlFor="image">Select Image *</label>
+                          {imagesLoading ? (
+                            <div>Loading images...</div>
+                          ) : (
+                            <select
+                              id="image"
+                              value={selectedImage || ''}
+                              onChange={(e) => setSelectedImage(e.target.value ? Number(e.target.value) : null)}
+                              required={scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY}
+                            >
+                              <option value="">
+                                {scheduleType === SCHEDULE_TYPE_ROTATION 
+                                  ? 'All Images (Rotation)' 
+                                  : 'Select an image'}
+                              </option>
+                              {(bucketImagesData || []).map((image) => (
+                                <option key={image.id} value={image.id}>
+                                  {image.friendly_name}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                        </>
                       )}
                     </>
-                  )}
-                  {selectedBucket && !imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) && (
-                    <small className="error-text">This bucket has no images. Please add images first.</small>
                   )}
                 </div>
               )}
