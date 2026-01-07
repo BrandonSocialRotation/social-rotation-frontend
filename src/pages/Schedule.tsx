@@ -767,7 +767,10 @@ export default function Schedule() {
                             ))}
                         </select>
                       ) : (
-                        <small style={{ color: '#666' }}>No Instagram accounts found. Please connect Facebook with an Instagram Business account.</small>
+                        <small style={{ color: '#666' }}>
+                          No Instagram accounts found. Instagram posting requires a Business or Creator account linked to a Facebook Page. 
+                          Personal Instagram accounts cannot be used for API posting. Please convert your account to Business/Creator and link it to a Facebook Page.
+                        </small>
                       )}
                     </div>
                   )}
