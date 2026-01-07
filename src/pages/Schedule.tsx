@@ -826,18 +826,20 @@ export default function Schedule() {
                 />
               </div>
 
-              <div className="form-group">
-                <label htmlFor="twitterDescription">X Description (optional)</label>
-                <textarea
-                  id="twitterDescription"
-                  value={twitterDescription}
-                  onChange={(e) => setTwitterDescription(e.target.value)}
-                  placeholder="X-specific description (280 characters max)"
-                  rows={2}
-                  maxLength={280}
-                />
-                <small>{twitterDescription.length}/280 characters</small>
-              </div>
+              {twitter && (
+                <div className="form-group">
+                  <label htmlFor="twitterDescription">Text only X post (optional)</label>
+                  <textarea
+                    id="twitterDescription"
+                    value={twitterDescription}
+                    onChange={(e) => setTwitterDescription(e.target.value)}
+                    placeholder="Text only X post"
+                    rows={2}
+                    maxLength={280}
+                  />
+                  <small>{twitterDescription.length}/280 characters</small>
+                </div>
+              )}
 
               <div className="modal-actions">
                 <button type="button" onClick={() => setShowCreateModal(false)} className="cancel-btn">
