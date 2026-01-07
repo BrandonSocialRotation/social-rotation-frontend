@@ -104,15 +104,16 @@ function Dashboard() {
       // Show individual platform data
       const platformData = overallAnalytics.platforms[selectedIndividualPlatform]
       // Skip if it's a placeholder message
-      if (platformData.message) {
+      if (platformData && platformData.message) {
         return null
       }
+      // Return data even if some values are 0 (Twitter has 0 likes/comments/shares but has followers)
       return {
-        engagement_rate: platformData.engagement_rate,
-        likes: platformData.likes,
-        comments: platformData.comments,
-        shares: platformData.shares,
-        followers: platformData.followers,
+        engagement_rate: platformData?.engagement_rate ?? null,
+        likes: platformData?.likes ?? 0,
+        comments: platformData?.comments ?? 0,
+        shares: platformData?.shares ?? 0,
+        followers: platformData?.followers ?? 0,
       }
     } else {
       // Show aggregated data
