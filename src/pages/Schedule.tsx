@@ -766,6 +766,11 @@ export default function Schedule() {
                               </option>
                             ))}
                         </select>
+                      ) : facebookPagesData && facebookPagesData.length > 0 ? (
+                        <small style={{ color: '#666' }}>
+                          Your Instagram account is not a Business or Creator account. Personal accounts cannot be posted to. 
+                          Please change your account status if you want to be able to post.
+                        </small>
                       ) : (
                         <small style={{ color: '#666' }}>
                           No Instagram accounts found. Instagram posting requires a Business or Creator account linked to a Facebook Page. 
