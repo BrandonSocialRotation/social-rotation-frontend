@@ -129,6 +129,9 @@ function Dashboard() {
 
   // Check if selected platforms only have placeholder messages
   const hasOnlyPlaceholders = overallAnalytics?.platforms && Object.values(overallAnalytics.platforms).every?.(p => (p as any)?.message) || false
+  
+  // Check for Twitter monthly limit error
+  const twitterLimitError = overallAnalytics?.platforms?.twitter?.error_code === 'TWITTER_MONTHLY_LIMIT'
 
   // Fetch posts count
   const { data: postsData } = useQuery({
@@ -263,6 +266,17 @@ function Dashboard() {
           <p>
             <strong>Analytics Not Available:</strong> The selected platforms (Facebook, Twitter, LinkedIn) don't have analytics implemented yet. 
             Only Instagram analytics are currently available. Please select Instagram or check back later.
+          </p>
+        </div>
+      )}
+      
+      {twitterLimitError && (
+        <div className="analytics-warning" style={{ backgroundColor: '#fff3cd', border: '1px solid #ffc107', color: '#856404' }}>
+          <p>
+            <strong>Twitter API Monthly Limit Reached:</strong> You have reached your monthly limit of 100 tweets. 
+            Please upgrade to Twitter API Basic ($100/month) for unlimited analytics, or wait until your limit resets.
+            <br />
+            <small>Your follower count will still be displayed, but engagement metrics are unavailable until the limit resets.</small>
           </p>
         </div>
       )}
