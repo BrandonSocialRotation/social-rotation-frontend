@@ -61,7 +61,20 @@ function Login() {
           </div>
           
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <label htmlFor="password" style={{ marginBottom: 0 }}>Password</label>
+              <Link 
+                to="/forgot-password" 
+                style={{ 
+                  fontSize: '14px', 
+                  color: '#667eea', 
+                  textDecoration: 'none',
+                  fontWeight: '500'
+                }}
+              >
+                Forgot password?
+              </Link>
+            </div>
             <div className="password-input-wrapper">
               <input
                 id="password"
@@ -90,12 +103,6 @@ function Login() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        
-        <p className="auth-link">
-          <Link to="/forgot-password" style={{ fontSize: '14px', color: '#666', textDecoration: 'none' }}>
-            Forgot your password?
-          </Link>
-        </p>
         
         <p className="auth-link">
           Don't have an account? <Link to="/register">Register</Link>
