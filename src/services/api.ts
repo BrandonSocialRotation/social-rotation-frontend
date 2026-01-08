@@ -77,6 +77,14 @@ export const authAPI = {
   // POST /api/v1/auth/register
   register: (name: string, email: string, password: string, accountType?: string, companyName?: string) =>
     api.post('/auth/register', { name, email, password, account_type: accountType, company_name: companyName }),
+  
+  // POST /api/v1/auth/forgot_password
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot_password', { email }),
+  
+  // POST /api/v1/auth/reset_password
+  resetPassword: (token: string, password: string, passwordConfirmation: string) =>
+    api.post('/auth/reset_password', { token, password, password_confirmation: passwordConfirmation }),
 }
 
 // BUCKET ENDPOINTS

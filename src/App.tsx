@@ -15,6 +15,8 @@ import Layout from './components/Layout'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Buckets from './pages/Buckets'
 import BucketImages from './pages/BucketImages'
@@ -41,6 +43,8 @@ function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/terms-of-service" element={<Terms />} />
       <Route path="/privacy-policy" element={<Privacy />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
