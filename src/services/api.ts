@@ -147,7 +147,4 @@ export const userAPI = {
   getConnectedAccounts: () => api.get('/user_info/connected_accounts'),
 }
 
-// Export the api instance for direct use
-export { api }
-
 export default api
