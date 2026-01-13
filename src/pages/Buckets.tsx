@@ -158,10 +158,23 @@ function Buckets() {
   }
 
   if (bucketsError) {
+    const errorMessage = bucketsError instanceof Error 
+      ? bucketsError.message 
+      : (bucketsError as any)?.response?.data?.error || (bucketsError as any)?.message || 'Unknown error'
     return (
       <div className="buckets-page">
-        <div className="error-message">
-          Failed to load buckets: {bucketsError instanceof Error ? bucketsError.message : 'Unknown error'}
+        <div className="error-message" style={{ padding: '2rem', textAlign: 'center' }}>
+          <h2>Failed to load buckets</h2>
+          <p>{errorMessage}</p>
+          <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '1rem' }}>
+            Status: {(bucketsError as any)?.response?.status || 'N/A'}
+          </p>
+          <button 
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['buckets'] })}
+            style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}
+          >
+            Retry
+          </button>
         </div>
       </div>
     )
