@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { useAuthStore } from '../store/authStore';
 import ImageEditor from '../components/ImageEditor';
 import './BucketImages.css';
 
@@ -30,6 +31,7 @@ interface Bucket {
   description: string;
   use_watermark: boolean;
   post_once_bucket: boolean;
+  is_global?: boolean;
   images_count: number;
   schedules_count: number;
 }
@@ -37,6 +39,8 @@ interface Bucket {
 export default function BucketImages() {
   const { bucketId } = useParams<{ bucketId: string }>();
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const isSuperAdmin = user?.super_admin || false;
   const [bucket, setBucket] = useState<Bucket | null>(null);
   const [images, setImages] = useState<BucketImage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +50,9 @@ export default function BucketImages() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [editingImage, setEditingImage] = useState<BucketImage | null>(null);
+  
+  // Check if user can modify this bucket (super admin for global buckets, or owner for regular buckets)
+  const canModifyBucket = bucket ? (bucket.is_global ? isSuperAdmin : true) : false;
 
   const getImageUrl = (image: Image) => {
     if (image?.source_url) {
@@ -207,14 +214,25 @@ export default function BucketImages() {
         <button className="back-button" onClick={() => navigate('/buckets')}>
           ← Back to Buckets
         </button>
-        <h1>{bucket.name}</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <h1>{bucket.name}</h1>
+          {bucket.is_global && (
+            <span className="global-badge" title="Global bucket - available to all users" style={{ fontSize: '1.25rem' }}>🌐</span>
+          )}
+        </div>
         {bucket.description && <p className="bucket-description">{bucket.description}</p>}
+        {bucket.is_global && !isSuperAdmin && (
+          <p style={{ fontSize: '0.9rem', color: '#666', fontStyle: 'italic', marginTop: '0.5rem' }}>
+            This is a global bucket. Only super admins can modify it.
+          </p>
+        )}
       </div>
 
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
 
-      {/* Upload Section */}
+      {/* Upload Section - Only show if user can modify bucket */}
+      {canModifyBucket && (
       <div className="upload-section">
         <h2>Upload Image</h2>
         <div className="upload-container">
@@ -262,6 +280,7 @@ export default function BucketImages() {
           )}
         </div>
       </div>
+      )}
 
       {/* Images Grid */}
       <div className="images-section">
@@ -286,6 +305,7 @@ export default function BucketImages() {
                   {bucketImage.description && (
                     <p className="image-description">{bucketImage.description}</p>
                   )}
+                  {canModifyBucket && (
                   <div className="image-actions">
                     <button
                       onClick={() => handleEdit(bucketImage)}
@@ -308,6 +328,7 @@ export default function BucketImages() {
                       Delete
                     </button>
                   </div>
+                  )}
                 </div>
               </div>
             ))}
