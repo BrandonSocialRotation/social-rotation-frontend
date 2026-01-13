@@ -60,15 +60,22 @@ function Buckets() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  // Get super_admin from updated user or userInfo
-  const isSuperAdmin = user?.super_admin || userInfo?.user?.super_admin || false
+  // Get super_admin from updated user or userInfo - check both boolean true and truthy
+  const isSuperAdmin = Boolean(
+    user?.super_admin === true || 
+    userInfo?.user?.super_admin === true ||
+    user?.account_id === 0 ||
+    userInfo?.user?.account_id === 0
+  )
   
   // Debug logging - more detailed
   console.log('=== SUPER ADMIN DEBUG ===')
   console.log('Current user from auth store:', JSON.stringify(user, null, 2))
   console.log('User info from query:', JSON.stringify(userInfo?.user, null, 2))
-  console.log('user?.super_admin:', user?.super_admin)
-  console.log('userInfo?.user?.super_admin:', userInfo?.user?.super_admin)
+  console.log('user?.super_admin:', user?.super_admin, typeof user?.super_admin)
+  console.log('userInfo?.user?.super_admin:', userInfo?.user?.super_admin, typeof userInfo?.user?.super_admin)
+  console.log('user?.account_id:', user?.account_id)
+  console.log('userInfo?.user?.account_id:', userInfo?.user?.account_id)
   console.log('Final isSuperAdmin:', isSuperAdmin)
   console.log('========================')
 
