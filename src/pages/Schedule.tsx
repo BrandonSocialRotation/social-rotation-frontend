@@ -6,6 +6,7 @@ import './Schedule.css';
 interface Bucket {
   id: number;
   name: string;
+  is_global?: boolean;
 }
 
 interface BucketImage {
@@ -102,12 +103,15 @@ export default function Schedule() {
     },
   });
 
-  // Fetch buckets for dropdown
+  // Fetch buckets for dropdown (includes both user buckets and global buckets)
   const { data: bucketsData } = useQuery({
     queryKey: ['buckets'],
     queryFn: async () => {
       const response = await api.get('/buckets');
-      return response.data.buckets as Bucket[];
+      const userBuckets = (response.data.buckets || []) as Bucket[];
+      const globalBuckets = (response.data.global_buckets || []) as Bucket[];
+      // Combine both arrays for the dropdown
+      return [...userBuckets, ...globalBuckets];
     },
   });
 
