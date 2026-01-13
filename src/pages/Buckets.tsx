@@ -42,22 +42,31 @@ function Buckets() {
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
   const setUser = useAuthStore((state) => state.setUser)
-  const isSuperAdmin = user?.super_admin || false
 
   // Fetch user info to ensure super_admin is up to date
-  useQuery({
+  const { data: userInfo } = useQuery({
     queryKey: ['user_info'],
     queryFn: async () => {
       const response = await api.get('/user_info')
       if (response.data?.user) {
         // Update auth store with latest user info including super_admin
         setUser(response.data.user)
+        console.log('Updated user in auth store:', response.data.user)
+        console.log('Super admin status:', response.data.user.super_admin)
       }
       return response.data
     },
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
+
+  // Get super_admin from updated user or userInfo
+  const isSuperAdmin = user?.super_admin || userInfo?.user?.super_admin || false
+  
+  // Debug logging
+  console.log('Current user from auth store:', user)
+  console.log('User info from query:', userInfo?.user)
+  console.log('Is super admin:', isSuperAdmin)
 
   // Fetch all buckets from API
   // GET /api/v1/buckets
@@ -187,6 +196,19 @@ function Buckets() {
     <div className="buckets-page">
       <div className="page-header">
         <h1>Content Buckets</h1>
+        {isSuperAdmin && (
+          <span style={{ 
+            marginRight: '1rem', 
+            padding: '0.25rem 0.75rem', 
+            background: '#4CAF50', 
+            color: 'white', 
+            borderRadius: '4px',
+            fontSize: '0.85rem',
+            fontWeight: 'bold'
+          }}>
+            🔑 Super Admin
+          </span>
+        )}
         <button onClick={() => setShowCreateModal(true)} className="create-btn">
           + Create New Bucket
         </button>
