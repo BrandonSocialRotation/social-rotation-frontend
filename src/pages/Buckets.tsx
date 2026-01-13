@@ -45,10 +45,19 @@ function Buckets() {
 
   // Fetch all buckets from API
   // GET /api/v1/buckets
-  const { data: bucketsData, isLoading } = useQuery({
+  const { data: bucketsData, isLoading, error: bucketsError } = useQuery({
     queryKey: ['buckets'],
     queryFn: async () => {
       const response = await bucketsAPI.getAll()
+      // Handle both old format (just buckets array) and new format (buckets + global_buckets)
+      if (Array.isArray(response.data)) {
+        // Old format - all buckets in one array
+        return {
+          buckets: response.data as Bucket[],
+          global_buckets: [] as Bucket[]
+        }
+      }
+      // New format - separate arrays
       return {
         buckets: (response.data.buckets || []) as Bucket[],
         global_buckets: (response.data.global_buckets || []) as Bucket[]
@@ -121,6 +130,16 @@ function Buckets() {
 
   if (isLoading) {
     return <div className="loading">Loading buckets...</div>
+  }
+
+  if (bucketsError) {
+    return (
+      <div className="buckets-page">
+        <div className="error-message">
+          Failed to load buckets: {bucketsError instanceof Error ? bucketsError.message : 'Unknown error'}
+        </div>
+      </div>
+    )
   }
 
   const buckets = bucketsData?.buckets || []
