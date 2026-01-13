@@ -237,40 +237,40 @@ function Buckets() {
                     </svg>
                   </button>
                 </div>
-              
-              {bucket.description && (
-                <p className="bucket-description">{bucket.description}</p>
-              )}
-              
-              <div className="bucket-stats">
-                <div className="stat">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.25rem'}}>
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                    <circle cx="8.5" cy="8.5" r="1.5"/>
-                    <polyline points="21 15 16 10 5 21"/>
-                  </svg>
-                  <span className="stat-value">{bucket.images_count}</span>
-                  <span className="stat-label">Images</span>
+                
+                {bucket.description && (
+                  <p className="bucket-description">{bucket.description}</p>
+                )}
+                
+                <div className="bucket-stats">
+                  <div className="stat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.25rem'}}>
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span className="stat-value">{bucket.images_count}</span>
+                    <span className="stat-label">Images</span>
+                  </div>
+                  <div className="stat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.25rem'}}>
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span className="stat-value">{bucket.schedules_count}</span>
+                    <span className="stat-label">Schedules</span>
+                  </div>
                 </div>
-                <div className="stat">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.25rem'}}>
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                  </svg>
-                  <span className="stat-value">{bucket.schedules_count}</span>
-                  <span className="stat-label">Schedules</span>
+                
+                <div className="bucket-footer">
+                  <button 
+                    className="view-btn"
+                    onClick={() => navigate(`/buckets/${bucket.id}/images`)}
+                  >
+                    View Images →
+                  </button>
                 </div>
               </div>
-              
-              <div className="bucket-footer">
-                <button 
-                  className="view-btn"
-                  onClick={() => navigate(`/buckets/${bucket.id}/images`)}
-                >
-                  View Images →
-                </button>
-              </div>
-            </div>
           ))}
         </div>
       )}
