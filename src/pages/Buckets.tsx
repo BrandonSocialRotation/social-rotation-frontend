@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { bucketsAPI } from '../services/api'
+import { bucketsAPI, api } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import './Buckets.css'
 
@@ -41,28 +41,53 @@ function Buckets() {
   
   const queryClient = useQueryClient()
   const user = useAuthStore((state) => state.user)
+  const setUser = useAuthStore((state) => state.setUser)
   const isSuperAdmin = user?.super_admin || false
+
+  // Fetch user info to ensure super_admin is up to date
+  useQuery({
+    queryKey: ['user_info'],
+    queryFn: async () => {
+      const response = await api.get('/user_info')
+      if (response.data?.user) {
+        // Update auth store with latest user info including super_admin
+        setUser(response.data.user)
+      }
+      return response.data
+    },
+    retry: 1,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
 
   // Fetch all buckets from API
   // GET /api/v1/buckets
   const { data: bucketsData, isLoading, error: bucketsError } = useQuery({
     queryKey: ['buckets'],
     queryFn: async () => {
-      const response = await bucketsAPI.getAll()
-      // Handle both old format (just buckets array) and new format (buckets + global_buckets)
-      if (Array.isArray(response.data)) {
-        // Old format - all buckets in one array
-        return {
-          buckets: response.data as Bucket[],
-          global_buckets: [] as Bucket[]
+      try {
+        const response = await bucketsAPI.getAll()
+        console.log('Buckets API response:', response.data)
+        // Handle both old format (just buckets array) and new format (buckets + global_buckets)
+        if (Array.isArray(response.data)) {
+          // Old format - all buckets in one array
+          return {
+            buckets: response.data as Bucket[],
+            global_buckets: [] as Bucket[]
+          }
         }
-      }
-      // New format - separate arrays
-      return {
-        buckets: (response.data.buckets || []) as Bucket[],
-        global_buckets: (response.data.global_buckets || []) as Bucket[]
+        // New format - separate arrays
+        return {
+          buckets: (response.data?.buckets || []) as Bucket[],
+          global_buckets: (response.data?.global_buckets || []) as Bucket[]
+        }
+      } catch (err: any) {
+        console.error('Error fetching buckets:', err)
+        console.error('Error response:', err.response?.data)
+        throw err
       }
     },
+    retry: false, // Don't retry on error - show error immediately
+    refetchOnWindowFocus: false, // Don't refetch when window regains focus
   })
 
   // Create new bucket mutation

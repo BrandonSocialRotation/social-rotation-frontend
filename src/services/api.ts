@@ -96,7 +96,7 @@ export const bucketsAPI = {
   getOne: (id: number) => api.get(`/buckets/${id}`),
   
   // POST /api/v1/buckets
-  create: (data: { name: string; description?: string }) =>
+  create: (data: { name: string; description?: string; is_global?: boolean }) =>
     api.post('/buckets', { bucket: data }),
   
   // PATCH /api/v1/buckets/:id
