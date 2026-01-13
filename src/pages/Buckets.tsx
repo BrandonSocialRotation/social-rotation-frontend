@@ -354,9 +354,10 @@ function Buckets() {
                   </button>
                 </div>
               </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Create Bucket Modal */}
       {showCreateModal && (
