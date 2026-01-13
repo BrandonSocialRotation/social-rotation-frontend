@@ -63,10 +63,14 @@ function Buckets() {
   // Get super_admin from updated user or userInfo
   const isSuperAdmin = user?.super_admin || userInfo?.user?.super_admin || false
   
-  // Debug logging
-  console.log('Current user from auth store:', user)
-  console.log('User info from query:', userInfo?.user)
-  console.log('Is super admin:', isSuperAdmin)
+  // Debug logging - more detailed
+  console.log('=== SUPER ADMIN DEBUG ===')
+  console.log('Current user from auth store:', JSON.stringify(user, null, 2))
+  console.log('User info from query:', JSON.stringify(userInfo?.user, null, 2))
+  console.log('user?.super_admin:', user?.super_admin)
+  console.log('userInfo?.user?.super_admin:', userInfo?.user?.super_admin)
+  console.log('Final isSuperAdmin:', isSuperAdmin)
+  console.log('========================')
 
   // Fetch all buckets from API
   // GET /api/v1/buckets
