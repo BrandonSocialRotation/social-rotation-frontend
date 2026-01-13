@@ -8,7 +8,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { bucketsAPI, api } from '../services/api'
+import { bucketsAPI, userAPI } from '../services/api'
 import { useAuthStore } from '../store/authStore'
 import './Buckets.css'
 
@@ -47,7 +47,7 @@ function Buckets() {
   const { data: userInfo } = useQuery({
     queryKey: ['user_info'],
     queryFn: async () => {
-      const response = await api.get('/user_info')
+      const response = await userAPI.getProfile()
       if (response.data?.user) {
         // Update auth store with latest user info including super_admin
         setUser(response.data.user)
