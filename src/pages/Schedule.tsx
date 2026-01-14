@@ -377,7 +377,7 @@ export default function Schedule() {
   };
 
   // Parse cron string to readable date/time
-  const getScheduledDateTime = (schedule: string, scheduleType: number): string => {
+  const getScheduledDateTime = (schedule: string): string => {
     if (!schedule) return 'Not scheduled';
     
     const parts = schedule.split(' ');
@@ -389,24 +389,24 @@ export default function Schedule() {
     const period = hourNum >= 12 ? 'PM' : 'AM';
     const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
     
-    if (scheduleType === SCHEDULE_TYPE_ROTATION) {
-      // Daily rotation - show time only
+    // Check if it's a daily rotation (day and month are *)
+    if (day === '*' && month === '*') {
       return `Daily at ${displayHour}:${minNum.toString().padStart(2, '0')} ${period}`;
-    } else {
-      // Once, Multiple, or Annually - show date and time
-      const now = new Date();
-      const year = now.getFullYear();
-      const monthNum = month === '*' ? now.getMonth() + 1 : parseInt(month);
-      const dayNum = day === '*' ? now.getDate() : parseInt(day);
-      
-      const scheduleDate = new Date(year, monthNum - 1, dayNum, hourNum, minNum);
-      
-      return scheduleDate.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      }) + ` at ${displayHour}:${minNum.toString().padStart(2, '0')} ${period}`;
     }
+    
+    // Specific date and time
+    const now = new Date();
+    const year = now.getFullYear();
+    const monthNum = month === '*' ? now.getMonth() + 1 : parseInt(month);
+    const dayNum = day === '*' ? now.getDate() : parseInt(day);
+    
+    const scheduleDate = new Date(year, monthNum - 1, dayNum, hourNum, minNum);
+    
+    return scheduleDate.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    }) + ` at ${displayHour}:${minNum.toString().padStart(2, '0')} ${period}`;
   };
 
   if (schedulesLoading) {
@@ -442,12 +442,15 @@ export default function Schedule() {
                   <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: '600' }}>
                     {schedule.name || `Schedule #${schedule.id}`}
                   </h3>
-                  <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
-                    {getScheduledDateTime(schedule.schedule, schedule.schedule_type)}
-                  </div>
-                  <div className="schedule-type-badge" data-type={schedule.schedule_type} style={{ display: 'inline-block' }}>
-                    {getScheduleTypeName(schedule.schedule_type)}
-                  </div>
+                  {schedule.schedule_items && schedule.schedule_items.length > 0 ? (
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                      {schedule.schedule_items.length} image{schedule.schedule_items.length !== 1 ? 's' : ''} scheduled
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
+                      {getScheduledDateTime(schedule.schedule)}
+                    </div>
+                  )}
                 </div>
                 <div className="schedule-actions">
                   <button
@@ -503,7 +506,7 @@ export default function Schedule() {
                         }}>
                           <strong>{item.bucket_image?.friendly_name || `Image ${idx + 1}`}</strong>
                           <div style={{ color: '#666', marginTop: '4px' }}>
-                            {getScheduledDateTime(item.schedule, SCHEDULE_TYPE_ONCE)}
+                            {getScheduledDateTime(item.schedule)}
                           </div>
                           {item.description && (
                             <div style={{ color: '#666', marginTop: '4px', fontSize: '12px' }}>
