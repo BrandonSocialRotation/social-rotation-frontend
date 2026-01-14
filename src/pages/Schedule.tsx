@@ -228,13 +228,17 @@ export default function Schedule() {
 
   const generateCronString = (dateTimeStr: string) => {
     // Parse dateTime (format: YYYY-MM-DDTHH:mm)
+    // The datetime-local input gives us local time, but we need to convert to UTC
+    // because the server uses UTC time for cron matching
     const dateTimeObj = new Date(dateTimeStr);
-    const minute = dateTimeObj.getMinutes();
-    const hour = dateTimeObj.getHours();
-    const day = dateTimeObj.getDate();
-    const month = dateTimeObj.getMonth() + 1;
     
-    // Always use specific date and time for multiple images
+    // Convert to UTC for server-side cron matching
+    const minute = dateTimeObj.getUTCMinutes();
+    const hour = dateTimeObj.getUTCHours();
+    const day = dateTimeObj.getUTCDate();
+    const month = dateTimeObj.getUTCMonth() + 1;
+    
+    // Always use specific date and time for multiple images (in UTC)
     return `${minute} ${hour} ${day} ${month} *`;
   };
 
