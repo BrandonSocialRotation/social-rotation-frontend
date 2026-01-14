@@ -49,10 +49,7 @@ interface BucketSchedule {
   schedule_items?: ScheduleItem[];
 }
 
-// Schedule types
-const SCHEDULE_TYPE_ROTATION = 1;
-const SCHEDULE_TYPE_ONCE = 2;
-const SCHEDULE_TYPE_ANNUALLY = 3;
+// Schedule type - only MULTIPLE is supported now
 const SCHEDULE_TYPE_MULTIPLE = 4;
 
 // Social media platforms
@@ -855,31 +852,6 @@ export default function Schedule() {
                 </div>
               </div>
 
-              <div className="form-group">
-                <label htmlFor="description">Description (optional)</label>
-                <textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Post description for Facebook, LinkedIn, etc."
-                  rows={3}
-                />
-              </div>
-
-              {twitter && (
-                <div className="form-group">
-                  <label htmlFor="twitterDescription">Text only X post (optional)</label>
-                  <textarea
-                    id="twitterDescription"
-                    value={twitterDescription}
-                    onChange={(e) => setTwitterDescription(e.target.value)}
-                    placeholder="Text only X post"
-                    rows={2}
-                    maxLength={280}
-                  />
-                  <small>{twitterDescription.length}/280 characters</small>
-                </div>
-              )}
 
               <div className="modal-actions">
                 <button type="button" onClick={() => setShowCreateModal(false)} className="cancel-btn">
