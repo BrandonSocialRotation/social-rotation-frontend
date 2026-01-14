@@ -69,19 +69,8 @@ export default function Schedule() {
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
-  const [selectedImage, setSelectedImage] = useState<number | null>(null);
-  const [selectedImages, setSelectedImages] = useState<number[]>([]); // For multiple images
-  const [scheduleType, setScheduleType] = useState<number>(SCHEDULE_TYPE_ROTATION);
-  const [dateTime, setDateTime] = useState(() => {
-    // Default to today at 12:00 PM
-    const now = new Date();
-    now.setHours(12, 0, 0, 0);
-    return now.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
-  });
-  const [selectedDays, setSelectedDays] = useState<number[]>([]); // Days of week for rotation (0=Sunday, 1=Monday, etc.)
+  const [selectedImages, setSelectedImages] = useState<number[]>([]); // Selected images from bucket
   const [scheduleName, setScheduleName] = useState('');
-  const [description, setDescription] = useState('');
-  const [twitterDescription, setTwitterDescription] = useState('');
   
   // For multiple images with different times - array of {imageId, dateTime, description, twitterDescription}
   const [scheduleItems, setScheduleItems] = useState<Array<{
@@ -208,17 +197,9 @@ export default function Schedule() {
 
   const resetForm = () => {
     setSelectedBucket(null);
-    setSelectedImage(null);
     setSelectedImages([]);
     setScheduleItems([]);
-    setScheduleType(SCHEDULE_TYPE_ROTATION);
-    const now = new Date();
-    now.setHours(12, 0, 0, 0);
-    setDateTime(now.toISOString().slice(0, 16));
-    setSelectedDays([]);
     setScheduleName('');
-    setDescription('');
-    setTwitterDescription('');
     setFacebook(true);
     setTwitter(true);
     setInstagram(false);
@@ -233,7 +214,8 @@ export default function Schedule() {
 
   // Reset image selection when bucket changes
   useEffect(() => {
-    setSelectedImage(null);
+    setSelectedImages([]);
+    setScheduleItems([]);
   }, [selectedBucket]);
 
   const calculatePostTo = () => {
@@ -247,34 +229,16 @@ export default function Schedule() {
     return postTo;
   };
 
-  const generateCronString = (dateTimeStr?: string, days?: number[], type?: number) => {
-    // Use provided dateTime or default to state
-    const dt = dateTimeStr || dateTime;
-    const dateTimeObj = new Date(dt);
+  const generateCronString = (dateTimeStr: string) => {
+    // Parse dateTime (format: YYYY-MM-DDTHH:mm)
+    const dateTimeObj = new Date(dateTimeStr);
     const minute = dateTimeObj.getMinutes();
     const hour = dateTimeObj.getHours();
     const day = dateTimeObj.getDate();
     const month = dateTimeObj.getMonth() + 1;
-    const daysToUse = days || selectedDays;
-    const scheduleTypeToUse = type !== undefined ? type : scheduleType;
     
-    if (scheduleTypeToUse === SCHEDULE_TYPE_ROTATION) {
-      // Daily at specified time, or specific days of week
-      if (daysToUse.length > 0) {
-        // Specific days of week (0=Sunday, 1=Monday, etc.)
-        const daysString = daysToUse.join(',');
-        return `${minute} ${hour} * * ${daysString}`;
-      } else {
-        // Daily (all days)
-        return `${minute} ${hour} * * *`;
-      }
-    } else if (scheduleTypeToUse === SCHEDULE_TYPE_ONCE || scheduleTypeToUse === SCHEDULE_TYPE_MULTIPLE) {
-      // Once at specified date and time
-      return `${minute} ${hour} ${day} ${month} *`;
-    } else {
-      // Annually (every year on specified date)
-      return `${minute} ${hour} ${day} ${month} *`;
-    }
+    // Always use specific date and time for multiple images
+    return `${minute} ${hour} ${day} ${month} *`;
   };
 
   const handleCreate = (e: React.FormEvent) => {
@@ -286,15 +250,16 @@ export default function Schedule() {
       return;
     }
 
-    // For ONCE and ANNUALLY schedules, require image selection
-    if ((scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY) && !selectedImage) {
-      setError('Please select an image for "One Image" or "Annually" schedules');
+    // Require at least one schedule item
+    if (scheduleItems.length === 0) {
+      setError('Please select at least one image and configure its schedule');
       return;
     }
 
-    // For MULTIPLE schedules, require at least one schedule item
-    if (scheduleType === SCHEDULE_TYPE_MULTIPLE && scheduleItems.length === 0) {
-      setError('Please add at least one image with a scheduled time for "Multiple Images" schedule');
+    // Validate all items have image and time
+    const invalidItems = scheduleItems.filter(item => !item.imageId || !item.dateTime);
+    if (invalidItems.length > 0) {
+      setError('Please ensure all selected images have a date and time configured');
       return;
     }
 
@@ -304,22 +269,22 @@ export default function Schedule() {
       return;
     }
 
-    const cronString = generateCronString(undefined, selectedDays.length > 0 ? selectedDays : undefined);
-
+    // Create schedule with multiple items
     const scheduleData: any = {
       bucket_id: selectedBucket,
-      schedule: cronString,
-      schedule_type: scheduleType,
+      schedule: generateCronString(scheduleItems[0].dateTime), // Use first item's time as base schedule
+      schedule_type: SCHEDULE_TYPE_MULTIPLE,
       post_to: postTo,
       name: scheduleName || `Schedule ${new Date().toLocaleDateString()}`,
-      description: description,
-      twitter_description: twitterDescription || description,
+      description: '', // No global description for multiple images
+      twitter_description: '', // No global description for multiple images
+      schedule_items: scheduleItems.map((item) => ({
+        bucket_image_id: item.imageId,
+        schedule: generateCronString(item.dateTime),
+        description: item.description || '',
+        twitter_description: item.twitterDescription || item.description || ''
+      }))
     };
-
-    // Include bucket_image_id if a specific image is selected
-    if (selectedImage) {
-      scheduleData.bucket_image_id = selectedImage;
-    }
 
     // Include page/organization selections
     // Edge case: If Facebook is selected but no page is chosen, warn user
@@ -368,37 +333,9 @@ export default function Schedule() {
       }
     }
 
-    // For multiple images, create one schedule with multiple schedule_items
-    if (scheduleType === SCHEDULE_TYPE_MULTIPLE && scheduleItems.length > 0) {
-      // Validate all items have image and time
-      const invalidItems = scheduleItems.filter(item => !item.imageId || !item.dateTime);
-      if (invalidItems.length > 0) {
-        setError('Please ensure all schedule items have an image and date/time selected');
-        return;
-      }
-      
-      // Create one schedule with multiple items
-      const scheduleWithItems = {
-        ...scheduleData,
-        schedule_type: SCHEDULE_TYPE_MULTIPLE,
-        schedule: generateCronString(scheduleItems[0].dateTime, undefined, SCHEDULE_TYPE_MULTIPLE), // Use first item's time as base schedule
-        schedule_items: scheduleItems.map((item) => ({
-          bucket_image_id: item.imageId,
-          schedule: generateCronString(item.dateTime, undefined, SCHEDULE_TYPE_MULTIPLE),
-          description: item.description || '',
-          twitter_description: item.twitterDescription || item.description || ''
-        }))
-      };
-      
-      createMutation.mutate({
-        bucket_schedule: scheduleWithItems,
-      });
-    } else {
-      // Single schedule creation
-      createMutation.mutate({
-        bucket_schedule: scheduleData,
-      });
-    }
+    createMutation.mutate({
+      bucket_schedule: scheduleData,
+    });
   };
 
   const handleDelete = (id: number) => {
@@ -654,258 +591,148 @@ export default function Schedule() {
                     </div>
                   ) : (
                     <>
-                      {scheduleType === SCHEDULE_TYPE_MULTIPLE ? (
-                        <>
-                          <label>Select Images to Schedule *</label>
-                          {imagesLoading ? (
-                            <div>Loading images...</div>
-                          ) : (
-                            <>
-                              <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '10px', marginBottom: '15px' }}>
-                                {(bucketImagesData || []).map((image) => (
-                                  <label key={image.id} style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
-                                    <input
-                                      type="checkbox"
-                                      checked={selectedImages.includes(image.id)}
-                                      onChange={(e) => {
-                                        if (e.target.checked) {
-                                          setSelectedImages([...selectedImages, image.id]);
-                                          // Auto-add to scheduleItems with default time
-                                          const now = new Date();
-                                          now.setHours(12, 0, 0, 0);
-                                          setScheduleItems([...scheduleItems, {
-                                            imageId: image.id,
-                                            dateTime: now.toISOString().slice(0, 16),
-                                            description: '',
-                                            twitterDescription: ''
-                                          }]);
-                                        } else {
-                                          setSelectedImages(selectedImages.filter(id => id !== image.id));
-                                          // Remove from scheduleItems
-                                          setScheduleItems(scheduleItems.filter(item => item.imageId !== image.id));
-                                        }
-                                      }}
-                                    />
-                                    <span style={{ marginLeft: '8px' }}>{image.friendly_name}</span>
-                                  </label>
-                                ))}
-                              </div>
-                              
-                              {selectedImages.length > 0 && (
-                                <>
-                                  <label style={{ marginTop: '20px', marginBottom: '10px', display: 'block', fontWeight: '600' }}>
-                                    Configure Each Image's Schedule:
-                                  </label>
-                                  {scheduleItems
-                                    .filter(item => selectedImages.includes(item.imageId))
-                                    .map((item, index) => {
-                                      const image = (bucketImagesData || []).find(img => img.id === item.imageId);
-                                      return (
-                                        <div key={item.imageId} style={{ 
-                                          border: '1px solid #ddd', 
-                                          borderRadius: '4px', 
-                                          padding: '15px', 
-                                          marginBottom: '15px',
-                                          backgroundColor: '#f9f9f9'
-                                        }}>
-                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                                            <strong style={{ fontSize: '16px' }}>{image?.friendly_name || `Image ${index + 1}`}</strong>
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                setSelectedImages(selectedImages.filter(id => id !== item.imageId));
-                                                setScheduleItems(scheduleItems.filter(i => i.imageId !== item.imageId));
-                                              }}
-                                              style={{ 
-                                                padding: '4px 8px', 
-                                                backgroundColor: '#f44336', 
-                                                color: 'white', 
-                                                border: 'none', 
-                                                borderRadius: '4px',
-                                                cursor: 'pointer',
-                                                fontSize: '12px'
-                                              }}
-                                            >
-                                              Remove
-                                            </button>
-                                          </div>
-                                          
-                                          <div style={{ marginBottom: '10px' }}>
-                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Date & Time *</label>
-                                            <input
-                                              type="datetime-local"
-                                              value={item.dateTime}
-                                              onChange={(e) => {
-                                                const newItems = [...scheduleItems];
-                                                const itemIndex = newItems.findIndex(i => i.imageId === item.imageId);
-                                                if (itemIndex >= 0) {
-                                                  newItems[itemIndex].dateTime = e.target.value;
-                                                  setScheduleItems(newItems);
-                                                }
-                                              }}
-                                              required
-                                              style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                                            />
-                                          </div>
-                                          
-                                          <div style={{ marginBottom: '10px' }}>
-                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Description</label>
-                                            <textarea
-                                              value={item.description}
-                                              onChange={(e) => {
-                                                const newItems = [...scheduleItems];
-                                                const itemIndex = newItems.findIndex(i => i.imageId === item.imageId);
-                                                if (itemIndex >= 0) {
-                                                  newItems[itemIndex].description = e.target.value;
-                                                  setScheduleItems(newItems);
-                                                }
-                                              }}
-                                              rows={3}
-                                              style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                                              placeholder="Post description for this image..."
-                                            />
-                                          </div>
-                                          
-                                          <div>
-                                            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Twitter Description (optional)</label>
-                                            <textarea
-                                              value={item.twitterDescription}
-                                              onChange={(e) => {
-                                                const newItems = [...scheduleItems];
-                                                const itemIndex = newItems.findIndex(i => i.imageId === item.imageId);
-                                                if (itemIndex >= 0) {
-                                                  newItems[itemIndex].twitterDescription = e.target.value;
-                                                  setScheduleItems(newItems);
-                                                }
-                                              }}
-                                              rows={2}
-                                              style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
-                                              placeholder="Twitter-specific description (280 char limit)..."
-                                            />
-                                          </div>
-                                        </div>
-                                      );
-                                    })}
-                                </>
-                              )}
-                              
-                              {selectedImages.length === 0 && (
-                                <small style={{ color: '#666', display: 'block', marginTop: '10px' }}>
-                                  Select images above to configure their individual schedules
-                                </small>
-                              )}
-                            </>
-                          )}
-                        </>
+                      <label>Select Images to Schedule *</label>
+                      {imagesLoading ? (
+                        <div>Loading images...</div>
                       ) : (
                         <>
-                          <label htmlFor="image">Select Image *</label>
-                          {imagesLoading ? (
-                            <div>Loading images...</div>
-                          ) : (
-                            <select
-                              id="image"
-                              value={selectedImage || ''}
-                              onChange={(e) => setSelectedImage(e.target.value ? Number(e.target.value) : null)}
-                              required={scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_ANNUALLY}
-                            >
-                              <option value="">
-                                {scheduleType === SCHEDULE_TYPE_ROTATION 
-                                  ? 'All Images (Rotation)' 
-                                  : 'Select an image'}
-                              </option>
-                              {(bucketImagesData || []).map((image) => (
-                                <option key={image.id} value={image.id}>
-                                  {image.friendly_name}
-                                </option>
-                              ))}
-                            </select>
+                          <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '10px', marginBottom: '15px' }}>
+                            {(bucketImagesData || []).map((image) => (
+                              <label key={image.id} style={{ display: 'block', marginBottom: '8px', cursor: 'pointer' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedImages.includes(image.id)}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      setSelectedImages([...selectedImages, image.id]);
+                                      // Auto-add to scheduleItems with default time
+                                      const now = new Date();
+                                      now.setHours(12, 0, 0, 0);
+                                      setScheduleItems([...scheduleItems, {
+                                        imageId: image.id,
+                                        dateTime: now.toISOString().slice(0, 16),
+                                        description: '',
+                                        twitterDescription: ''
+                                      }]);
+                                    } else {
+                                      setSelectedImages(selectedImages.filter(id => id !== image.id));
+                                      // Remove from scheduleItems
+                                      setScheduleItems(scheduleItems.filter(item => item.imageId !== image.id));
+                                    }
+                                  }}
+                                />
+                                <span style={{ marginLeft: '8px' }}>{image.friendly_name}</span>
+                              </label>
+                            ))}
+                          </div>
+                          
+                          {selectedImages.length > 0 && (
+                            <>
+                              <label style={{ marginTop: '20px', marginBottom: '10px', display: 'block', fontWeight: '600' }}>
+                                Configure Each Image's Schedule:
+                              </label>
+                              {scheduleItems
+                                .filter(item => selectedImages.includes(item.imageId))
+                                .map((item, index) => {
+                                  const image = (bucketImagesData || []).find(img => img.id === item.imageId);
+                                  return (
+                                    <div key={item.imageId} style={{ 
+                                      border: '1px solid #ddd', 
+                                      borderRadius: '4px', 
+                                      padding: '15px', 
+                                      marginBottom: '15px',
+                                      backgroundColor: '#f9f9f9'
+                                    }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                        <strong style={{ fontSize: '16px' }}>{image?.friendly_name || `Image ${index + 1}`}</strong>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedImages(selectedImages.filter(id => id !== item.imageId));
+                                            setScheduleItems(scheduleItems.filter(i => i.imageId !== item.imageId));
+                                          }}
+                                          style={{ 
+                                            padding: '4px 8px', 
+                                            backgroundColor: '#f44336', 
+                                            color: 'white', 
+                                            border: 'none', 
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            fontSize: '12px'
+                                          }}
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                      
+                                      <div style={{ marginBottom: '10px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Date & Time *</label>
+                                        <input
+                                          type="datetime-local"
+                                          value={item.dateTime}
+                                          onChange={(e) => {
+                                            const newItems = [...scheduleItems];
+                                            const itemIndex = newItems.findIndex(i => i.imageId === item.imageId);
+                                            if (itemIndex >= 0) {
+                                              newItems[itemIndex].dateTime = e.target.value;
+                                              setScheduleItems(newItems);
+                                            }
+                                          }}
+                                          required
+                                          style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                                        />
+                                      </div>
+                                      
+                                      <div style={{ marginBottom: '10px' }}>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Description</label>
+                                        <textarea
+                                          value={item.description}
+                                          onChange={(e) => {
+                                            const newItems = [...scheduleItems];
+                                            const itemIndex = newItems.findIndex(i => i.imageId === item.imageId);
+                                            if (itemIndex >= 0) {
+                                              newItems[itemIndex].description = e.target.value;
+                                              setScheduleItems(newItems);
+                                            }
+                                          }}
+                                          rows={3}
+                                          style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                                          placeholder="Post description for this image..."
+                                        />
+                                      </div>
+                                      
+                                      <div>
+                                        <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: '500' }}>Twitter Description (optional)</label>
+                                        <textarea
+                                          value={item.twitterDescription}
+                                          onChange={(e) => {
+                                            const newItems = [...scheduleItems];
+                                            const itemIndex = newItems.findIndex(i => i.imageId === item.imageId);
+                                            if (itemIndex >= 0) {
+                                              newItems[itemIndex].twitterDescription = e.target.value;
+                                              setScheduleItems(newItems);
+                                            }
+                                          }}
+                                          rows={2}
+                                          style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                                          placeholder="Twitter-specific description (280 char limit)..."
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                            </>
+                          )}
+                          
+                          {selectedImages.length === 0 && (
+                            <small style={{ color: '#666', display: 'block', marginTop: '10px' }}>
+                              Select images above to configure their individual schedules
+                            </small>
                           )}
                         </>
                       )}
                     </>
                   )}
-                </div>
-              )}
-
-              <div className="form-group">
-                <label htmlFor="scheduleType">Schedule Type *</label>
-                <select
-                  id="scheduleType"
-                  value={scheduleType}
-                  onChange={(e) => {
-                    const newType = Number(e.target.value);
-                    setScheduleType(newType);
-                    // Clear image selections when switching types
-                    if (newType === SCHEDULE_TYPE_ROTATION) {
-                      setSelectedImage(null);
-                      setSelectedImages([]);
-                      setScheduleItems([]);
-                    } else if (newType === SCHEDULE_TYPE_MULTIPLE) {
-                      setSelectedImage(null);
-                      // Keep selectedImages but reset scheduleItems
-                      setScheduleItems([]);
-                    } else {
-                      setSelectedImages([]);
-                      setScheduleItems([]);
-                    }
-                  }}
-                  required
-                >
-                  <option value={SCHEDULE_TYPE_ROTATION}>All Images (Daily Rotation)</option>
-                  <option value={SCHEDULE_TYPE_ONCE}>One Image</option>
-                  <option value={SCHEDULE_TYPE_MULTIPLE}>Multiple Images (Separate Posts)</option>
-                  <option value={SCHEDULE_TYPE_ANNUALLY}>Annually - Single Image</option>
-                </select>
-              </div>
-
-              {scheduleType === SCHEDULE_TYPE_ROTATION && (
-                <div className="form-group">
-                  <label>Days of Week (leave empty for daily)</label>
-                  <div className="checkbox-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                    {[
-                      { value: 0, label: 'Sun' },
-                      { value: 1, label: 'Mon' },
-                      { value: 2, label: 'Tue' },
-                      { value: 3, label: 'Wed' },
-                      { value: 4, label: 'Thu' },
-                      { value: 5, label: 'Fri' },
-                      { value: 6, label: 'Sat' }
-                    ].map((day) => (
-                      <label key={day.value} className="checkbox-label" style={{ marginRight: '10px' }}>
-                        <input
-                          type="checkbox"
-                          checked={selectedDays.includes(day.value)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedDays([...selectedDays, day.value]);
-                            } else {
-                              setSelectedDays(selectedDays.filter(d => d !== day.value));
-                            }
-                          }}
-                        />
-                        <span>{day.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {selectedDays.length === 0 && (
-                    <small style={{ color: '#666', display: 'block', marginTop: '5px' }}>
-                      No days selected = posts daily at the specified time
-                    </small>
-                  )}
-                </div>
-              )}
-
-              {scheduleType !== SCHEDULE_TYPE_MULTIPLE && (
-                <div className="form-group">
-                  <label htmlFor="dateTime">Date & Time *</label>
-                  <input
-                    id="dateTime"
-                    type="datetime-local"
-                    value={dateTime}
-                    onChange={(e) => setDateTime(e.target.value)}
-                    required
-                  />
                 </div>
               )}
 
