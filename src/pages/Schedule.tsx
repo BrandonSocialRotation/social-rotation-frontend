@@ -350,20 +350,6 @@ export default function Schedule() {
     }
   };
 
-  const getScheduleTypeName = (type: number) => {
-    switch (type) {
-      case SCHEDULE_TYPE_ROTATION:
-        return 'Rotation';
-      case SCHEDULE_TYPE_ONCE:
-        return 'Once';
-      case SCHEDULE_TYPE_ANNUALLY:
-        return 'Annually';
-      case SCHEDULE_TYPE_MULTIPLE:
-        return 'Multiple Images';
-      default:
-        return 'Scheduled';
-    }
-  };
 
   const getPlatformNames = (postTo: number) => {
     const platforms = [];
