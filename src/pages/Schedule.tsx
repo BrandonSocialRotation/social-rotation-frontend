@@ -353,15 +353,15 @@ export default function Schedule() {
   const getScheduleTypeName = (type: number) => {
     switch (type) {
       case SCHEDULE_TYPE_ROTATION:
-        return 'All Images';
+        return 'Rotation';
       case SCHEDULE_TYPE_ONCE:
-        return 'One Image';
+        return 'Once';
       case SCHEDULE_TYPE_ANNUALLY:
         return 'Annually';
       case SCHEDULE_TYPE_MULTIPLE:
         return 'Multiple Images';
       default:
-        return 'Unknown';
+        return 'Scheduled';
     }
   };
 
@@ -384,26 +384,22 @@ export default function Schedule() {
     if (parts.length !== 5) return schedule; // Return as-is if invalid format
     
     const [minute, hour, day, month] = parts;
+    const hourNum = parseInt(hour);
+    const minNum = parseInt(minute);
+    const period = hourNum >= 12 ? 'PM' : 'AM';
+    const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
     
     if (scheduleType === SCHEDULE_TYPE_ROTATION) {
       // Daily rotation - show time only
-      const hourNum = parseInt(hour);
-      const minNum = parseInt(minute);
-      const period = hourNum >= 12 ? 'PM' : 'AM';
-      const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
       return `Daily at ${displayHour}:${minNum.toString().padStart(2, '0')} ${period}`;
     } else {
-      // Once or Multiple - show date and time
+      // Once, Multiple, or Annually - show date and time
       const now = new Date();
       const year = now.getFullYear();
       const monthNum = month === '*' ? now.getMonth() + 1 : parseInt(month);
       const dayNum = day === '*' ? now.getDate() : parseInt(day);
-      const hourNum = parseInt(hour);
-      const minNum = parseInt(minute);
       
       const scheduleDate = new Date(year, monthNum - 1, dayNum, hourNum, minNum);
-      const period = hourNum >= 12 ? 'PM' : 'AM';
-      const displayHour = hourNum > 12 ? hourNum - 12 : (hourNum === 0 ? 12 : hourNum);
       
       return scheduleDate.toLocaleDateString('en-US', { 
         month: 'short', 
