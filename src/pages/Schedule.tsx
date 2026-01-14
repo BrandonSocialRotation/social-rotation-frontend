@@ -18,6 +18,19 @@ interface BucketImage {
   };
 }
 
+interface ScheduleItem {
+  id: number;
+  bucket_image_id: number;
+  schedule: string;
+  description: string;
+  twitter_description: string;
+  position: number;
+  bucket_image?: {
+    id: number;
+    friendly_name: string;
+  };
+}
+
 interface BucketSchedule {
   id: number;
   bucket_id: number;
@@ -33,6 +46,7 @@ interface BucketSchedule {
   updated_at: string;
   bucket_name?: string;
   name?: string;
+  schedule_items?: ScheduleItem[];
 }
 
 // Schedule types
@@ -540,6 +554,32 @@ export default function Schedule() {
                   <div className="info-row">
                     <span className="label">Description:</span>
                     <span className="value">{schedule.description}</span>
+                  </div>
+                )}
+                {schedule.schedule_items && schedule.schedule_items.length > 0 && (
+                  <div className="info-row">
+                    <span className="label">Scheduled Images:</span>
+                    <div style={{ marginTop: '5px' }}>
+                      {schedule.schedule_items.map((item: any, idx: number) => (
+                        <div key={item.id || idx} style={{ 
+                          marginBottom: '8px', 
+                          padding: '8px', 
+                          backgroundColor: '#f5f5f5', 
+                          borderRadius: '4px',
+                          fontSize: '13px'
+                        }}>
+                          <strong>{item.bucket_image?.friendly_name || `Image ${idx + 1}`}</strong>
+                          <div style={{ color: '#666', marginTop: '4px' }}>
+                            {getScheduledDateTime(item.schedule, SCHEDULE_TYPE_ONCE)}
+                          </div>
+                          {item.description && (
+                            <div style={{ color: '#666', marginTop: '4px', fontSize: '12px' }}>
+                              {item.description}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
                 <div className="info-row">
