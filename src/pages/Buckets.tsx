@@ -225,9 +225,72 @@ function Buckets() {
         </button>
       </div>
 
+      {/* User's Own Buckets Section */}
+      <div className="buckets-section">
+        <h2 className="section-title">Your Buckets</h2>
+        {buckets.length === 0 ? (
+          <div className="empty-state">
+            <p>No buckets yet. Create your first bucket to get started!</p>
+          </div>
+        ) : (
+          <div className="buckets-grid">
+            {buckets.map((bucket) => (
+              <div key={bucket.id} className="bucket-card">
+                <div className="bucket-header">
+                  <h3>{bucket.name}</h3>
+                  <button
+                    onClick={() => handleDelete(bucket.id, bucket.name, false)}
+                    className="delete-btn"
+                    title="Delete bucket"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6"/>
+                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                  </button>
+                </div>
+                
+                {bucket.description && (
+                  <p className="bucket-description">{bucket.description}</p>
+                )}
+                
+                <div className="bucket-stats">
+                  <div className="stat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.25rem'}}>
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <circle cx="8.5" cy="8.5" r="1.5"/>
+                      <polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    <span className="stat-value">{bucket.images_count}</span>
+                    <span className="stat-label">Images</span>
+                  </div>
+                  <div className="stat">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.25rem'}}>
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span className="stat-value">{bucket.schedules_count}</span>
+                    <span className="stat-label">Schedules</span>
+                  </div>
+                </div>
+                
+                <div className="bucket-footer">
+                  <button 
+                    className="view-btn"
+                    onClick={() => navigate(`/buckets/${bucket.id}/images`)}
+                  >
+                    View Images →
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Global Buckets Section (visible to all users) */}
       {globalBuckets.length > 0 && (
-        <div className="buckets-section">
+        <div className="buckets-section" style={{ marginTop: '3rem' }}>
           <h2 className="section-title">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.5rem', verticalAlign: 'middle'}}>
               <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -302,69 +365,6 @@ function Buckets() {
           </div>
         </div>
       )}
-
-      {/* User's Own Buckets Section */}
-      <div className="buckets-section" style={{ marginTop: globalBuckets.length > 0 ? '3rem' : '0' }}>
-        <h2 className="section-title">Your Buckets</h2>
-        {buckets.length === 0 ? (
-          <div className="empty-state">
-            <p>No buckets yet. Create your first bucket to get started!</p>
-          </div>
-        ) : (
-          <div className="buckets-grid">
-            {buckets.map((bucket) => (
-              <div key={bucket.id} className="bucket-card">
-                <div className="bucket-header">
-                  <h3>{bucket.name}</h3>
-                  <button
-                    onClick={() => handleDelete(bucket.id, bucket.name, false)}
-                    className="delete-btn"
-                    title="Delete bucket"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3 6 5 6 21 6"/>
-                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                    </svg>
-                  </button>
-                </div>
-                
-                {bucket.description && (
-                  <p className="bucket-description">{bucket.description}</p>
-                )}
-                
-                <div className="bucket-stats">
-                  <div className="stat">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.25rem'}}>
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                      <circle cx="8.5" cy="8.5" r="1.5"/>
-                      <polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                    <span className="stat-value">{bucket.images_count}</span>
-                    <span className="stat-label">Images</span>
-                  </div>
-                  <div className="stat">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.25rem'}}>
-                      <circle cx="12" cy="12" r="10"/>
-                      <polyline points="12 6 12 12 16 14"/>
-                    </svg>
-                    <span className="stat-value">{bucket.schedules_count}</span>
-                    <span className="stat-label">Schedules</span>
-                  </div>
-                </div>
-                
-                <div className="bucket-footer">
-                  <button 
-                    className="view-btn"
-                    onClick={() => navigate(`/buckets/${bucket.id}/images`)}
-                  >
-                    View Images →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
 
       {/* Create Bucket Modal */}
       {showCreateModal && (
