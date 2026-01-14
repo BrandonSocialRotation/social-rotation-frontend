@@ -233,7 +233,7 @@ export default function Schedule() {
     return postTo;
   };
 
-  const generateCronString = (dateTimeStr?: string, days?: number[]) => {
+  const generateCronString = (dateTimeStr?: string, days?: number[], type?: number) => {
     // Use provided dateTime or default to state
     const dt = dateTimeStr || dateTime;
     const dateTimeObj = new Date(dt);
@@ -242,8 +242,9 @@ export default function Schedule() {
     const day = dateTimeObj.getDate();
     const month = dateTimeObj.getMonth() + 1;
     const daysToUse = days || selectedDays;
+    const scheduleTypeToUse = type !== undefined ? type : scheduleType;
     
-    if (scheduleType === SCHEDULE_TYPE_ROTATION) {
+    if (scheduleTypeToUse === SCHEDULE_TYPE_ROTATION) {
       // Daily at specified time, or specific days of week
       if (daysToUse.length > 0) {
         // Specific days of week (0=Sunday, 1=Monday, etc.)
@@ -253,7 +254,7 @@ export default function Schedule() {
         // Daily (all days)
         return `${minute} ${hour} * * *`;
       }
-    } else if (scheduleType === SCHEDULE_TYPE_ONCE || scheduleType === SCHEDULE_TYPE_MULTIPLE) {
+    } else if (scheduleTypeToUse === SCHEDULE_TYPE_ONCE || scheduleTypeToUse === SCHEDULE_TYPE_MULTIPLE) {
       // Once at specified date and time
       return `${minute} ${hour} ${day} ${month} *`;
     } else {
@@ -289,7 +290,7 @@ export default function Schedule() {
       return;
     }
 
-    const cronString = generateCronString();
+    const cronString = generateCronString(undefined, selectedDays.length > 0 ? selectedDays : undefined);
 
     const scheduleData: any = {
       bucket_id: selectedBucket,
@@ -355,14 +356,21 @@ export default function Schedule() {
 
     // For multiple images, create one schedule with multiple schedule_items
     if (scheduleType === SCHEDULE_TYPE_MULTIPLE && scheduleItems.length > 0) {
+      // Validate all items have image and time
+      const invalidItems = scheduleItems.filter(item => !item.imageId || !item.dateTime);
+      if (invalidItems.length > 0) {
+        setError('Please ensure all schedule items have an image and date/time selected');
+        return;
+      }
+      
       // Create one schedule with multiple items
       const scheduleWithItems = {
         ...scheduleData,
         schedule_type: SCHEDULE_TYPE_MULTIPLE,
-        schedule: scheduleItems[0]?.dateTime ? generateCronString(scheduleItems[0].dateTime) : generateCronString(), // Use first item's time as base schedule
+        schedule: generateCronString(scheduleItems[0].dateTime, undefined, SCHEDULE_TYPE_MULTIPLE), // Use first item's time as base schedule
         schedule_items: scheduleItems.map((item) => ({
           bucket_image_id: item.imageId,
-          schedule: generateCronString(item.dateTime),
+          schedule: generateCronString(item.dateTime, undefined, SCHEDULE_TYPE_MULTIPLE),
           description: item.description || '',
           twitter_description: item.twitterDescription || item.description || ''
         }))
