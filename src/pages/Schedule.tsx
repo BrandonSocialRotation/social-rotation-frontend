@@ -190,6 +190,7 @@ export default function Schedule() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bucket_schedules'] });
+      setShowCreateModal(false);
       setEditingSchedule(null);
       resetForm();
     },
@@ -248,19 +249,27 @@ export default function Schedule() {
   };
 
   const generateCronString = (dateTimeStr: string) => {
-    // Parse dateTime (format: YYYY-MM-DDTHH:mm)
-    // The datetime-local input gives us local time, but we need to convert to UTC
-    // because the server uses UTC time for cron matching
-    const dateTimeObj = new Date(dateTimeStr);
+    // Parse dateTime (format: YYYY-MM-DDTHH:mm from datetime-local input)
+    // datetime-local gives us local time without timezone info
+    // We need to explicitly parse it as local time, then convert to UTC
     
-    // Convert to UTC for server-side cron matching
-    const minute = dateTimeObj.getUTCMinutes();
-    const hour = dateTimeObj.getUTCHours();
-    const day = dateTimeObj.getUTCDate();
-    const month = dateTimeObj.getUTCMonth() + 1;
+    // Parse the string manually to avoid timezone interpretation issues
+    const [datePart, timePart] = dateTimeStr.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+    
+    // Create a Date object in LOCAL timezone (this represents what the user selected)
+    // Using the Date constructor with local time parameters
+    const localDate = new Date(year, month - 1, day, hour, minute, 0, 0);
+    
+    // Now convert to UTC for server-side cron matching
+    const utcMinute = localDate.getUTCMinutes();
+    const utcHour = localDate.getUTCHours();
+    const utcDay = localDate.getUTCDate();
+    const utcMonth = localDate.getUTCMonth() + 1;
     
     // Always use specific date and time for multiple images (in UTC)
-    return `${minute} ${hour} ${day} ${month} *`;
+    return `${utcMinute} ${utcHour} ${utcDay} ${utcMonth} *`;
   };
 
   const handleCreate = (e: React.FormEvent) => {
