@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { toZonedTime, fromZonedTime, format } from 'date-fns-tz';
 import api from '../services/api';
 import './Schedule.css';
 
@@ -96,17 +95,8 @@ export default function Schedule() {
   
   const [error, setError] = useState('');
 
-  // Fetch user info to get timezone
-  const { data: userInfo } = useQuery({
-    queryKey: ['user_info'],
-    queryFn: async () => {
-      const response = await api.get('/user_info');
-      return response.data.user as { timezone?: string };
-    },
-  });
-
-  // Use user's timezone from profile, fallback to browser timezone
-  const userTimezone = userInfo?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // Note: datetime-local input always uses browser's local timezone
+  // This is the most reliable approach - what you see is what you get
 
   // Fetch bucket images when bucket is selected
   const { data: bucketImagesData, isLoading: imagesLoading } = useQuery({
@@ -263,8 +253,8 @@ export default function Schedule() {
 
   const generateCronString = (dateTimeStr: string) => {
     // Parse dateTime (format: YYYY-MM-DDTHH:mm from datetime-local input)
-    // datetime-local input gives time in browser's timezone, but we interpret it as user's timezone
-    // Then convert to UTC for server-side cron matching
+    // datetime-local input always gives time in browser's local timezone
+    // We convert browser local time -> UTC for server-side cron matching
     
     try {
       // Parse the string manually
@@ -279,20 +269,14 @@ export default function Schedule() {
         return `${now.getUTCMinutes()} ${now.getUTCHours()} ${now.getUTCDate()} ${now.getUTCMonth() + 1} *`;
       }
       
-      // Ensure userTimezone is valid
-      const tz = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+      // Create a Date object in browser's local timezone (what datetime-local gives us)
+      const localDate = new Date(year, month - 1, day, hour, minute, 0, 0);
       
-      // Create a date object representing the time in user's timezone
-      const dateInUserTz = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
-      
-      // Convert to UTC by treating it as if it were in the user's timezone
-      const utcDate = fromZonedTime(dateInUserTz, tz);
-      
-      // Extract UTC components for cron string
-      const utcMinute = utcDate.getUTCMinutes();
-      const utcHour = utcDate.getUTCHours();
-      const utcDay = utcDate.getUTCDate();
-      const utcMonth = utcDate.getUTCMonth() + 1;
+      // Convert to UTC for server-side cron matching
+      const utcMinute = localDate.getUTCMinutes();
+      const utcHour = localDate.getUTCHours();
+      const utcDay = localDate.getUTCDate();
+      const utcMonth = localDate.getUTCMonth() + 1;
       
       // Always use specific date and time for multiple images (in UTC)
       return `${utcMinute} ${utcHour} ${utcDay} ${utcMonth} *`;
@@ -462,14 +446,15 @@ export default function Schedule() {
           // Create a Date object in UTC (since cron string is in UTC)
           const utcDate = new Date(Date.UTC(year, monthNum - 1, dayNum, hourNum, minNum, 0, 0));
           
-          // Ensure userTimezone is valid
-          const tz = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+          // Convert UTC back to browser's local timezone for datetime-local input
+          // datetime-local always works in browser timezone
+          const localYear = utcDate.getFullYear();
+          const localMonth = String(utcDate.getMonth() + 1).padStart(2, '0');
+          const localDay = String(utcDate.getDate()).padStart(2, '0');
+          const localHour = String(utcDate.getHours()).padStart(2, '0');
+          const localMinute = String(utcDate.getMinutes()).padStart(2, '0');
           
-          // Convert UTC to user's timezone
-          const dateInUserTz = toZonedTime(utcDate, tz);
-          
-          // Format for datetime-local input (YYYY-MM-DDTHH:mm)
-          const dateTimeStr = format(dateInUserTz, "yyyy-MM-dd'T'HH:mm", { timeZone: tz });
+          const dateTimeStr = `${localYear}-${localMonth}-${localDay}T${localHour}:${localMinute}`;
           
           return {
             imageId: item.bucket_image_id,
