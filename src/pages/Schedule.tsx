@@ -416,7 +416,7 @@ export default function Schedule() {
       
       // Convert schedule items to the format used in the form
       const items = schedule.schedule_items.map(item => {
-        // Parse cron string to datetime-local format
+        // Parse cron string (UTC) to datetime-local format (local time)
         const parts = item.schedule.split(' ');
         if (parts.length === 5) {
           const [minute, hour, day, month] = parts;
@@ -427,9 +427,17 @@ export default function Schedule() {
           const hourNum = hour === '*' ? 12 : parseInt(hour);
           const minNum = minute === '*' ? 0 : parseInt(minute);
           
-          // Create date in local timezone
-          const date = new Date(year, monthNum - 1, dayNum, hourNum, minNum);
-          const dateTimeStr = date.toISOString().slice(0, 16);
+          // Create a Date object in UTC (since cron string is in UTC)
+          const utcDate = new Date(Date.UTC(year, monthNum - 1, dayNum, hourNum, minNum, 0, 0));
+          
+          // Convert to local time for display in datetime-local format
+          const localYear = utcDate.getFullYear();
+          const localMonth = String(utcDate.getMonth() + 1).padStart(2, '0');
+          const localDay = String(utcDate.getDate()).padStart(2, '0');
+          const localHour = String(utcDate.getHours()).padStart(2, '0');
+          const localMinute = String(utcDate.getMinutes()).padStart(2, '0');
+          
+          const dateTimeStr = `${localYear}-${localMonth}-${localDay}T${localHour}:${localMinute}`;
           
           return {
             imageId: item.bucket_image_id,
@@ -440,10 +448,12 @@ export default function Schedule() {
         }
         // Fallback if cron parsing fails
         const now = new Date();
-        now.setHours(12, 0, 0, 0);
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
         return {
           imageId: item.bucket_image_id,
-          dateTime: now.toISOString().slice(0, 16),
+          dateTime: `${year}-${month}-${day}T12:00`,
           description: item.description || '',
           twitterDescription: item.twitter_description || ''
         };
