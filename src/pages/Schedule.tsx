@@ -46,6 +46,8 @@ interface BucketSchedule {
   updated_at: string;
   bucket_name?: string;
   name?: string;
+  facebook_page_id?: string;
+  linkedin_organization_urn?: string;
   schedule_items?: ScheduleItem[];
 }
 
@@ -65,6 +67,7 @@ const PLATFORMS = {
 export default function Schedule() {
   const queryClient = useQueryClient();
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<BucketSchedule | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
   const [selectedImages, setSelectedImages] = useState<number[]>([]); // Selected images from bucket
   const [scheduleName, setScheduleName] = useState('');
@@ -163,6 +166,7 @@ export default function Schedule() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bucket_schedules'] });
       setShowCreateModal(false);
+      setEditingSchedule(null);
       resetForm();
     },
     onError: (err: any) => {
@@ -176,6 +180,22 @@ export default function Schedule() {
     mutationFn: (id: number) => api.delete(`/bucket_schedules/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bucket_schedules'] });
+    },
+  });
+
+  // Update schedule mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return await api.patch(`/bucket_schedules/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['bucket_schedules'] });
+      setEditingSchedule(null);
+      resetForm();
+    },
+    onError: (err: any) => {
+      const errorMessage = err.response?.data?.message || err.response?.data?.error || err.response?.data?.errors?.join(', ') || 'Failed to update schedule';
+      setError(errorMessage);
     },
   });
 
@@ -193,6 +213,7 @@ export default function Schedule() {
   });
 
   const resetForm = () => {
+    setEditingSchedule(null);
     setSelectedBucket(null);
     setSelectedImages([]);
     setScheduleItems([]);
@@ -351,6 +372,153 @@ export default function Schedule() {
     }
   };
 
+  const handleEdit = (schedule: BucketSchedule) => {
+    setEditingSchedule(schedule);
+    setSelectedBucket(schedule.bucket_id);
+    setScheduleName(schedule.name || '');
+    
+    // Set platforms based on post_to flags
+    setFacebook((schedule.post_to & PLATFORMS.FACEBOOK) !== 0);
+    setTwitter((schedule.post_to & PLATFORMS.TWITTER) !== 0);
+    setInstagram((schedule.post_to & PLATFORMS.INSTAGRAM) !== 0);
+    setLinkedin((schedule.post_to & PLATFORMS.LINKEDIN) !== 0);
+    setGmb((schedule.post_to & PLATFORMS.GMB) !== 0);
+    setPinterest((schedule.post_to & PLATFORMS.PINTEREST) !== 0);
+    
+    // Set Facebook page and LinkedIn organization if they exist
+    if (schedule.facebook_page_id) {
+      setSelectedFacebookPage(schedule.facebook_page_id);
+      // If Instagram is enabled, find the Instagram account for this page
+      if ((schedule.post_to & PLATFORMS.INSTAGRAM) !== 0 && facebookPagesData) {
+        const page = facebookPagesData.find(p => p.id === schedule.facebook_page_id);
+        if (page?.instagram_account) {
+          setSelectedInstagramAccount(page.instagram_account.id);
+        }
+      }
+    }
+    if (schedule.linkedin_organization_urn) {
+      setSelectedLinkedInOrg(schedule.linkedin_organization_urn);
+    }
+    
+    // Load schedule items if they exist
+    if (schedule.schedule_items && schedule.schedule_items.length > 0) {
+      const imageIds = schedule.schedule_items.map(item => item.bucket_image_id);
+      setSelectedImages(imageIds);
+      
+      // Convert schedule items to the format used in the form
+      const items = schedule.schedule_items.map(item => {
+        // Parse cron string to datetime-local format
+        const parts = item.schedule.split(' ');
+        if (parts.length === 5) {
+          const [minute, hour, day, month] = parts;
+          const now = new Date();
+          const year = now.getFullYear();
+          const monthNum = month === '*' ? now.getMonth() + 1 : parseInt(month);
+          const dayNum = day === '*' ? now.getDate() : parseInt(day);
+          const hourNum = hour === '*' ? 12 : parseInt(hour);
+          const minNum = minute === '*' ? 0 : parseInt(minute);
+          
+          // Create date in local timezone
+          const date = new Date(year, monthNum - 1, dayNum, hourNum, minNum);
+          const dateTimeStr = date.toISOString().slice(0, 16);
+          
+          return {
+            imageId: item.bucket_image_id,
+            dateTime: dateTimeStr,
+            description: item.description || '',
+            twitterDescription: item.twitter_description || ''
+          };
+        }
+        // Fallback if cron parsing fails
+        const now = new Date();
+        now.setHours(12, 0, 0, 0);
+        return {
+          imageId: item.bucket_image_id,
+          dateTime: now.toISOString().slice(0, 16),
+          description: item.description || '',
+          twitterDescription: item.twitter_description || ''
+        };
+      });
+      setScheduleItems(items);
+    } else {
+      // Legacy schedule - no schedule_items
+      setSelectedImages(schedule.bucket_image_id ? [schedule.bucket_image_id] : []);
+      setScheduleItems([]);
+    }
+    
+    setShowCreateModal(true);
+  };
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingSchedule) return;
+    
+    setError('');
+
+    if (!selectedBucket) {
+      setError('Please select a bucket');
+      return;
+    }
+
+    // Require at least one schedule item
+    if (scheduleItems.length === 0) {
+      setError('Please select at least one image and configure its schedule');
+      return;
+    }
+
+    // Validate all items have image and time
+    const invalidItems = scheduleItems.filter(item => !item.imageId || !item.dateTime);
+    if (invalidItems.length > 0) {
+      setError('Please ensure all selected images have a date and time configured');
+      return;
+    }
+
+    const postTo = calculatePostTo();
+    if (postTo === 0) {
+      setError('Please select at least one social media platform');
+      return;
+    }
+
+    // Create update data
+    const scheduleData: any = {
+      bucket_id: selectedBucket,
+      schedule: generateCronString(scheduleItems[0].dateTime), // Use first item's time as base schedule
+      schedule_type: SCHEDULE_TYPE_MULTIPLE,
+      post_to: postTo,
+      name: scheduleName || `Schedule ${new Date().toLocaleDateString()}`,
+      description: '',
+      twitter_description: '',
+      schedule_items: scheduleItems.map((item) => ({
+        id: editingSchedule.schedule_items?.find(si => si.bucket_image_id === item.imageId)?.id, // Preserve existing IDs
+        bucket_image_id: item.imageId,
+        schedule: generateCronString(item.dateTime),
+        description: item.description || '',
+        twitter_description: item.twitterDescription || item.description || ''
+      }))
+    };
+
+    // Include page/organization selections
+    if (facebook && selectedFacebookPage) {
+      scheduleData.facebook_page_id = selectedFacebookPage;
+    }
+    
+    if (linkedin && selectedLinkedInOrg) {
+      scheduleData.linkedin_organization_urn = selectedLinkedInOrg;
+    }
+    
+    if (instagram && selectedInstagramAccount) {
+      const pageWithInstagram = facebookPagesData?.find(p => p.instagram_account?.id === selectedInstagramAccount);
+      if (pageWithInstagram) {
+        scheduleData.facebook_page_id = pageWithInstagram.id;
+      }
+    }
+
+    updateMutation.mutate({
+      id: editingSchedule.id,
+      data: { bucket_schedule: scheduleData }
+    });
+  };
+
 
   const getPlatformNames = (postTo: number) => {
     const platforms = [];
@@ -441,6 +609,16 @@ export default function Schedule() {
                 </div>
                 <div className="schedule-actions">
                   <button
+                    onClick={() => handleEdit(schedule)}
+                    className="edit-btn"
+                    title="Edit schedule"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button
                     onClick={() => handlePostNow(schedule.id)}
                     className="post-now-btn"
                     title="Post now"
@@ -515,13 +693,13 @@ export default function Schedule() {
         </div>
       )}
 
-      {/* Create Schedule Modal */}
+      {/* Create/Edit Schedule Modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
+        <div className="modal-overlay" onClick={() => { setShowCreateModal(false); setEditingSchedule(null); resetForm(); }}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>Create New Schedule</h2>
-              <button onClick={() => setShowCreateModal(false)} className="close-btn">
+              <h2>{editingSchedule ? 'Edit Schedule' : 'Create New Schedule'}</h2>
+              <button onClick={() => { setShowCreateModal(false); setEditingSchedule(null); resetForm(); }} className="close-btn">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <line x1="18" y1="6" x2="6" y2="18"></line>
                   <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -531,7 +709,7 @@ export default function Schedule() {
 
             {error && <div className="error-message">{error}</div>}
 
-            <form onSubmit={handleCreate}>
+            <form onSubmit={editingSchedule ? handleUpdate : handleCreate}>
               <div className="form-group">
                 <label htmlFor="scheduleName">Schedule Name *</label>
                 <input
@@ -858,11 +1036,14 @@ export default function Schedule() {
 
 
               <div className="modal-actions">
-                <button type="button" onClick={() => setShowCreateModal(false)} className="cancel-btn">
+                <button type="button" onClick={() => { setShowCreateModal(false); setEditingSchedule(null); resetForm(); }} className="cancel-btn">
                   Cancel
                 </button>
-                <button type="submit" disabled={createMutation.isPending} className="submit-btn">
-                  {createMutation.isPending ? 'Creating...' : 'Create Schedule'}
+                <button type="submit" disabled={editingSchedule ? updateMutation.isPending : createMutation.isPending} className="submit-btn">
+                  {editingSchedule 
+                    ? (updateMutation.isPending ? 'Updating...' : 'Update Schedule')
+                    : (createMutation.isPending ? 'Creating...' : 'Create Schedule')
+                  }
                 </button>
               </div>
             </form>
