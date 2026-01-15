@@ -9,30 +9,6 @@ static_sites:
   output_dir: dist
   environment_slug: node-js
   catchall_document: index.html
-  routes:
-  - path: /
-  - path: /dashboard
-    catchall_document: index.html
-  - path: /login
-    catchall_document: index.html
-  - path: /register
-    catchall_document: index.html
-  - path: /buckets
-    catchall_document: index.html
-  - path: /schedule
-    catchall_document: index.html
-  - path: /profile
-    catchall_document: index.html
-  - path: /sub-accounts
-    catchall_document: index.html
-  - path: /rss-feeds
-    catchall_document: index.html
-  - path: /terms-of-service
-    catchall_document: index.html
-  - path: /privacy-policy
-    catchall_document: index.html
-  - path: /oauth/callback
-    catchall_document: index.html
   envs:
   - key: VITE_API_BASE_URL
     value: https://new-social-rotation-backend-qzyk8.ondigitalocean.app/api/v1
