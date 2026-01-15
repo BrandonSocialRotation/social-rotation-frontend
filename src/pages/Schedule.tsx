@@ -266,25 +266,17 @@ export default function Schedule() {
       if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
         console.error('Invalid date/time values');
         const now = new Date();
-        return `${now.getUTCMinutes()} ${now.getUTCHours()} ${now.getUTCDate()} ${now.getUTCMonth() + 1} *`;
+        return `${now.getMinutes()} ${now.getHours()} ${now.getDate()} ${now.getMonth() + 1} *`;
       }
       
-      // Create a Date object in browser's local timezone (what datetime-local gives us)
-      const localDate = new Date(year, month - 1, day, hour, minute, 0, 0);
-      
-      // Convert to UTC for server-side cron matching
-      const utcMinute = localDate.getUTCMinutes();
-      const utcHour = localDate.getUTCHours();
-      const utcDay = localDate.getUTCDate();
-      const utcMonth = localDate.getUTCMonth() + 1;
-      
-      // Always use specific date and time for multiple images (in UTC)
-      return `${utcMinute} ${utcHour} ${utcDay} ${utcMonth} *`;
+      // NO CONVERSION - Store EXACTLY as user entered it
+      // Backend will check against user's timezone
+      return `${minute} ${hour} ${day} ${month} *`;
     } catch (error) {
       console.error('Error in generateCronString:', error);
-      // Fallback to current time if conversion fails
+      // Fallback to current time (local, not UTC)
       const now = new Date();
-      return `${now.getUTCMinutes()} ${now.getUTCHours()} ${now.getUTCDate()} ${now.getUTCMonth() + 1} *`;
+      return `${now.getMinutes()} ${now.getHours()} ${now.getDate()} ${now.getMonth() + 1} *`;
     }
   };
 
@@ -443,18 +435,9 @@ export default function Schedule() {
           const hourNum = hour === '*' ? 12 : parseInt(hour);
           const minNum = minute === '*' ? 0 : parseInt(minute);
           
-          // Create a Date object in UTC (since cron string is in UTC)
-          const utcDate = new Date(Date.UTC(year, monthNum - 1, dayNum, hourNum, minNum, 0, 0));
-          
-          // Convert UTC back to browser's local timezone for datetime-local input
-          // datetime-local always works in browser timezone
-          const localYear = utcDate.getFullYear();
-          const localMonth = String(utcDate.getMonth() + 1).padStart(2, '0');
-          const localDay = String(utcDate.getDate()).padStart(2, '0');
-          const localHour = String(utcDate.getHours()).padStart(2, '0');
-          const localMinute = String(utcDate.getMinutes()).padStart(2, '0');
-          
-          const dateTimeStr = `${localYear}-${localMonth}-${localDay}T${localHour}:${localMinute}`;
+          // NO CONVERSION - Display time exactly as stored
+          // Cron string stores time in user's timezone, display as-is
+          const dateTimeStr = `${year}-${String(monthNum).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}T${String(hourNum).padStart(2, '0')}:${String(minNum).padStart(2, '0')}`;
           
           return {
             imageId: item.bucket_image_id,
