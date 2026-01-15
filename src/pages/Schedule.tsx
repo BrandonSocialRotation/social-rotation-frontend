@@ -594,13 +594,36 @@ export default function Schedule() {
     <div className="schedule-page">
       <div className="page-header">
         <h1>Schedules</h1>
-        <button onClick={() => setShowCreateModal(true)} className="create-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Create Schedule
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={async () => {
+              try {
+                const response = await api.post('/scheduler/process_now');
+                alert(`Scheduler triggered!\n\nCheck backend logs to see if any posts were sent.\n\nResponse: ${JSON.stringify(response.data, null, 2)}`);
+                queryClient.invalidateQueries({ queryKey: ['bucket_schedules'] });
+              } catch (err: any) {
+                alert(`Error: ${err.response?.data?.message || err.message}`);
+              }
+            }} 
+            style={{ 
+              padding: '8px 16px', 
+              backgroundColor: '#6c757d', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '4px', 
+              cursor: 'pointer' 
+            }}
+          >
+            Test Scheduler Now
+          </button>
+          <button onClick={() => setShowCreateModal(true)} className="create-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Create Schedule
+          </button>
+        </div>
       </div>
 
       {schedules.length === 0 ? (
