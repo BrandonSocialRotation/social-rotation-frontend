@@ -266,25 +266,42 @@ export default function Schedule() {
     // datetime-local input gives time in browser's timezone, but we interpret it as user's timezone
     // Then convert to UTC for server-side cron matching
     
-    // Parse the string manually
-    const [datePart, timePart] = dateTimeStr.split('T');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const [hour, minute] = timePart.split(':').map(Number);
-    
-    // Create a date object representing the time in user's timezone
-    // The datetime-local input gives us a time, and we interpret it as being in the user's timezone
-    const dateInUserTz = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
-    // Convert to UTC by treating it as if it were in the user's timezone
-    const utcDate = fromZonedTime(dateInUserTz, userTimezone);
-    
-          // Extract UTC components for cron string
-          const utcMinute = utcDate.getUTCMinutes();
-          const utcHour = utcDate.getUTCHours();
-          const utcDay = utcDate.getUTCDate();
-          const utcMonth = utcDate.getUTCMonth() + 1;
-    
-    // Always use specific date and time for multiple images (in UTC)
-    return `${utcMinute} ${utcHour} ${utcDay} ${utcMonth} *`;
+    try {
+      // Parse the string manually
+      const [datePart, timePart] = dateTimeStr.split('T');
+      const [year, month, day] = datePart.split('-').map(Number);
+      const [hour, minute] = timePart.split(':').map(Number);
+      
+      // Validate parsed values
+      if (isNaN(year) || isNaN(month) || isNaN(day) || isNaN(hour) || isNaN(minute)) {
+        console.error('Invalid date/time values');
+        const now = new Date();
+        return `${now.getUTCMinutes()} ${now.getUTCHours()} ${now.getUTCDate()} ${now.getUTCMonth() + 1} *`;
+      }
+      
+      // Ensure userTimezone is valid
+      const tz = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // Create a date object representing the time in user's timezone
+      const dateInUserTz = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
+      
+      // Convert to UTC by treating it as if it were in the user's timezone
+      const utcDate = fromZonedTime(dateInUserTz, tz);
+      
+      // Extract UTC components for cron string
+      const utcMinute = utcDate.getUTCMinutes();
+      const utcHour = utcDate.getUTCHours();
+      const utcDay = utcDate.getUTCDate();
+      const utcMonth = utcDate.getUTCMonth() + 1;
+      
+      // Always use specific date and time for multiple images (in UTC)
+      return `${utcMinute} ${utcHour} ${utcDay} ${utcMonth} *`;
+    } catch (error) {
+      console.error('Error in generateCronString:', error);
+      // Fallback to current time if conversion fails
+      const now = new Date();
+      return `${now.getUTCMinutes()} ${now.getUTCHours()} ${now.getUTCDate()} ${now.getUTCMonth() + 1} *`;
+    }
   };
 
   const handleCreate = (e: React.FormEvent) => {
@@ -445,11 +462,14 @@ export default function Schedule() {
           // Create a Date object in UTC (since cron string is in UTC)
           const utcDate = new Date(Date.UTC(year, monthNum - 1, dayNum, hourNum, minNum, 0, 0));
           
+          // Ensure userTimezone is valid
+          const tz = userTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+          
           // Convert UTC to user's timezone
-          const dateInUserTz = toZonedTime(utcDate, userTimezone);
+          const dateInUserTz = toZonedTime(utcDate, tz);
           
           // Format for datetime-local input (YYYY-MM-DDTHH:mm)
-          const dateTimeStr = format(dateInUserTz, "yyyy-MM-dd'T'HH:mm", { timeZone: userTimezone });
+          const dateTimeStr = format(dateInUserTz, "yyyy-MM-dd'T'HH:mm", { timeZone: tz });
           
           return {
             imageId: item.bucket_image_id,
