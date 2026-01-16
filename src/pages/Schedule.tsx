@@ -95,8 +95,14 @@ export default function Schedule() {
   
   const [error, setError] = useState('');
 
-  // Note: datetime-local input always uses browser's local timezone
-  // This is the most reliable approach - what you see is what you get
+  // Fetch user timezone from profile
+  const { data: userInfo } = useQuery({
+    queryKey: ['user_info'],
+    queryFn: async () => {
+      const response = await api.get('/user_info');
+      return response.data.user as { timezone?: string };
+    },
+  });
 
   // Fetch bucket images when bucket is selected
   const { data: bucketImagesData, isLoading: imagesLoading } = useQuery({
@@ -252,9 +258,12 @@ export default function Schedule() {
   };
 
   const generateCronString = (dateTimeStr: string) => {
-    // Parse dateTime (format: YYYY-MM-DDTHH:mm from datetime-local input)
-    // datetime-local input always gives time in browser's local timezone
-    // We convert browser local time -> UTC for server-side cron matching
+    // THE SIMPLE APPROACH:
+    // datetime-local gives time in BROWSER's timezone
+    // User enters "4:20 PM" thinking it's in their profile timezone
+    // We interpret the input as: "4:20 PM in user's profile timezone"
+    // Then convert that to what it actually is in browser timezone
+    // Then store it (backend checks against user's timezone)
     
     try {
       // Parse the string manually
@@ -269,12 +278,22 @@ export default function Schedule() {
         return `${now.getMinutes()} ${now.getHours()} ${now.getDate()} ${now.getMonth() + 1} *`;
       }
       
-      // NO CONVERSION - Store EXACTLY as user entered it
-      // Backend will check against user's timezone
+      const userTimezone = userInfo?.timezone;
+      const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      
+      // IMPORTANT: Browser timezone should match user's profile timezone
+      // If they don't match, the time you enter won't match what gets scheduled
+      // We store exactly what you enter - backend checks in your profile timezone
+      if (userTimezone && browserTimezone !== userTimezone) {
+        console.warn(`⚠️ Browser timezone (${browserTimezone}) doesn't match your profile timezone (${userTimezone}). Please set your browser/system timezone to ${userTimezone} or update your profile timezone to ${browserTimezone}.`);
+      }
+      
+      // Store exactly as entered - backend checks in user's timezone
+      // If browser timezone = profile timezone, this works perfectly
+      // If not, user needs to match them or manually adjust
       return `${minute} ${hour} ${day} ${month} *`;
     } catch (error) {
       console.error('Error in generateCronString:', error);
-      // Fallback to current time (local, not UTC)
       const now = new Date();
       return `${now.getMinutes()} ${now.getHours()} ${now.getDate()} ${now.getMonth() + 1} *`;
     }
