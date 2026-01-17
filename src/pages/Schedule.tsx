@@ -24,6 +24,7 @@ interface ScheduleItem {
   schedule: string;
   description: string;
   twitter_description: string;
+  timezone?: string;
   position: number;
   bucket_image?: {
     id: number;
@@ -46,6 +47,7 @@ interface BucketSchedule {
   updated_at: string;
   bucket_name?: string;
   name?: string;
+  timezone?: string;
   facebook_page_id?: string;
   linkedin_organization_urn?: string;
   schedule_items?: ScheduleItem[];
@@ -94,6 +96,9 @@ export default function Schedule() {
   const [selectedInstagramAccount, setSelectedInstagramAccount] = useState<string>('');
   
   const [error, setError] = useState('');
+  
+  // Timezone selector - defaults to user's profile timezone
+  const [selectedTimezone, setSelectedTimezone] = useState<string>('');
 
   // Fetch user timezone from profile
   const { data: userInfo } = useQuery({
@@ -103,6 +108,13 @@ export default function Schedule() {
       return response.data.user as { timezone?: string };
     },
   });
+  
+  // Set default timezone when userInfo loads
+  useEffect(() => {
+    if (userInfo?.timezone && !selectedTimezone) {
+      setSelectedTimezone(userInfo.timezone);
+    }
+  }, [userInfo, selectedTimezone]);
 
   // Fetch bucket images when bucket is selected
   const { data: bucketImagesData, isLoading: imagesLoading } = useQuery({
@@ -237,6 +249,7 @@ export default function Schedule() {
     setSelectedFacebookPage('');
     setSelectedLinkedInOrg('');
     setSelectedInstagramAccount('');
+    setSelectedTimezone(userInfo?.timezone || 'UTC');
     setError('');
   };
 
@@ -336,11 +349,13 @@ export default function Schedule() {
       name: scheduleName || `Schedule ${new Date().toLocaleDateString()}`,
       description: '', // No global description for multiple images
       twitter_description: '', // No global description for multiple images
+      timezone: selectedTimezone || userInfo?.timezone || 'UTC',
       schedule_items: scheduleItems.map((item) => ({
         bucket_image_id: item.imageId,
         schedule: generateCronString(item.dateTime),
         description: item.description || '',
-        twitter_description: item.twitterDescription || item.description || ''
+        twitter_description: item.twitterDescription || item.description || '',
+        timezone: selectedTimezone || userInfo?.timezone || 'UTC'
       }))
     };
 
@@ -412,6 +427,7 @@ export default function Schedule() {
     setEditingSchedule(schedule);
     setSelectedBucket(schedule.bucket_id);
     setScheduleName(schedule.name || '');
+    setSelectedTimezone(schedule.timezone || userInfo?.timezone || 'UTC');
     
     // Set platforms based on post_to flags
     setFacebook((schedule.post_to & PLATFORMS.FACEBOOK) !== 0);
@@ -526,12 +542,14 @@ export default function Schedule() {
       name: scheduleName || `Schedule ${new Date().toLocaleDateString()}`,
       description: '',
       twitter_description: '',
+      timezone: selectedTimezone || userInfo?.timezone || 'UTC',
       schedule_items: scheduleItems.map((item) => ({
         id: editingSchedule.schedule_items?.find(si => si.bucket_image_id === item.imageId)?.id, // Preserve existing IDs
         bucket_image_id: item.imageId,
         schedule: generateCronString(item.dateTime),
         description: item.description || '',
-        twitter_description: item.twitterDescription || item.description || ''
+        twitter_description: item.twitterDescription || item.description || '',
+        timezone: selectedTimezone || userInfo?.timezone || 'UTC'
       }))
     };
 
@@ -780,6 +798,23 @@ export default function Schedule() {
                   onChange={(e) => setScheduleName(e.target.value)}
                   required
                 />
+                
+                <label htmlFor="timezone">Timezone *</label>
+                <select
+                  id="timezone"
+                  value={selectedTimezone || userInfo?.timezone || 'UTC'}
+                  onChange={(e) => setSelectedTimezone(e.target.value)}
+                  required
+                >
+                  <option value="UTC">UTC</option>
+                  <option value="America/New_York">Eastern Time</option>
+                  <option value="America/Chicago">Central Time</option>
+                  <option value="America/Denver">Mountain Time</option>
+                  <option value="America/Los_Angeles">Pacific Time</option>
+                </select>
+                <small style={{ color: '#666', fontSize: '0.9em' }}>
+                  Defaults to your profile timezone ({userInfo?.timezone || 'UTC'})
+                </small>
               </div>
 
               <div className="form-group">
