@@ -679,6 +679,11 @@ export default function Schedule() {
                   {schedule.schedule_items && schedule.schedule_items.length > 0 ? (
                     <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
                       {schedule.schedule_items.length} image{schedule.schedule_items.length !== 1 ? 's' : ''} scheduled
+                      {schedule.schedule_items.length > 0 && (
+                        <div style={{ marginTop: '4px', fontWeight: '500' }}>
+                          Next: {getScheduledDateTime(schedule.schedule_items[0]?.schedule || schedule.schedule)}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div style={{ fontSize: '14px', color: '#666', marginBottom: '8px' }}>
