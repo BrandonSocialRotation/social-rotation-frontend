@@ -34,9 +34,14 @@ interface Bucket {
 function Buckets() {
   const navigate = useNavigate()
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingBucket, setEditingBucket] = useState<Bucket | null>(null)
   const [newBucketName, setNewBucketName] = useState('')
   const [newBucketDescription, setNewBucketDescription] = useState('')
   const [isGlobalBucket, setIsGlobalBucket] = useState(false)
+  const [editBucketName, setEditBucketName] = useState('')
+  const [editBucketDescription, setEditBucketDescription] = useState('')
+  const [editIsGlobal, setEditIsGlobal] = useState(false)
   const [error, setError] = useState('')
   
   const queryClient = useQueryClient()
@@ -130,6 +135,27 @@ function Buckets() {
     },
   })
 
+  // Update bucket mutation
+  // PATCH /api/v1/buckets/:id
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: { name: string; description: string; is_global?: boolean } }) =>
+      bucketsAPI.update(id, data),
+    onSuccess: () => {
+      // Refresh buckets list
+      queryClient.invalidateQueries({ queryKey: ['buckets'] })
+      // Close modal and reset form
+      setShowEditModal(false)
+      setEditingBucket(null)
+      setEditBucketName('')
+      setEditBucketDescription('')
+      setEditIsGlobal(false)
+      setError('')
+    },
+    onError: (err: any) => {
+      setError(err.response?.data?.errors?.join(', ') || err.response?.data?.error || 'Failed to update bucket')
+    },
+  })
+
   // Delete bucket mutation
   // DELETE /api/v1/buckets/:id
   const deleteMutation = useMutation({
@@ -160,6 +186,39 @@ function Buckets() {
     }
     
     createMutation.mutate(createData)
+  }
+
+  const handleEdit = (bucket: Bucket) => {
+    setEditingBucket(bucket)
+    setEditBucketName(bucket.name)
+    setEditBucketDescription(bucket.description || '')
+    setEditIsGlobal(bucket.is_global || false)
+    setError('')
+    setShowEditModal(true)
+  }
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    
+    if (!editingBucket) return
+    
+    if (!editBucketName.trim()) {
+      setError('Bucket name is required')
+      return
+    }
+    
+    const updateData: { name: string; description: string; is_global?: boolean } = {
+      name: editBucketName,
+      description: editBucketDescription,
+    }
+    
+    // Only include is_global if user is super admin
+    if (isSuperAdmin) {
+      updateData.is_global = editIsGlobal
+    }
+    
+    updateMutation.mutate({ id: editingBucket.id, data: updateData })
   }
 
   const handleDelete = (id: number, name: string, isGlobal: boolean) => {
@@ -238,16 +297,37 @@ function Buckets() {
               <div key={bucket.id} className="bucket-card">
                 <div className="bucket-header">
                   <h3>{bucket.name}</h3>
-                  <button
-                    onClick={() => handleDelete(bucket.id, bucket.name, false)}
-                    className="delete-btn"
-                    title="Delete bucket"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="3 6 5 6 21 6"/>
-                      <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                    </svg>
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => handleEdit(bucket)}
+                      className="edit-btn"
+                      title="Edit bucket"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '0.25rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: '#666',
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(bucket.id, bucket.name, false)}
+                      className="delete-btn"
+                      title="Delete bucket"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                      </svg>
+                    </button>
+                  </div>
                 </div>
                 
                 {bucket.description && (
@@ -309,16 +389,37 @@ function Buckets() {
                     <span className="global-badge" title="Global bucket - available to all users">🌐</span>
                   </div>
                   {isSuperAdmin && (
-                    <button
-                      onClick={() => handleDelete(bucket.id, bucket.name, true)}
-                      className="delete-btn"
-                      title="Delete global bucket"
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                      </svg>
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        onClick={() => handleEdit(bucket)}
+                        className="edit-btn"
+                        title="Edit global bucket"
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: '0.25rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          color: '#666',
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(bucket.id, bucket.name, true)}
+                        className="delete-btn"
+                        title="Delete global bucket"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
                   )}
                 </div>
                 
@@ -362,6 +463,81 @@ function Buckets() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Bucket Modal */}
+      {showEditModal && editingBucket && (
+        <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Edit Bucket</h2>
+              <button onClick={() => setShowEditModal(false)} className="close-btn">
+                ✕
+              </button>
+            </div>
+            
+            {error && <div className="error-message">{error}</div>}
+            
+            <form onSubmit={handleUpdate}>
+              <div className="form-group">
+                <label htmlFor="editBucketName">Bucket Name *</label>
+                <input
+                  id="editBucketName"
+                  type="text"
+                  value={editBucketName}
+                  onChange={(e) => setEditBucketName(e.target.value)}
+                  placeholder="e.g., Summer Promotions"
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="editBucketDescription">Description (optional)</label>
+                <textarea
+                  id="editBucketDescription"
+                  value={editBucketDescription}
+                  onChange={(e) => setEditBucketDescription(e.target.value)}
+                  placeholder="Describe this content collection..."
+                  rows={3}
+                />
+              </div>
+              
+              {isSuperAdmin && (
+                <div className="form-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={editIsGlobal}
+                      onChange={(e) => setEditIsGlobal(e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>Make this a global bucket (visible to all users)</span>
+                  </label>
+                  <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.25rem', marginLeft: '1.5rem' }}>
+                    Global buckets are shared with all users and can only be edited or deleted by super admins.
+                  </p>
+                </div>
+              )}
+              
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="cancel-btn"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="submit-btn"
+                >
+                  {updateMutation.isPending ? 'Updating...' : 'Update Bucket'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
