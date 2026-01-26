@@ -408,7 +408,7 @@ export default function BucketImages() {
               const formData = new FormData();
               formData.append('file', editedBlob, newName || editingImage.friendly_name);
               
-              const response = await api.patch(
+              await api.patch(
                 `/buckets/${bucketId}/images/${editingImage.id}`,
                 formData,
                 {
@@ -419,23 +419,8 @@ export default function BucketImages() {
               );
               
               // Refresh images to get the updated image with new URL
+              // This ensures the edited image URL is loaded when editing again
               await fetchBucketAndImages();
-              
-              // Update editingImage with the new image data from response
-              // This ensures if user edits again, they see the edited version
-              if (response.data?.bucket_image) {
-                const updatedImage = images.find(img => img.id === editingImage.id);
-                if (updatedImage) {
-                  // Update the image data in the images array
-                  setImages(prevImages => 
-                    prevImages.map(img => 
-                      img.id === editingImage.id 
-                        ? { ...img, ...response.data.bucket_image }
-                        : img
-                    )
-                  );
-                }
-              }
               
               setEditingImage(null);
             } catch (err: any) {
