@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Cropper from 'react-easy-crop';
 // Define types locally since react-easy-crop/types is not available
 interface Point {
@@ -26,6 +26,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   
   // Image name
   const [name, setName] = useState(imageName);
@@ -42,6 +44,26 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const [error, setError] = useState('');
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // Load image to get dimensions when component mounts
+  useEffect(() => {
+    const loadImage = async () => {
+      try {
+        const img = await createImage(imageUrl);
+        if (img.width > 0 && img.height > 0) {
+          setImageDimensions({ width: img.width, height: img.height });
+          setImageLoaded(true);
+        }
+      } catch (err) {
+        console.error('Failed to load image:', err);
+        setError('Failed to load image. Please check the image URL.');
+      }
+    };
+    
+    if (imageUrl && !imageUrl.includes('via.placeholder.com')) {
+      loadImage();
+    }
+  }, [imageUrl]);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
     // Validate crop area before setting
