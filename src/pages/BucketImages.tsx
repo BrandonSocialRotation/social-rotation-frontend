@@ -236,7 +236,10 @@ export default function BucketImages() {
   };
 
   const handleEdit = (bucketImage: BucketImage) => {
-    setEditingImage(bucketImage);
+    // Always use the latest image data from the images state
+    // This ensures we're editing the most recent version (including after edits)
+    const latestImage = images.find(img => img.id === bucketImage.id) || bucketImage;
+    setEditingImage(latestImage);
   };
 
 
@@ -400,12 +403,12 @@ export default function BucketImages() {
           imageUrl={getImageUrl(editingImage.image)}
           imageName={editingImage.friendly_name}
           onClose={() => setEditingImage(null)}
-          onSave={async (editedBlob) => {
+          onSave={async (editedBlob, newName) => {
             try {
               const formData = new FormData();
-              formData.append('file', editedBlob, editingImage.friendly_name);
+              formData.append('file', editedBlob, newName || editingImage.friendly_name);
               
-              await api.patch(
+              const response = await api.patch(
                 `/buckets/${bucketId}/images/${editingImage.id}`,
                 formData,
                 {
@@ -415,7 +418,25 @@ export default function BucketImages() {
                 }
               );
               
+              // Refresh images to get the updated image with new URL
               await fetchBucketAndImages();
+              
+              // Update editingImage with the new image data from response
+              // This ensures if user edits again, they see the edited version
+              if (response.data?.bucket_image) {
+                const updatedImage = images.find(img => img.id === editingImage.id);
+                if (updatedImage) {
+                  // Update the image data in the images array
+                  setImages(prevImages => 
+                    prevImages.map(img => 
+                      img.id === editingImage.id 
+                        ? { ...img, ...response.data.bucket_image }
+                        : img
+                    )
+                  );
+                }
+              }
+              
               setEditingImage(null);
             } catch (err: any) {
               console.error('Error saving edited image:', err);

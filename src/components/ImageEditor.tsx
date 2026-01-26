@@ -253,6 +253,9 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                 onRotationChange={setRotation}
                 style={{
                   containerStyle: {
+                    width: '100%',
+                    height: '100%',
+                    position: 'relative',
                     filter: `
                       brightness(${brightness}%)
                       contrast(${contrast}%)
@@ -261,6 +264,9 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                       grayscale(${grayscale}%)
                       sepia(${sepia}%)
                     `
+                  },
+                  cropAreaStyle: {
+                    border: '2px solid #007bff'
                   }
                 }}
               />
