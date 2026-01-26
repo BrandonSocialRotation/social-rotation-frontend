@@ -134,15 +134,23 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     }
 
     // Set canvas size to crop area (ensure positive integers)
-    const cropWidth = Math.max(1, Math.round(pixelCrop.width));
-    const cropHeight = Math.max(1, Math.round(pixelCrop.height));
+    // Handle NaN, undefined, or invalid values
+    const rawWidth = Number(pixelCrop.width) || 0;
+    const rawHeight = Number(pixelCrop.height) || 0;
+    const cropWidth = Math.max(1, Math.round(Math.abs(rawWidth)));
+    const cropHeight = Math.max(1, Math.round(Math.abs(rawHeight)));
     
-    if (cropWidth <= 0 || cropHeight <= 0 || !isFinite(cropWidth) || !isFinite(cropHeight)) {
-      throw new Error(`Invalid crop dimensions: width=${cropWidth}, height=${cropHeight}`);
+    if (cropWidth <= 0 || cropHeight <= 0 || !isFinite(cropWidth) || !isFinite(cropHeight) || isNaN(cropWidth) || isNaN(cropHeight)) {
+      throw new Error(`Invalid crop dimensions: width=${cropWidth}, height=${cropHeight} (original: ${pixelCrop.width}, ${pixelCrop.height})`);
     }
 
     canvas.width = cropWidth;
     canvas.height = cropHeight;
+    
+    // Double-check canvas dimensions were set correctly
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error(`Canvas dimensions are 0 after setting: width=${canvas.width}, height=${canvas.height}`);
+    }
 
     // Calculate source coordinates in the rotated image
     const sourceX = Math.round(Math.max(0, safeArea / 2 - image.width * 0.5 + pixelCrop.x));
