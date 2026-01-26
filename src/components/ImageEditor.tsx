@@ -104,16 +104,28 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     pixelCrop: Area,
     rotation = 0
   ): Promise<Blob> => {
-    const image = await createImage(imageSrc);
-    
-    // Validate crop area
+    // Validate crop area first
     if (!pixelCrop || pixelCrop.width <= 0 || pixelCrop.height <= 0) {
       throw new Error(`Invalid crop area: width=${pixelCrop?.width}, height=${pixelCrop?.height}`);
     }
 
-    // Ensure image is loaded
-    if (!image.width || !image.height) {
-      throw new Error(`Invalid image dimensions: width=${image.width}, height=${image.height}`);
+    const image = await createImage(imageSrc);
+    
+    // Ensure image is fully loaded and has valid dimensions
+    if (!image.complete) {
+      throw new Error('Image is not fully loaded');
+    }
+    
+    if (!image.width || !image.height || image.width <= 0 || image.height <= 0) {
+      throw new Error(`Invalid image dimensions: width=${image.width}, height=${image.height}. Image may not have loaded correctly.`);
+    }
+    
+    // Ensure image natural dimensions are available
+    const naturalWidth = image.naturalWidth || image.width;
+    const naturalHeight = image.naturalHeight || image.height;
+    
+    if (!naturalWidth || !naturalHeight || naturalWidth <= 0 || naturalHeight <= 0) {
+      throw new Error(`Invalid natural image dimensions: width=${naturalWidth}, height=${naturalHeight}`);
     }
     
     // Create a temporary canvas for rotation
@@ -125,7 +137,15 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     }
 
     // Calculate safe area for rotation
-    const maxSize = Math.max(image.width, image.height);
+    // Use natural dimensions if available, otherwise use displayed dimensions
+    const imgWidth = image.naturalWidth || image.width;
+    const imgHeight = image.naturalHeight || image.height;
+    const maxSize = Math.max(imgWidth, imgHeight);
+    
+    if (maxSize <= 0 || !isFinite(maxSize)) {
+      throw new Error(`Invalid max size for rotation: ${maxSize} (image: ${imgWidth}x${imgHeight})`);
+    }
+    
     const safeArea = Math.ceil(2 * ((maxSize / 2) * Math.sqrt(2)));
 
     // Ensure safe area is valid
@@ -143,8 +163,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
 
     tempCtx.drawImage(
       image,
-      safeArea / 2 - image.width * 0.5,
-      safeArea / 2 - image.height * 0.5
+      safeArea / 2 - imgWidth * 0.5,
+      safeArea / 2 - imgHeight * 0.5
     );
 
     // Create final canvas for cropping
@@ -175,8 +195,9 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     }
 
     // Calculate source coordinates in the rotated image
-    const sourceX = Math.round(Math.max(0, safeArea / 2 - image.width * 0.5 + pixelCrop.x));
-    const sourceY = Math.round(Math.max(0, safeArea / 2 - image.height * 0.5 + pixelCrop.y));
+    // pixelCrop coordinates from react-easy-crop are relative to the natural image size
+    const sourceX = Math.round(Math.max(0, safeArea / 2 - imgWidth * 0.5 + pixelCrop.x));
+    const sourceY = Math.round(Math.max(0, safeArea / 2 - imgHeight * 0.5 + pixelCrop.y));
     const sourceWidth = Math.min(cropWidth, safeArea - sourceX);
     const sourceHeight = Math.min(cropHeight, safeArea - sourceY);
 
