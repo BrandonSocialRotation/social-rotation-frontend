@@ -73,6 +73,16 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   ): Promise<Blob> => {
     const image = await createImage(imageSrc);
     
+    // Validate crop area
+    if (!pixelCrop || pixelCrop.width <= 0 || pixelCrop.height <= 0) {
+      throw new Error(`Invalid crop area: width=${pixelCrop?.width}, height=${pixelCrop?.height}`);
+    }
+
+    // Ensure image is loaded
+    if (!image.width || !image.height) {
+      throw new Error(`Invalid image dimensions: width=${image.width}, height=${image.height}`);
+    }
+    
     // Create a temporary canvas for rotation
     const tempCanvas = document.createElement('canvas');
     const tempCtx = tempCanvas.getContext('2d');
@@ -84,6 +94,11 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     // Calculate safe area for rotation
     const maxSize = Math.max(image.width, image.height);
     const safeArea = Math.ceil(2 * ((maxSize / 2) * Math.sqrt(2)));
+
+    // Ensure safe area is valid
+    if (safeArea <= 0 || !isFinite(safeArea)) {
+      throw new Error(`Invalid safe area: ${safeArea}`);
+    }
 
     tempCanvas.width = safeArea;
     tempCanvas.height = safeArea;
@@ -107,15 +122,27 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       throw new Error('No 2d context');
     }
 
-    // Set canvas size to crop area
-    canvas.width = Math.round(pixelCrop.width);
-    canvas.height = Math.round(pixelCrop.height);
+    // Set canvas size to crop area (ensure positive integers)
+    const cropWidth = Math.max(1, Math.round(pixelCrop.width));
+    const cropHeight = Math.max(1, Math.round(pixelCrop.height));
+    
+    if (cropWidth <= 0 || cropHeight <= 0 || !isFinite(cropWidth) || !isFinite(cropHeight)) {
+      throw new Error(`Invalid crop dimensions: width=${cropWidth}, height=${cropHeight}`);
+    }
+
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
 
     // Calculate source coordinates in the rotated image
-    const sourceX = Math.round(safeArea / 2 - image.width * 0.5 + pixelCrop.x);
-    const sourceY = Math.round(safeArea / 2 - image.height * 0.5 + pixelCrop.y);
-    const sourceWidth = Math.round(pixelCrop.width);
-    const sourceHeight = Math.round(pixelCrop.height);
+    const sourceX = Math.round(Math.max(0, safeArea / 2 - image.width * 0.5 + pixelCrop.x));
+    const sourceY = Math.round(Math.max(0, safeArea / 2 - image.height * 0.5 + pixelCrop.y));
+    const sourceWidth = Math.min(cropWidth, safeArea - sourceX);
+    const sourceHeight = Math.min(cropHeight, safeArea - sourceY);
+
+    // Validate source coordinates
+    if (sourceWidth <= 0 || sourceHeight <= 0 || !isFinite(sourceX) || !isFinite(sourceY)) {
+      throw new Error(`Invalid source coordinates: x=${sourceX}, y=${sourceY}, width=${sourceWidth}, height=${sourceHeight}`);
+    }
 
     // Draw the cropped portion from the rotated image
     ctx.drawImage(
