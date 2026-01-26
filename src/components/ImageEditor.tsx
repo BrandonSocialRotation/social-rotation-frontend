@@ -72,6 +72,34 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     rotation = 0
   ): Promise<Blob> => {
     const image = await createImage(imageSrc);
+    
+    // Create a temporary canvas for rotation
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+
+    if (!tempCtx) {
+      throw new Error('No 2d context');
+    }
+
+    // Calculate safe area for rotation
+    const maxSize = Math.max(image.width, image.height);
+    const safeArea = Math.ceil(2 * ((maxSize / 2) * Math.sqrt(2)));
+
+    tempCanvas.width = safeArea;
+    tempCanvas.height = safeArea;
+
+    // Center and rotate the image
+    tempCtx.translate(safeArea / 2, safeArea / 2);
+    tempCtx.rotate((rotation * Math.PI) / 180);
+    tempCtx.translate(-safeArea / 2, -safeArea / 2);
+
+    tempCtx.drawImage(
+      image,
+      safeArea / 2 - image.width * 0.5,
+      safeArea / 2 - image.height * 0.5
+    );
+
+    // Create final canvas for cropping
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -79,35 +107,41 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       throw new Error('No 2d context');
     }
 
-    const maxSize = Math.max(image.width, image.height);
-    const safeArea = 2 * ((maxSize / 2) * Math.sqrt(2));
+    // Set canvas size to crop area
+    canvas.width = Math.round(pixelCrop.width);
+    canvas.height = Math.round(pixelCrop.height);
 
-    canvas.width = safeArea;
-    canvas.height = safeArea;
+    // Calculate source coordinates in the rotated image
+    const sourceX = Math.round(safeArea / 2 - image.width * 0.5 + pixelCrop.x);
+    const sourceY = Math.round(safeArea / 2 - image.height * 0.5 + pixelCrop.y);
+    const sourceWidth = Math.round(pixelCrop.width);
+    const sourceHeight = Math.round(pixelCrop.height);
 
-    ctx.translate(safeArea / 2, safeArea / 2);
-    ctx.rotate((rotation * Math.PI) / 180);
-    ctx.translate(-safeArea / 2, -safeArea / 2);
-
+    // Draw the cropped portion from the rotated image
     ctx.drawImage(
-      image,
-      safeArea / 2 - image.width * 0.5,
-      safeArea / 2 - image.height * 0.5
+      tempCanvas,
+      sourceX,
+      sourceY,
+      sourceWidth,
+      sourceHeight,
+      0,
+      0,
+      canvas.width,
+      canvas.height
     );
 
-    const data = ctx.getImageData(0, 0, safeArea, safeArea);
+    // Apply filters using a new canvas to avoid filter stacking issues
+    const filteredCanvas = document.createElement('canvas');
+    filteredCanvas.width = canvas.width;
+    filteredCanvas.height = canvas.height;
+    const filteredCtx = filteredCanvas.getContext('2d');
 
-    canvas.width = pixelCrop.width;
-    canvas.height = pixelCrop.height;
-
-    ctx.putImageData(
-      data,
-      Math.round(0 - safeArea / 2 + image.width * 0.5 - pixelCrop.x),
-      Math.round(0 - safeArea / 2 + image.height * 0.5 - pixelCrop.y)
-    );
+    if (!filteredCtx) {
+      throw new Error('No 2d context for filtered canvas');
+    }
 
     // Apply filters
-    ctx.filter = `
+    filteredCtx.filter = `
       brightness(${brightness}%)
       contrast(${contrast}%)
       saturate(${saturation}%)
@@ -116,12 +150,14 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       sepia(${sepia}%)
     `;
     
-    ctx.drawImage(canvas, 0, 0);
+    filteredCtx.drawImage(canvas, 0, 0);
 
-    return new Promise((resolve) => {
-      canvas.toBlob((blob) => {
+    return new Promise((resolve, reject) => {
+      filteredCanvas.toBlob((blob) => {
         if (blob) {
           resolve(blob);
+        } else {
+          reject(new Error('Failed to create blob from canvas'));
         }
       }, 'image/jpeg', 0.95);
     });
