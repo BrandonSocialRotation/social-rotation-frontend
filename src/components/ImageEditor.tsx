@@ -49,19 +49,47 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   useEffect(() => {
     const loadImage = async () => {
       try {
+        setImageLoaded(false);
+        setImageDimensions(null);
         const img = await createImage(imageUrl);
-        if (img.width > 0 && img.height > 0) {
-          setImageDimensions({ width: img.width, height: img.height });
-          setImageLoaded(true);
+        // Wait for image to be fully loaded
+        if (img.complete && img.width > 0 && img.height > 0) {
+          const naturalWidth = img.naturalWidth || img.width;
+          const naturalHeight = img.naturalHeight || img.height;
+          if (naturalWidth > 0 && naturalHeight > 0) {
+            setImageDimensions({ width: naturalWidth, height: naturalHeight });
+            setImageLoaded(true);
+          } else {
+            throw new Error('Image has invalid natural dimensions');
+          }
+        } else {
+          // Wait for image to load if not complete
+          const checkLoaded = () => {
+            if (img.complete && img.width > 0 && img.height > 0) {
+              const naturalWidth = img.naturalWidth || img.width;
+              const naturalHeight = img.naturalHeight || img.height;
+              if (naturalWidth > 0 && naturalHeight > 0) {
+                setImageDimensions({ width: naturalWidth, height: naturalHeight });
+                setImageLoaded(true);
+              }
+            }
+          };
+          img.addEventListener('load', checkLoaded);
+          img.addEventListener('error', () => {
+            setError('Failed to load image. Please check the image URL.');
+          });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load image:', err);
-        setError('Failed to load image. Please check the image URL.');
+        setError(err.message || 'Failed to load image. Please check the image URL.');
+        setImageLoaded(false);
       }
     };
     
     if (imageUrl && !imageUrl.includes('via.placeholder.com')) {
       loadImage();
+    } else {
+      setImageLoaded(true); // Allow placeholder images
     }
   }, [imageUrl]);
 
