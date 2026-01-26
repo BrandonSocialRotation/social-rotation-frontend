@@ -109,19 +109,33 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   }, [imageUrl]);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    // Validate crop area before setting
-    if (croppedAreaPixels && 
-        croppedAreaPixels.width > 0 && 
-        croppedAreaPixels.height > 0 &&
-        isFinite(croppedAreaPixels.x) &&
-        isFinite(croppedAreaPixels.y) &&
-        isFinite(croppedAreaPixels.width) &&
-        isFinite(croppedAreaPixels.height)) {
-      setCroppedAreaPixels(croppedAreaPixels);
-    } else {
-      console.warn('Invalid crop area received:', croppedAreaPixels);
+    // Don't process crop area if image isn't fully loaded yet
+    if (!imageLoaded || !imageDimensions) {
+      return; // Silently ignore until image is ready
     }
-  }, []);
+    
+    // Validate crop area before setting - reject NaN, undefined, or invalid values
+    if (!croppedAreaPixels) {
+      return; // Silently ignore null/undefined
+    }
+    
+    const width = Number(croppedAreaPixels.width);
+    const height = Number(croppedAreaPixels.height);
+    const x = Number(croppedAreaPixels.x);
+    const y = Number(croppedAreaPixels.y);
+    
+    // Check for valid numbers (not NaN, not Infinity, positive dimensions)
+    if (isFinite(width) && isFinite(height) && isFinite(x) && isFinite(y) &&
+        width > 0 && height > 0 && !isNaN(width) && !isNaN(height) && !isNaN(x) && !isNaN(y)) {
+      setCroppedAreaPixels({
+        x: x,
+        y: y,
+        width: width,
+        height: height
+      });
+    }
+    // Silently ignore invalid values - don't log warnings to reduce console spam
+  }, [imageLoaded, imageDimensions]);
 
   const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
