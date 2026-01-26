@@ -67,7 +67,12 @@ const RssPosts: React.FC = () => {
   const fetchBuckets = async () => {
     try {
       const response = await api.get('/buckets');
-      setBuckets(response.data);
+      // Combine user buckets and global buckets
+      const allBuckets = [
+        ...(response.data.buckets || []),
+        ...(response.data.global_buckets || [])
+      ];
+      setBuckets(allBuckets);
     } catch (error) {
       console.error('Error fetching buckets:', error);
     }
