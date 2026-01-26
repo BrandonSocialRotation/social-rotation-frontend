@@ -51,38 +51,52 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       try {
         setImageLoaded(false);
         setImageDimensions(null);
+        setCroppedAreaPixels(null); // Reset crop area when image changes
+        
         const img = await createImage(imageUrl);
-        // Wait for image to be fully loaded
-        if (img.complete && img.width > 0 && img.height > 0) {
-          const naturalWidth = img.naturalWidth || img.width;
-          const naturalHeight = img.naturalHeight || img.height;
-          if (naturalWidth > 0 && naturalHeight > 0) {
-            setImageDimensions({ width: naturalWidth, height: naturalHeight });
-            setImageLoaded(true);
-          } else {
-            throw new Error('Image has invalid natural dimensions');
-          }
-        } else {
-          // Wait for image to load if not complete
-          const checkLoaded = () => {
-            if (img.complete && img.width > 0 && img.height > 0) {
-              const naturalWidth = img.naturalWidth || img.width;
-              const naturalHeight = img.naturalHeight || img.height;
-              if (naturalWidth > 0 && naturalHeight > 0) {
-                setImageDimensions({ width: naturalWidth, height: naturalHeight });
-                setImageLoaded(true);
-              }
+        
+        // Function to check and set image dimensions
+        const checkAndSetDimensions = () => {
+          if (img.complete && img.width > 0 && img.height > 0) {
+            const naturalWidth = img.naturalWidth || img.width;
+            const naturalHeight = img.naturalHeight || img.height;
+            if (naturalWidth > 0 && naturalHeight > 0) {
+              setImageDimensions({ width: naturalWidth, height: naturalHeight });
+              setImageLoaded(true);
+              return true;
             }
-          };
-          img.addEventListener('load', checkLoaded);
-          img.addEventListener('error', () => {
-            setError('Failed to load image. Please check the image URL.');
-          });
+          }
+          return false;
+        };
+        
+        // Check if already loaded
+        if (checkAndSetDimensions()) {
+          return; // Image is ready
         }
+        
+        // Wait for image to load if not complete
+        const loadHandler = () => {
+          checkAndSetDimensions();
+        };
+        
+        const errorHandler = () => {
+          setError('Failed to load image. Please check the image URL.');
+          setImageLoaded(false);
+        };
+        
+        img.addEventListener('load', loadHandler, { once: true });
+        img.addEventListener('error', errorHandler, { once: true });
+        
+        // Cleanup
+        return () => {
+          img.removeEventListener('load', loadHandler);
+          img.removeEventListener('error', errorHandler);
+        };
       } catch (err: any) {
         console.error('Failed to load image:', err);
         setError(err.message || 'Failed to load image. Please check the image URL.');
         setImageLoaded(false);
+        setImageDimensions(null);
       }
     };
     
@@ -90,6 +104,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       loadImage();
     } else {
       setImageLoaded(true); // Allow placeholder images
+      setImageDimensions({ width: 800, height: 600 }); // Default dimensions for placeholders
     }
   }, [imageUrl]);
 
