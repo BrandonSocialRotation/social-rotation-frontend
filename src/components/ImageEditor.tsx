@@ -407,35 +407,52 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           {/* Crop Area */}
           <div className="crop-container">
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
-              <Cropper
-                image={imageUrl}
-                crop={crop}
-                zoom={zoom}
-                rotation={rotation}
-                aspect={undefined}
-                onCropChange={setCrop}
-                onCropComplete={onCropComplete}
-                onZoomChange={setZoom}
-                onRotationChange={setRotation}
-                style={{
-                  containerStyle: {
-                    width: '100%',
-                    height: '100%',
-                    position: 'relative',
-                    filter: `
-                      brightness(${brightness}%)
-                      contrast(${contrast}%)
-                      saturate(${saturation}%)
-                      blur(${blur}px)
-                      grayscale(${grayscale}%)
-                      sepia(${sepia}%)
-                    `
-                  },
-                  cropAreaStyle: {
-                    border: '2px solid #007bff'
-                  }
-                }}
-              />
+              imageLoaded && imageDimensions ? (
+                <Cropper
+                  image={imageUrl}
+                  crop={crop}
+                  zoom={zoom}
+                  rotation={rotation}
+                  aspect={undefined}
+                  onCropChange={setCrop}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                  onRotationChange={setRotation}
+                  style={{
+                    containerStyle: {
+                      width: '100%',
+                      height: '100%',
+                      position: 'relative',
+                      filter: `
+                        brightness(${brightness}%)
+                        contrast(${contrast}%)
+                        saturate(${saturation}%)
+                        blur(${blur}px)
+                        grayscale(${grayscale}%)
+                        sepia(${sepia}%)
+                      `
+                    },
+                    cropAreaStyle: {
+                      border: '2px solid #007bff'
+                    }
+                  }}
+                />
+              ) : (
+                <div style={{ 
+                  padding: '40px', 
+                  textAlign: 'center', 
+                  color: '#999',
+                  backgroundColor: '#f5f5f5',
+                  borderRadius: '8px',
+                  minHeight: '400px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column'
+                }}>
+                  <p style={{ fontSize: '18px', marginBottom: '10px' }}>Loading image...</p>
+                </div>
+              )
             ) : (
               <div style={{ 
                 padding: '40px', 
