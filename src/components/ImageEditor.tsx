@@ -44,7 +44,18 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    setCroppedAreaPixels(croppedAreaPixels);
+    // Validate crop area before setting
+    if (croppedAreaPixels && 
+        croppedAreaPixels.width > 0 && 
+        croppedAreaPixels.height > 0 &&
+        isFinite(croppedAreaPixels.x) &&
+        isFinite(croppedAreaPixels.y) &&
+        isFinite(croppedAreaPixels.width) &&
+        isFinite(croppedAreaPixels.height)) {
+      setCroppedAreaPixels(croppedAreaPixels);
+    } else {
+      console.warn('Invalid crop area received:', croppedAreaPixels);
+    }
   }, []);
 
   const createImage = (url: string): Promise<HTMLImageElement> =>
@@ -191,8 +202,17 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   };
 
   const handleSave = async () => {
+    // Validate crop area
     if (!croppedAreaPixels) {
       setError('Please adjust the crop area');
+      return;
+    }
+
+    // Validate crop area dimensions
+    if (!croppedAreaPixels.width || !croppedAreaPixels.height || 
+        croppedAreaPixels.width <= 0 || croppedAreaPixels.height <= 0 ||
+        !isFinite(croppedAreaPixels.width) || !isFinite(croppedAreaPixels.height)) {
+      setError('Invalid crop area. Please adjust the crop selection.');
       return;
     }
 
@@ -205,9 +225,13 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       setSaving(true);
       setError('');
 
-      // First, verify the image can be loaded
+      // First, verify the image can be loaded and has valid dimensions
+      let testImage: HTMLImageElement;
       try {
-        await createImage(imageUrl);
+        testImage = await createImage(imageUrl);
+        if (!testImage.width || !testImage.height || testImage.width <= 0 || testImage.height <= 0) {
+          throw new Error('Image has invalid dimensions');
+        }
       } catch (loadError: any) {
         setError(`Cannot load image: ${loadError.message || 'Image URL may be invalid or blocked by CORS'}`);
         setSaving(false);
