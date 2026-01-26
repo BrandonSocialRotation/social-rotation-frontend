@@ -50,9 +50,19 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
       const image = new Image();
+      
+      // Only set CORS if the URL is from a different origin
+      const imageUrl = new URL(url, window.location.href);
+      const currentOrigin = window.location.origin;
+      if (imageUrl.origin !== currentOrigin) {
+        image.setAttribute('crossOrigin', 'anonymous');
+      }
+      
       image.addEventListener('load', () => resolve(image));
-      image.addEventListener('error', (error) => reject(error));
-      image.setAttribute('crossOrigin', 'anonymous');
+      image.addEventListener('error', (error) => {
+        console.error('Image load error:', error, 'URL:', url);
+        reject(new Error(`Failed to load image from ${url}. Please check if the image URL is correct and accessible.`));
+      });
       image.src = url;
     });
 
@@ -132,6 +142,15 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       setSaving(true);
       setError('');
 
+      // First, verify the image can be loaded
+      try {
+        await createImage(imageUrl);
+      } catch (loadError: any) {
+        setError(`Cannot load image: ${loadError.message || 'Image URL may be invalid or blocked by CORS'}`);
+        setSaving(false);
+        return;
+      }
+
       const croppedImage = await getCroppedImg(
         imageUrl,
         croppedAreaPixels,
@@ -140,9 +159,9 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
 
       await onSave(croppedImage, name.trim());
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error saving edited image:', err);
-      setError('Failed to save edited image');
+      setError(err.message || 'Failed to save edited image. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -205,34 +224,70 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           </button>
         </div>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="error-message" style={{ 
+            padding: '12px', 
+            margin: '10px', 
+            backgroundColor: '#fee', 
+            color: '#c33', 
+            borderRadius: '4px',
+            border: '1px solid #fcc'
+          }}>
+            {error}
+          </div>
+        )}
 
         <div className="editor-body">
           {/* Crop Area */}
           <div className="crop-container">
-            <Cropper
-              image={imageUrl}
-              crop={crop}
-              zoom={zoom}
-              rotation={rotation}
-              aspect={undefined}
-              onCropChange={setCrop}
-              onCropComplete={onCropComplete}
-              onZoomChange={setZoom}
-              onRotationChange={setRotation}
-              style={{
-                containerStyle: {
-                  filter: `
-                    brightness(${brightness}%)
-                    contrast(${contrast}%)
-                    saturate(${saturation}%)
-                    blur(${blur}px)
-                    grayscale(${grayscale}%)
-                    sepia(${sepia}%)
-                  `
-                }
-              }}
-            />
+            {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
+              <Cropper
+                image={imageUrl}
+                crop={crop}
+                zoom={zoom}
+                rotation={rotation}
+                aspect={undefined}
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+                onRotationChange={setRotation}
+                style={{
+                  containerStyle: {
+                    filter: `
+                      brightness(${brightness}%)
+                      contrast(${contrast}%)
+                      saturate(${saturation}%)
+                      blur(${blur}px)
+                      grayscale(${grayscale}%)
+                      sepia(${sepia}%)
+                    `
+                  }
+                }}
+              />
+            ) : (
+              <div style={{ 
+                padding: '40px', 
+                textAlign: 'center', 
+                color: '#999',
+                backgroundColor: '#f5f5f5',
+                borderRadius: '8px',
+                minHeight: '400px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexDirection: 'column'
+              }}>
+                <p style={{ fontSize: '18px', marginBottom: '10px' }}>⚠️ Image Not Available</p>
+                <p style={{ fontSize: '14px' }}>
+                  {imageUrl?.includes('via.placeholder.com') 
+                    ? 'This image appears to be a placeholder. The original image may not be accessible.'
+                    : 'Unable to load image. Please check the image URL and try again.'}
+                </p>
+                <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>
+                  Image URL: {imageUrl || 'Not provided'}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Controls */}
