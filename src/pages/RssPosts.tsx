@@ -143,9 +143,17 @@ const RssPosts: React.FC = () => {
             friendly_name: post.short_title || post.title.substring(0, 30)
           });
           
+          // Extract image ID from response (handle both formats)
+          const imageId = imageResponse.data.image?.id || imageResponse.data.id;
+          
+          if (!imageId) {
+            console.error('No image ID in response:', imageResponse.data);
+            throw new Error('Failed to create image: No ID returned');
+          }
+          
           // Add to bucket
           await api.post(`/buckets/${bucketId}/images`, {
-            image_id: imageResponse.data.id,
+            image_id: imageId,
             friendly_name: post.short_title || post.title.substring(0, 30)
           });
         }
@@ -192,9 +200,17 @@ const RssPosts: React.FC = () => {
             friendly_name: post.short_title || post.title.substring(0, 30)
           });
           
+          // Extract image ID from response (handle both formats)
+          const imageId = imageResponse.data.image?.id || imageResponse.data.id;
+          
+          if (!imageId) {
+            console.error('No image ID in response:', imageResponse.data);
+            throw new Error('Failed to create image: No ID returned');
+          }
+          
           // Add to bucket
           await api.post(`/buckets/${bucketId}/images`, {
-            image_id: imageResponse.data.id,
+            image_id: imageId,
             friendly_name: post.short_title || post.title.substring(0, 30)
           });
         }
