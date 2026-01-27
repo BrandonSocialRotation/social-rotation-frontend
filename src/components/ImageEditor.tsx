@@ -474,6 +474,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                       width: '100%',
                       height: '100%',
                       position: 'relative',
+                      backgroundColor: '#000', // Black background to see if Cropper is rendering
                       filter: `
                         brightness(${brightness}%)
                         contrast(${contrast}%)
@@ -486,6 +487,11 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                     cropAreaStyle: {
                       border: '2px solid #007bff'
                     }
+                  }}
+                  onError={(error) => {
+                    console.error('[ImageEditor] Cropper error:', error);
+                    setError(`Failed to display image in editor. The image may be blocked by CORS policy. URL: ${imageUrl}`);
+                    setImageLoadError(true);
                   }}
                 />
               ) : (
