@@ -114,9 +114,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         
         // Check if already loaded
         if (checkAndSetDimensions()) {
-          // Preload image with CORS for Cropper
-          preloadImageForCropper(imageUrl, img);
-          return; // Image is ready
+          // Canvas test already ran above when image was created
+          // No need to return early - let the load handler set everything up
         }
         
         // Wait for image to load if not complete
@@ -124,7 +123,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           console.log('[ImageEditor] Image load event fired');
           if (checkAndSetDimensions()) {
             console.log('[ImageEditor] Image loaded successfully');
-            // Canvas test already ran above when image was created
+            // Run canvas test now that image is fully loaded
+            testCanvasAccess();
           } else {
             console.warn('[ImageEditor] Image loaded but dimensions invalid');
             setError('Image loaded but has invalid dimensions');
