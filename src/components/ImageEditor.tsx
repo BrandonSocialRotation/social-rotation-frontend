@@ -567,25 +567,35 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                       }
                     }}
                   />
-                  {/* Debug: Show image directly to verify it loads */}
+                  {/* Debug: Show image directly to verify it loads - make it very visible */}
                   <div style={{
-                    position: 'absolute',
+                    position: 'fixed',
                     top: '10px',
                     right: '10px',
-                    width: '100px',
-                    height: '100px',
-                    border: '2px solid red',
-                    zIndex: 9999,
-                    backgroundColor: 'white',
-                    padding: '5px'
+                    width: '200px',
+                    height: '200px',
+                    border: '5px solid red',
+                    zIndex: 99999,
+                    backgroundColor: 'yellow',
+                    padding: '10px',
+                    boxShadow: '0 0 20px rgba(255,0,0,0.8)'
                   }}>
+                    <div style={{ color: 'black', fontSize: '12px', marginBottom: '5px', fontWeight: 'bold' }}>
+                      DEBUG IMAGE
+                    </div>
                     <img 
                       src={imageUrl} 
                       alt="Debug" 
-                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      style={{ width: '100%', height: 'calc(100% - 20px)', objectFit: 'contain', border: '2px solid blue' }}
                       crossOrigin="anonymous"
-                      onLoad={() => console.log('[ImageEditor] Debug image loaded in Cropper')}
-                      onError={(e) => console.error('[ImageEditor] Debug image failed to load in Cropper:', e)}
+                      onLoad={() => {
+                        console.log('[ImageEditor] ✓✓✓ Debug image loaded successfully in Cropper');
+                        console.log('[ImageEditor] Debug image URL:', imageUrl);
+                      }}
+                      onError={(e) => {
+                        console.error('[ImageEditor] ✗✗✗ Debug image FAILED to load in Cropper:', e);
+                        console.error('[ImageEditor] Failed URL:', imageUrl);
+                      }}
                     />
                   </div>
                 </>
