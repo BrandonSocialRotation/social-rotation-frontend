@@ -468,36 +468,68 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           <div className="crop-container">
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
               imageLoaded && imageDimensions ? (
-                <Cropper
-                  image={imageUrl}
-                  crop={crop}
-                  zoom={zoom}
-                  rotation={rotation}
-                  aspect={undefined}
-                  onCropChange={setCrop}
-                  onCropComplete={onCropComplete}
-                  onZoomChange={setZoom}
-                  onRotationChange={setRotation}
-                  style={{
-                    containerStyle: {
-                      width: '100%',
-                      height: '100%',
-                      position: 'relative',
-                      backgroundColor: '#000',
-                      filter: `
-                        brightness(${brightness}%)
-                        contrast(${contrast}%)
-                        saturate(${saturation}%)
-                        blur(${blur}px)
-                        grayscale(${grayscale}%)
-                        sepia(${sepia}%)
-                      `
-                    },
-                    cropAreaStyle: {
-                      border: '2px solid #007bff'
-                    }
-                  }}
-                />
+                <>
+                  <Cropper
+                    image={imageUrl}
+                    crop={crop}
+                    zoom={zoom}
+                    rotation={rotation}
+                    aspect={undefined}
+                    onCropChange={setCrop}
+                    onCropComplete={onCropComplete}
+                    onZoomChange={setZoom}
+                    onRotationChange={setRotation}
+                    style={{
+                      containerStyle: {
+                        width: '100%',
+                        height: '100%',
+                        position: 'relative',
+                        backgroundColor: '#1a1a1a', // Dark gray instead of black to see if Cropper is rendering
+                        filter: `
+                          brightness(${brightness}%)
+                          contrast(${contrast}%)
+                          saturate(${saturation}%)
+                          blur(${blur}px)
+                          grayscale(${grayscale}%)
+                          sepia(${sepia}%)
+                        `
+                      },
+                      cropAreaStyle: {
+                        border: '2px solid #007bff'
+                      },
+                      mediaStyle: {
+                        objectFit: 'contain'
+                      }
+                    }}
+                  />
+                  {/* Fallback: Show image directly if Cropper fails */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#000',
+                    zIndex: -1,
+                    pointerEvents: 'none'
+                  }}>
+                    <img 
+                      src={imageUrl} 
+                      alt="Image preview" 
+                      style={{ 
+                        maxWidth: '100%', 
+                        maxHeight: '100%',
+                        objectFit: 'contain'
+                      }}
+                      crossOrigin="anonymous"
+                      onLoad={() => console.log('[ImageEditor] Fallback image loaded')}
+                      onError={(e) => console.error('[ImageEditor] Fallback image error:', e)}
+                    />
+                  </div>
+                </>
               ) : (
                 <div style={{ 
                   padding: '40px', 
