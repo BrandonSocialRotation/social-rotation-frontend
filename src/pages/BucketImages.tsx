@@ -61,7 +61,21 @@ export default function BucketImages() {
       if (image.source_url.includes('via.placeholder.com')) {
         console.warn('Image has placeholder URL - image may not be accessible:', image);
       }
-      return image.source_url;
+      
+      // For external URLs (not from our backend), proxy through backend to avoid CORS issues
+      // This is especially important for the image editor which uses canvas
+      const sourceUrl = image.source_url;
+      if (sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://')) {
+        // Check if it's already a backend URL (don't double-proxy)
+        const backendUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1$/, '') || 
+                          'https://new-social-rotation-backend-qzyk8.ondigitalocean.app';
+        if (!sourceUrl.includes(backendUrl)) {
+          // External URL - proxy through backend for CORS
+          return `${backendUrl}/api/v1/images/proxy?url=${encodeURIComponent(sourceUrl)}`;
+        }
+      }
+      
+      return sourceUrl;
     }
 
     // Fallback to file_path if it's already a full URL
