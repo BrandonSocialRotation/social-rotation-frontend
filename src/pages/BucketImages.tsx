@@ -63,15 +63,22 @@ export default function BucketImages() {
       }
       
       const sourceUrl = image.source_url;
+      console.log('[BucketImages] getImageUrl called:', { sourceUrl, forEditor, image });
       
       // For the image editor, always proxy external URLs to avoid CORS issues
       // The Cropper component needs CORS-enabled images to draw to canvas
-      if (forEditor && (sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://'))) {
+      if (forEditor) {
         const backendUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1$/, '') || 
                           'https://new-social-rotation-backend-qzyk8.ondigitalocean.app';
         
+        // Check if it's an external URL (starts with http:// or https://)
+        const isExternalUrl = sourceUrl.startsWith('http://') || sourceUrl.startsWith('https://');
         // Check if it's already a backend proxy URL (don't double-proxy)
-        if (!sourceUrl.includes(`${backendUrl}/api/v1/images/proxy`)) {
+        const isAlreadyProxied = sourceUrl.includes(`${backendUrl}/api/v1/images/proxy`);
+        
+        console.log('[BucketImages] Proxy check:', { isExternalUrl, isAlreadyProxied, backendUrl });
+        
+        if (isExternalUrl && !isAlreadyProxied) {
           // External URL - proxy through backend for CORS
           const proxiedUrl = `${backendUrl}/api/v1/images/proxy?url=${encodeURIComponent(sourceUrl)}`;
           console.log('[BucketImages] Proxying external image for editor:', sourceUrl, '->', proxiedUrl);
