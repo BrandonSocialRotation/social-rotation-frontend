@@ -488,11 +488,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                       border: '2px solid #007bff'
                     }
                   }}
-                  onError={(error) => {
-                    console.error('[ImageEditor] Cropper error:', error);
-                    setError(`Failed to display image in editor. The image may be blocked by CORS policy. URL: ${imageUrl}`);
-                    setImageLoadError(true);
-                  }}
                 />
               ) : (
                 <div style={{ 
