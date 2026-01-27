@@ -468,61 +468,36 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           <div className="crop-container">
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
               imageLoaded && imageDimensions ? (
-                <>
-                  {/* Debug: Show raw image to verify it loads */}
-                  <div style={{ 
-                    position: 'absolute', 
-                    top: 0, 
-                    left: 0, 
-                    zIndex: 1, 
-                    opacity: 0.3,
-                    pointerEvents: 'none',
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <img 
-                      src={imageUrl} 
-                      alt="Debug preview" 
-                      style={{ maxWidth: '50%', maxHeight: '50%', objectFit: 'contain' }}
-                      crossOrigin="anonymous"
-                      onLoad={() => console.log('[ImageEditor] Debug image loaded successfully')}
-                      onError={(e) => console.error('[ImageEditor] Debug image failed to load:', e)}
-                    />
-                  </div>
-                  <Cropper
-                    image={imageUrl}
-                    crop={crop}
-                    zoom={zoom}
-                    rotation={rotation}
-                    aspect={undefined}
-                    onCropChange={setCrop}
-                    onCropComplete={onCropComplete}
-                    onZoomChange={setZoom}
-                    onRotationChange={setRotation}
-                    style={{
-                      containerStyle: {
-                        width: '100%',
-                        height: '100%',
-                        position: 'relative',
-                        backgroundColor: '#000', // Black background to see if Cropper is rendering
-                        filter: `
-                          brightness(${brightness}%)
-                          contrast(${contrast}%)
-                          saturate(${saturation}%)
-                          blur(${blur}px)
-                          grayscale(${grayscale}%)
-                          sepia(${sepia}%)
-                        `
-                      },
-                      cropAreaStyle: {
-                        border: '2px solid #007bff'
-                      }
-                    }}
-                  />
-                </>
+                <Cropper
+                  image={imageUrl}
+                  crop={crop}
+                  zoom={zoom}
+                  rotation={rotation}
+                  aspect={undefined}
+                  onCropChange={setCrop}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                  onRotationChange={setRotation}
+                  style={{
+                    containerStyle: {
+                      width: '100%',
+                      height: '100%',
+                      position: 'relative',
+                      backgroundColor: '#000',
+                      filter: `
+                        brightness(${brightness}%)
+                        contrast(${contrast}%)
+                        saturate(${saturation}%)
+                        blur(${blur}px)
+                        grayscale(${grayscale}%)
+                        sepia(${sepia}%)
+                      `
+                    },
+                    cropAreaStyle: {
+                      border: '2px solid #007bff'
+                    }
+                  }}
+                />
               ) : (
                 <div style={{ 
                   padding: '40px', 
