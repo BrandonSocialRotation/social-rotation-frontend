@@ -497,6 +497,16 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                   flexDirection: 'column'
                 }}>
                   <p style={{ fontSize: '18px', marginBottom: '10px' }}>Loading image...</p>
+                  {imageUrl && (
+                    <p style={{ fontSize: '12px', marginTop: '10px', color: '#666', wordBreak: 'break-all', maxWidth: '100%' }}>
+                      URL: {imageUrl}
+                    </p>
+                  )}
+                  {error && (
+                    <p style={{ fontSize: '12px', marginTop: '10px', color: '#c33', maxWidth: '100%' }}>
+                      Error: {error}
+                    </p>
+                  )}
                 </div>
               )
             ) : (
