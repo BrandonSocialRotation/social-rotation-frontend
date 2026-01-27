@@ -469,6 +469,40 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
               imageLoaded && imageDimensions ? (
                 <>
+                  {/* Fallback: Show image directly first to verify it loads */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#1a1a1a',
+                    zIndex: 1,
+                    pointerEvents: 'none'
+                  }}>
+                    <img 
+                      src={imageUrl} 
+                      alt="Image preview" 
+                      style={{ 
+                        maxWidth: '90%', 
+                        maxHeight: '90%',
+                        objectFit: 'contain',
+                        opacity: 0.5 // Semi-transparent so we can see if Cropper renders on top
+                      }}
+                      crossOrigin="anonymous"
+                      onLoad={() => {
+                        console.log('[ImageEditor] Fallback image loaded successfully');
+                        console.log('[ImageEditor] Image URL:', imageUrl);
+                      }}
+                      onError={(e) => {
+                        console.error('[ImageEditor] Fallback image error:', e);
+                        console.error('[ImageEditor] Failed URL:', imageUrl);
+                      }}
+                    />
+                  </div>
                   <Cropper
                     image={imageUrl}
                     crop={crop}
@@ -484,7 +518,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                         width: '100%',
                         height: '100%',
                         position: 'relative',
-                        backgroundColor: '#1a1a1a', // Dark gray instead of black to see if Cropper is rendering
+                        backgroundColor: 'transparent', // Transparent so we can see fallback
+                        zIndex: 2,
                         filter: `
                           brightness(${brightness}%)
                           contrast(${contrast}%)
@@ -502,33 +537,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                       }
                     }}
                   />
-                  {/* Fallback: Show image directly if Cropper fails */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#000',
-                    zIndex: -1,
-                    pointerEvents: 'none'
-                  }}>
-                    <img 
-                      src={imageUrl} 
-                      alt="Image preview" 
-                      style={{ 
-                        maxWidth: '100%', 
-                        maxHeight: '100%',
-                        objectFit: 'contain'
-                      }}
-                      crossOrigin="anonymous"
-                      onLoad={() => console.log('[ImageEditor] Fallback image loaded')}
-                      onError={(e) => console.error('[ImageEditor] Fallback image error:', e)}
-                    />
-                  </div>
                 </>
               ) : (
                 <div style={{ 
