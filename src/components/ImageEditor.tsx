@@ -52,8 +52,17 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         setImageLoaded(false);
         setImageDimensions(null);
         setCroppedAreaPixels(null); // Reset crop area when image changes
+        setError(''); // Clear previous errors
+        
+        console.log('[ImageEditor] Loading image:', imageUrl);
+        
+        if (!imageUrl) {
+          setError('No image URL provided');
+          return;
+        }
         
         const img = await createImage(imageUrl);
+        console.log('[ImageEditor] Image created, complete:', img.complete, 'dimensions:', img.width, 'x', img.height);
         
         // Function to check and set image dimensions
         const checkAndSetDimensions = () => {
@@ -61,6 +70,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
             const naturalWidth = img.naturalWidth || img.width;
             const naturalHeight = img.naturalHeight || img.height;
             if (naturalWidth > 0 && naturalHeight > 0) {
+              console.log('[ImageEditor] Image dimensions set:', naturalWidth, 'x', naturalHeight);
               setImageDimensions({ width: naturalWidth, height: naturalHeight });
               setImageLoaded(true);
               return true;
@@ -76,11 +86,18 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         
         // Wait for image to load if not complete
         const loadHandler = () => {
-          checkAndSetDimensions();
+          console.log('[ImageEditor] Image load event fired');
+          if (checkAndSetDimensions()) {
+            console.log('[ImageEditor] Image loaded successfully');
+          } else {
+            console.warn('[ImageEditor] Image loaded but dimensions invalid');
+            setError('Image loaded but has invalid dimensions');
+          }
         };
         
-        const errorHandler = () => {
-          setError('Failed to load image. Please check the image URL.');
+        const errorHandler = (e: any) => {
+          console.error('[ImageEditor] Image load error:', e, 'URL:', imageUrl);
+          setError(`Failed to load image from: ${imageUrl}. The image may be blocked by CORS or the URL may be invalid.`);
           setImageLoaded(false);
         };
         
@@ -93,8 +110,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           img.removeEventListener('error', errorHandler);
         };
       } catch (err: any) {
-        console.error('Failed to load image:', err);
-        setError(err.message || 'Failed to load image. Please check the image URL.');
+        console.error('[ImageEditor] Failed to load image:', err, 'URL:', imageUrl);
+        setError(err.message || `Failed to load image from: ${imageUrl}`);
         setImageLoaded(false);
         setImageDimensions(null);
       }
