@@ -423,9 +423,29 @@ export default function BucketImages() {
       </div>
 
       {/* Image Editor Modal */}
-      {editingImage && (
+      {editingImage && (() => {
+        // Always proxy external URLs for the editor to avoid CORS issues
+        const editorImageUrl = (() => {
+          const url = getImageUrl(editingImage.image, true);
+          console.log('[BucketImages] Editor image URL (before final check):', url);
+          
+          // Double-check: if it's an external URL and not already proxied, force proxy
+          if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            const backendUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/api\/v1$/, '') || 
+                              'https://new-social-rotation-backend-qzyk8.ondigitalocean.app';
+            
+            if (!url.includes(`${backendUrl}/api/v1/images/proxy`)) {
+              const proxiedUrl = `${backendUrl}/api/v1/images/proxy?url=${encodeURIComponent(url)}`;
+              console.log('[BucketImages] FORCING proxy for editor:', url.substring(0, 60) + '...', '->', proxiedUrl.substring(0, 60) + '...');
+              return proxiedUrl;
+            }
+          }
+          return url;
+        })();
+        
+        return (
         <ImageEditor
-          imageUrl={getImageUrl(editingImage.image, true)}
+          imageUrl={editorImageUrl}
           imageName={editingImage.friendly_name}
           onClose={() => setEditingImage(null)}
           onSave={async (editedBlob, newName) => {
@@ -453,7 +473,8 @@ export default function BucketImages() {
             }
           }}
         />
-      )}
+        );
+      })()}
     </div>
   );
 }
