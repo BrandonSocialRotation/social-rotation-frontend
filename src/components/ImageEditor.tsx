@@ -85,13 +85,16 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           }
         } catch (canvasError: any) {
           console.error('[ImageEditor] ✗ Canvas test failed:', canvasError);
-          if (canvasError.message && canvasError.message.includes('tainted')) {
+          console.error('[ImageEditor] Canvas error type:', canvasError.name);
+          console.error('[ImageEditor] Canvas error message:', canvasError.message);
+          if (canvasError.message && (canvasError.message.includes('tainted') || canvasError.message.includes('cross-origin'))) {
             setError('Image cannot be edited due to CORS restrictions. The proxy may not be setting CORS headers correctly.');
+            setImageReadyForCropper(false);
           } else {
             console.error('[ImageEditor] Canvas error details:', canvasError.message);
+            // For other errors, still allow Cropper to try
+            setImageReadyForCropper(true);
           }
-          setImageReadyForCropper(false);
-          // Don't return - still show the image, but Cropper won't work
         }
         
         // Function to check and set image dimensions
