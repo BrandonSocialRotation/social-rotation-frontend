@@ -64,6 +64,24 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         const img = await createImage(imageUrl);
         console.log('[ImageEditor] Image created, complete:', img.complete, 'dimensions:', img.width, 'x', img.height);
         
+        // Test if we can draw the image to a canvas (required for Cropper)
+        // This verifies CORS is working correctly
+        try {
+          const testCanvas = document.createElement('canvas');
+          testCanvas.width = img.width;
+          testCanvas.height = img.height;
+          const testCtx = testCanvas.getContext('2d');
+          if (testCtx) {
+            testCtx.drawImage(img, 0, 0);
+            const imageData = testCtx.getImageData(0, 0, 1, 1);
+            console.log('[ImageEditor] Canvas test successful - image can be drawn to canvas');
+          }
+        } catch (canvasError: any) {
+          console.error('[ImageEditor] Canvas test failed - CORS issue:', canvasError);
+          setError('Image cannot be used in editor due to CORS restrictions. The proxy may not be setting CORS headers correctly.');
+          return;
+        }
+        
         // Function to check and set image dimensions
         const checkAndSetDimensions = () => {
           if (img.complete && img.width > 0 && img.height > 0) {
