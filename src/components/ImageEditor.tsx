@@ -534,6 +534,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
               imageLoaded && imageDimensions && imageReadyForCropper ? (
                 <>
+                  {console.log('[ImageEditor] Rendering Cropper with image:', imageUrl, 'States:', { imageLoaded, imageDimensions, imageReadyForCropper })}
                   <Cropper
                     image={imageUrl}
                     crop={crop}
