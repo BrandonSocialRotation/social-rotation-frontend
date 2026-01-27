@@ -158,17 +158,22 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     new Promise((resolve, reject) => {
       const image = new Image();
       
-      // Only set CORS if the URL is from a different origin
+      // Always set CORS for external images to allow canvas manipulation
+      // This is required for the Cropper component to work with cross-origin images
       const imageUrl = new URL(url, window.location.href);
       const currentOrigin = window.location.origin;
       if (imageUrl.origin !== currentOrigin) {
         image.setAttribute('crossOrigin', 'anonymous');
+        console.log('[ImageEditor] Setting CORS for external image:', url);
       }
       
-      image.addEventListener('load', () => resolve(image));
+      image.addEventListener('load', () => {
+        console.log('[ImageEditor] Image loaded successfully:', url);
+        resolve(image);
+      });
       image.addEventListener('error', (error) => {
-        console.error('Image load error:', error, 'URL:', url);
-        reject(new Error(`Failed to load image from ${url}. Please check if the image URL is correct and accessible.`));
+        console.error('[ImageEditor] Image load error:', error, 'URL:', url);
+        reject(new Error(`Failed to load image from ${url}. The image may be blocked by CORS policy.`));
       });
       image.src = url;
     });
