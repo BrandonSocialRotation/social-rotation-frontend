@@ -29,6 +29,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [imageReadyForCropper, setImageReadyForCropper] = useState(false);
+  const [cropperImageUrl, setCropperImageUrl] = useState<string | null>(null); // Blob URL for Cropper
   
   // Debug: Log when imageReadyForCropper changes
   useEffect(() => {
@@ -173,6 +174,10 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         return () => {
           img.removeEventListener('load', loadHandler);
           img.removeEventListener('error', errorHandler);
+          // Clean up blob URL if it exists
+          if (cropperImageUrl && cropperImageUrl.startsWith('blob:')) {
+            URL.revokeObjectURL(cropperImageUrl);
+          }
         };
       } catch (err: any) {
         console.error('[ImageEditor] Failed to load image:', err, 'URL:', imageUrl);
@@ -534,9 +539,9 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
               imageLoaded && imageDimensions && imageReadyForCropper ? (
                 <>
-                  {console.log('[ImageEditor] Rendering Cropper with image:', imageUrl, 'States:', { imageLoaded, imageDimensions, imageReadyForCropper })}
+                  {console.log('[ImageEditor] Rendering Cropper with image:', cropperImageUrl || imageUrl, 'States:', { imageLoaded, imageDimensions, imageReadyForCropper })}
                   <Cropper
-                    image={imageUrl}
+                    image={cropperImageUrl || imageUrl}
                     crop={crop}
                     zoom={zoom}
                     rotation={rotation}
