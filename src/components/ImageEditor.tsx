@@ -63,39 +63,46 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         }
         
         const img = await createImage(imageUrl);
-        console.log('[ImageEditor] Image created, complete:', img.complete, 'dimensions:', img.width, 'x', img.height);
+        console.log('[ImageEditor] Image created, complete:', img.complete, 'dimensions:', img.width, 'x', img.height, 'crossOrigin:', img.crossOrigin);
         
-        // Test if we can draw the image to a canvas (required for Cropper)
+        // Function to test if we can draw the image to a canvas (required for Cropper)
         // This verifies CORS is working correctly
-        try {
-          const testCanvas = document.createElement('canvas');
-          testCanvas.width = img.width || 100;
-          testCanvas.height = img.height || 100;
-          const testCtx = testCanvas.getContext('2d');
-          if (testCtx) {
-            testCtx.drawImage(img, 0, 0);
-            // Try to read pixel data to verify CORS is working
-            const imageData = testCtx.getImageData(0, 0, 1, 1);
-            console.log('[ImageEditor] ✓ Canvas test successful - image can be manipulated');
-            setImageReadyForCropper(true);
-          } else {
-            console.error('[ImageEditor] ✗ Canvas context not available');
-            setError('Canvas not supported in this browser');
-            setImageReadyForCropper(false);
+        const testCanvasAccess = () => {
+          try {
+            console.log('[ImageEditor] Running canvas test...');
+            const testCanvas = document.createElement('canvas');
+            const naturalWidth = img.naturalWidth || img.width || 100;
+            const naturalHeight = img.naturalHeight || img.height || 100;
+            testCanvas.width = naturalWidth;
+            testCanvas.height = naturalHeight;
+            const testCtx = testCanvas.getContext('2d');
+            if (testCtx) {
+              testCtx.drawImage(img, 0, 0);
+              // Try to read pixel data to verify CORS is working
+              const imageData = testCtx.getImageData(0, 0, 1, 1);
+              console.log('[ImageEditor] ✓ Canvas test successful - image can be manipulated');
+              console.log('[ImageEditor] Canvas test - first pixel:', imageData.data[0], imageData.data[1], imageData.data[2], imageData.data[3]);
+              setImageReadyForCropper(true);
+            } else {
+              console.error('[ImageEditor] ✗ Canvas context not available');
+              setError('Canvas not supported in this browser');
+              setImageReadyForCropper(false);
+            }
+          } catch (canvasError: any) {
+            console.error('[ImageEditor] ✗ Canvas test failed:', canvasError);
+            console.error('[ImageEditor] Canvas error type:', canvasError.name);
+            console.error('[ImageEditor] Canvas error message:', canvasError.message);
+            console.error('[ImageEditor] Canvas error stack:', canvasError.stack);
+            if (canvasError.message && (canvasError.message.includes('tainted') || canvasError.message.includes('cross-origin') || canvasError.name === 'SecurityError')) {
+              setError('Image cannot be edited due to CORS restrictions. The proxy may not be setting CORS headers correctly.');
+              setImageReadyForCropper(false);
+            } else {
+              console.error('[ImageEditor] Canvas error details:', canvasError.message);
+              // For other errors, still allow Cropper to try
+              setImageReadyForCropper(true);
+            }
           }
-        } catch (canvasError: any) {
-          console.error('[ImageEditor] ✗ Canvas test failed:', canvasError);
-          console.error('[ImageEditor] Canvas error type:', canvasError.name);
-          console.error('[ImageEditor] Canvas error message:', canvasError.message);
-          if (canvasError.message && (canvasError.message.includes('tainted') || canvasError.message.includes('cross-origin'))) {
-            setError('Image cannot be edited due to CORS restrictions. The proxy may not be setting CORS headers correctly.');
-            setImageReadyForCropper(false);
-          } else {
-            console.error('[ImageEditor] Canvas error details:', canvasError.message);
-            // For other errors, still allow Cropper to try
-            setImageReadyForCropper(true);
-          }
-        }
+        };
         
         // Function to check and set image dimensions
         const checkAndSetDimensions = () => {
@@ -112,12 +119,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           return false;
         };
         
-        // Check if already loaded
-        if (checkAndSetDimensions()) {
-          // Canvas test already ran above when image was created
-          // No need to return early - let the load handler set everything up
-        }
-        
         // Wait for image to load if not complete
         const loadHandler = () => {
           console.log('[ImageEditor] Image load event fired');
@@ -130,6 +131,12 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
             setError('Image loaded but has invalid dimensions');
           }
         };
+        
+        // Check if already loaded
+        if (checkAndSetDimensions()) {
+          // Image is already loaded, run canvas test immediately
+          testCanvasAccess();
+        }
         
         const errorHandler = (e: any) => {
           console.error('[ImageEditor] Image load error:', e, 'URL:', imageUrl);
