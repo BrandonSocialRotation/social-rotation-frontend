@@ -158,23 +158,32 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     new Promise((resolve, reject) => {
       const image = new Image();
       
-      // Always set CORS for external images to allow canvas manipulation
-      // This is required for the Cropper component to work with cross-origin images
+      // Always set CORS for images from different origins (including proxied URLs)
+      // This is required for the Cropper component to work with canvas manipulation
       const imageUrl = new URL(url, window.location.href);
       const currentOrigin = window.location.origin;
-      if (imageUrl.origin !== currentOrigin) {
+      
+      // If it's a proxied URL (from our backend), we still need CORS because
+      // the frontend and backend are on different domains
+      if (imageUrl.origin !== currentOrigin || url.includes('/api/v1/images/proxy')) {
         image.setAttribute('crossOrigin', 'anonymous');
-        console.log('[ImageEditor] Setting CORS for external image:', url);
+        console.log('[ImageEditor] Setting CORS for image:', url.substring(0, 80) + '...');
       }
       
       image.addEventListener('load', () => {
-        console.log('[ImageEditor] Image loaded successfully:', url);
+        console.log('[ImageEditor] Image loaded successfully, dimensions:', image.width, 'x', image.height, 'natural:', image.naturalWidth, 'x', image.naturalHeight);
+        if (image.width === 0 || image.height === 0) {
+          reject(new Error('Image loaded but has zero dimensions'));
+          return;
+        }
         resolve(image);
       });
       image.addEventListener('error', (error) => {
         console.error('[ImageEditor] Image load error:', error, 'URL:', url);
-        reject(new Error(`Failed to load image from ${url}. The image may be blocked by CORS policy.`));
+        reject(new Error(`Failed to load image from ${url}. The image may be blocked by CORS policy or the URL may be invalid.`));
       });
+      
+      console.log('[ImageEditor] Starting to load image:', url.substring(0, 80) + '...');
       image.src = url;
     });
 
