@@ -28,6 +28,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [imageReadyForCropper, setImageReadyForCropper] = useState(false);
   
   // Image name
   const [name, setName] = useState(imageName);
@@ -99,6 +100,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         
         // Check if already loaded
         if (checkAndSetDimensions()) {
+          // Preload image with CORS for Cropper
+          preloadImageForCropper(imageUrl, img);
           return; // Image is ready
         }
         
@@ -107,6 +110,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           console.log('[ImageEditor] Image load event fired');
           if (checkAndSetDimensions()) {
             console.log('[ImageEditor] Image loaded successfully');
+            // Preload image with CORS for Cropper
+            preloadImageForCropper(imageUrl, img);
           } else {
             console.warn('[ImageEditor] Image loaded but dimensions invalid');
             setError('Image loaded but has invalid dimensions');
@@ -485,77 +490,66 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           {/* Crop Area */}
           <div className="crop-container">
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
-              imageLoaded && imageDimensions ? (
-                <>
-                  {/* Fallback: Show image directly first to verify it loads */}
-                  <div style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#1a1a1a',
-                    zIndex: 1,
-                    pointerEvents: 'none'
-                  }}>
+              imageLoaded && imageDimensions && imageReadyForCropper ? (
+                <Cropper
+                  image={imageUrl}
+                  crop={crop}
+                  zoom={zoom}
+                  rotation={rotation}
+                  aspect={undefined}
+                  onCropChange={setCrop}
+                  onCropComplete={onCropComplete}
+                  onZoomChange={setZoom}
+                  onRotationChange={setRotation}
+                  style={{
+                    containerStyle: {
+                      width: '100%',
+                      height: '100%',
+                      position: 'relative',
+                      backgroundColor: '#1a1a1a',
+                      filter: `
+                        brightness(${brightness}%)
+                        contrast(${contrast}%)
+                        saturate(${saturation}%)
+                        blur(${blur}px)
+                        grayscale(${grayscale}%)
+                        sepia(${sepia}%)
+                      `
+                    },
+                    cropAreaStyle: {
+                      border: '2px solid #007bff'
+                    },
+                    mediaStyle: {
+                      objectFit: 'contain'
+                    }
+                  }}
+                />
+              ) : imageLoaded && imageDimensions ? (
+                <div style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: '#1a1a1a',
+                  color: '#fff'
+                }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <p>Preparing image for editing...</p>
                     <img 
                       src={imageUrl} 
-                      alt="Image preview" 
+                      alt="Loading preview" 
                       style={{ 
-                        maxWidth: '90%', 
-                        maxHeight: '90%',
+                        maxWidth: '50%', 
+                        maxHeight: '50%',
                         objectFit: 'contain',
-                        opacity: 0.5 // Semi-transparent so we can see if Cropper renders on top
+                        opacity: 0.3
                       }}
                       crossOrigin="anonymous"
-                      onLoad={() => {
-                        console.log('[ImageEditor] Fallback image loaded successfully');
-                        console.log('[ImageEditor] Image URL:', imageUrl);
-                      }}
-                      onError={(e) => {
-                        console.error('[ImageEditor] Fallback image error:', e);
-                        console.error('[ImageEditor] Failed URL:', imageUrl);
-                      }}
+                      onLoad={() => console.log('[ImageEditor] Preview image loaded')}
                     />
                   </div>
-                  <Cropper
-                    image={imageUrl}
-                    crop={crop}
-                    zoom={zoom}
-                    rotation={rotation}
-                    aspect={undefined}
-                    onCropChange={setCrop}
-                    onCropComplete={onCropComplete}
-                    onZoomChange={setZoom}
-                    onRotationChange={setRotation}
-                    style={{
-                      containerStyle: {
-                        width: '100%',
-                        height: '100%',
-                        position: 'relative',
-                        backgroundColor: 'transparent', // Transparent so we can see fallback
-                        zIndex: 2,
-                        filter: `
-                          brightness(${brightness}%)
-                          contrast(${contrast}%)
-                          saturate(${saturation}%)
-                          blur(${blur}px)
-                          grayscale(${grayscale}%)
-                          sepia(${sepia}%)
-                        `
-                      },
-                      cropAreaStyle: {
-                        border: '2px solid #007bff'
-                      },
-                      mediaStyle: {
-                        objectFit: 'contain'
-                      }
-                    }}
-                  />
-                </>
+                </div>
               ) : (
                 <div style={{ 
                   padding: '40px', 
