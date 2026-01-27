@@ -69,18 +69,29 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         // This verifies CORS is working correctly
         try {
           const testCanvas = document.createElement('canvas');
-          testCanvas.width = img.width;
-          testCanvas.height = img.height;
+          testCanvas.width = img.width || 100;
+          testCanvas.height = img.height || 100;
           const testCtx = testCanvas.getContext('2d');
           if (testCtx) {
             testCtx.drawImage(img, 0, 0);
+            // Try to read pixel data to verify CORS is working
             const imageData = testCtx.getImageData(0, 0, 1, 1);
-            console.log('[ImageEditor] Canvas test successful - image can be drawn to canvas');
+            console.log('[ImageEditor] ✓ Canvas test successful - image can be manipulated');
+            setImageReadyForCropper(true);
+          } else {
+            console.error('[ImageEditor] ✗ Canvas context not available');
+            setError('Canvas not supported in this browser');
+            setImageReadyForCropper(false);
           }
         } catch (canvasError: any) {
-          console.error('[ImageEditor] Canvas test failed - CORS issue:', canvasError);
-          setError('Image cannot be used in editor due to CORS restrictions. The proxy may not be setting CORS headers correctly.');
-          return;
+          console.error('[ImageEditor] ✗ Canvas test failed:', canvasError);
+          if (canvasError.message && canvasError.message.includes('tainted')) {
+            setError('Image cannot be edited due to CORS restrictions. The proxy may not be setting CORS headers correctly.');
+          } else {
+            console.error('[ImageEditor] Canvas error details:', canvasError.message);
+          }
+          setImageReadyForCropper(false);
+          // Don't return - still show the image, but Cropper won't work
         }
         
         // Function to check and set image dimensions
@@ -110,8 +121,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           console.log('[ImageEditor] Image load event fired');
           if (checkAndSetDimensions()) {
             console.log('[ImageEditor] Image loaded successfully');
-            // Test canvas access before allowing Cropper
-            testCanvasAccess(img);
+            // Canvas test already ran above when image was created
           } else {
             console.warn('[ImageEditor] Image loaded but dimensions invalid');
             setError('Image loaded but has invalid dimensions');
