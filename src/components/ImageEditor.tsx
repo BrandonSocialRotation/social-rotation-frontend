@@ -570,6 +570,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                         height: '100%',
                         position: 'relative',
                         backgroundColor: '#1a1a1a',
+                        minHeight: '400px',
                         filter: `
                           brightness(${brightness}%)
                           contrast(${contrast}%)
@@ -580,12 +581,17 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                         `
                       },
                       cropAreaStyle: {
-                        border: '2px solid #007bff'
+                        border: '2px solid #007bff',
+                        boxShadow: '0 0 0 9999em rgba(0, 0, 0, 0.5)'
                       },
                       mediaStyle: {
+                        maxWidth: '100%',
+                        maxHeight: '100%',
                         objectFit: 'contain'
                       }
                     }}
+                    restrictPosition={false}
+                    showGrid={true}
                   />
                   {/* Debug: Show image directly to verify it loads - make it very visible */}
                   <div style={{
