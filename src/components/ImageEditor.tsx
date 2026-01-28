@@ -102,6 +102,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const [error, setError] = useState('');
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   
   // Load image to get dimensions when component mounts
   useEffect(() => {
@@ -608,7 +609,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
 
         <div className="editor-body">
           {/* Crop Area */}
-          <div className="crop-container">
+          <div className="crop-container" ref={containerRef}>
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
               imageLoaded && imageDimensions && imageReadyForCropper && cropperImageUrl ? (
                 <>
