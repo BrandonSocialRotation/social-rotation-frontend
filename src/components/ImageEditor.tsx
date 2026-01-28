@@ -478,8 +478,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
 
       const croppedImage = await getCroppedImg(
         imageUrl,
-        croppedAreaPixels,
-        rotation
+        croppedAreaPixels
       );
 
       await onSave(croppedImage, name.trim());
