@@ -294,12 +294,17 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         height: height
       });
       
-      // Log crop area size for debugging
-      console.log('[ImageEditor] Crop area updated:', {
-        width: width.toFixed(0),
-        height: height.toFixed(0),
-        imageSize: `${imageDimensions.width}x${imageDimensions.height}`,
-        zoom: zoom.toFixed(2)
+      // Log crop area size for debugging - check if it matches image size
+      const imageDisplayWidth = imageDimensions.width * zoom;
+      const imageDisplayHeight = imageDimensions.height * zoom;
+      const cropMatchesImage = Math.abs(width - imageDisplayWidth) < 10 && Math.abs(height - imageDisplayHeight) < 10;
+      
+      console.log('[ImageEditor] Crop area:', {
+        cropSize: `${width.toFixed(0)}x${height.toFixed(0)}`,
+        imageDisplaySize: `${imageDisplayWidth.toFixed(0)}x${imageDisplayHeight.toFixed(0)}`,
+        imageActualSize: `${imageDimensions.width}x${imageDimensions.height}`,
+        zoom: zoom.toFixed(2),
+        matches: cropMatchesImage ? '✓' : '✗'
       });
     }
     // Silently ignore invalid values - don't log warnings to reduce console spam
