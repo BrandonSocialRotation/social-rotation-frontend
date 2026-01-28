@@ -628,9 +628,10 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                       containerStyle: {
                         width: '100%',
                         height: '100%',
+                        minWidth: '600px',
+                        minHeight: '400px',
                         position: 'relative',
                         backgroundColor: '#1a1a1a',
-                        minHeight: '400px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
