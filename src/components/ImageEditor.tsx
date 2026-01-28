@@ -25,25 +25,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
-  
-  // Calculate initial zoom to fit image properly in the container
-  useEffect(() => {
-    if (imageDimensions && imageReadyForCropper) {
-      // Calculate zoom to make image fill at least 50% of a 400px container
-      const containerSize = 400; // Minimum container height
-      const imageAspect = imageDimensions.width / imageDimensions.height;
-      const containerAspect = 1; // Assume square-ish container
-      
-      // Calculate zoom to make image visible but not too small
-      // Target: image should be at least 200px in its smaller dimension
-      const minDimension = Math.min(imageDimensions.width, imageDimensions.height);
-      const targetSize = 300; // Target size in pixels
-      const calculatedZoom = Math.max(1, targetSize / minDimension);
-      
-      console.log('[ImageEditor] Setting initial zoom:', calculatedZoom, 'for image:', imageDimensions);
-      setZoom(calculatedZoom);
-    }
-  }, [imageDimensions, imageReadyForCropper]);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
@@ -54,6 +35,20 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   useEffect(() => {
     console.log('[ImageEditor] imageReadyForCropper state changed:', imageReadyForCropper);
   }, [imageReadyForCropper]);
+  
+  // Calculate initial zoom to fit image properly in the container
+  useEffect(() => {
+    if (imageDimensions && imageReadyForCropper) {
+      // Calculate zoom to make image visible but not too small
+      // Target: image should be at least 300px in its smaller dimension
+      const minDimension = Math.min(imageDimensions.width, imageDimensions.height);
+      const targetSize = 300; // Target size in pixels
+      const calculatedZoom = Math.max(1, targetSize / minDimension);
+      
+      console.log('[ImageEditor] Setting initial zoom:', calculatedZoom, 'for image:', imageDimensions);
+      setZoom(calculatedZoom);
+    }
+  }, [imageDimensions, imageReadyForCropper]);
   
   // Image name
   const [name, setName] = useState(imageName);
