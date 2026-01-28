@@ -593,37 +593,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                     restrictPosition={false}
                     showGrid={true}
                   />
-                  {/* Debug: Show image directly to verify it loads - make it very visible */}
-                  <div style={{
-                    position: 'fixed',
-                    top: '10px',
-                    right: '10px',
-                    width: '200px',
-                    height: '200px',
-                    border: '5px solid red',
-                    zIndex: 99999,
-                    backgroundColor: 'yellow',
-                    padding: '10px',
-                    boxShadow: '0 0 20px rgba(255,0,0,0.8)'
-                  }}>
-                    <div style={{ color: 'black', fontSize: '12px', marginBottom: '5px', fontWeight: 'bold' }}>
-                      DEBUG IMAGE
-                    </div>
-                    <img 
-                      src={imageUrl} 
-                      alt="Debug" 
-                      style={{ width: '100%', height: 'calc(100% - 20px)', objectFit: 'contain', border: '2px solid blue' }}
-                      crossOrigin="anonymous"
-                      onLoad={() => {
-                        console.log('[ImageEditor] ✓✓✓ Debug image loaded successfully in Cropper');
-                        console.log('[ImageEditor] Debug image URL:', imageUrl);
-                      }}
-                      onError={(e) => {
-                        console.error('[ImageEditor] ✗✗✗ Debug image FAILED to load in Cropper:', e);
-                        console.error('[ImageEditor] Failed URL:', imageUrl);
-                      }}
-                    />
-                  </div>
                 </>
               ) : imageLoaded && imageDimensions ? (
                 <div style={{
