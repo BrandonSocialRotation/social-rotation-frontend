@@ -711,32 +711,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
               </div>
             </div>
 
-            {/* Crop Controls */}
-            <div className="control-section">
-              <h3>Crop & Transform</h3>
-              <div className="control-group">
-                <label>Zoom: {zoom.toFixed(1)}x</label>
-                <input
-                  type="range"
-                  min={1}
-                  max={3}
-                  step={0.1}
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                />
-              </div>
-              <div className="control-group">
-                <label>Rotate: {rotation}°</label>
-                <input
-                  type="range"
-                  min={0}
-                  max={360}
-                  step={1}
-                  value={rotation}
-                  onChange={(e) => setRotation(Number(e.target.value))}
-                />
-              </div>
-            </div>
 
             {/* Filter Presets */}
             <div className="control-section">
