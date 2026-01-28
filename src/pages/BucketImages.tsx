@@ -261,9 +261,17 @@ export default function BucketImages() {
   };
 
   const handleEdit = (bucketImage: BucketImage) => {
+    // Check if image is broken (no source_url or placeholder URL)
+    const latestImage = images.find(img => img.id === bucketImage.id) || bucketImage;
+    const imageUrl = latestImage?.image?.source_url || latestImage?.image?.file_path || '';
+    
+    if (!imageUrl || imageUrl.includes('via.placeholder.com') || imageUrl.includes('placeholder/')) {
+      setError('Cannot edit this image - image file is missing or broken. Please delete and re-upload.');
+      return;
+    }
+    
     // Always use the latest image data from the images state
     // This ensures we're editing the most recent version (including after edits)
-    const latestImage = images.find(img => img.id === bucketImage.id) || bucketImage;
     setEditingImage(latestImage);
   };
 
