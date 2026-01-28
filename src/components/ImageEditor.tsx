@@ -23,8 +23,6 @@ interface ImageEditorProps {
 
 export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: ImageEditorProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [zoom] = useState(1); // Fixed at 1 - no zoom controls
-  const [rotation] = useState(0); // Fixed at 0 - no rotation controls
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
