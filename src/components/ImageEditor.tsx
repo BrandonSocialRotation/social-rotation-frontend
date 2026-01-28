@@ -587,11 +587,15 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                       mediaStyle: {
                         maxWidth: '100%',
                         maxHeight: '100%',
-                        objectFit: 'contain'
+                        objectFit: 'contain',
+                        display: 'block'
                       }
                     }}
                     restrictPosition={false}
                     showGrid={true}
+                    zoomWithScroll={false}
+                    minZoom={0.1}
+                    maxZoom={3}
                   />
                 </>
               ) : imageLoaded && imageDimensions ? (
