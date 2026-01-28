@@ -633,7 +633,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                     minZoom={0.1}
                     maxZoom={5}
                     cropShape="rect"
-                    aspect={undefined}
                   />
                 </>
               ) : imageLoaded && imageDimensions ? (
