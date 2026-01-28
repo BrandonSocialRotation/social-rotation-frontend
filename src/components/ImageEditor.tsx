@@ -36,31 +36,36 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     console.log('[ImageEditor] imageReadyForCropper state changed:', imageReadyForCropper);
   }, [imageReadyForCropper]);
   
-  // Calculate initial zoom and crop area to fit image properly in the container
+  // Calculate initial zoom to fit image properly in the container
   useEffect(() => {
     if (imageDimensions && imageReadyForCropper) {
-      // Calculate zoom to make image fill the container properly
-      // The container has min-height: 400px, so we want the image to fill most of it
-      const containerMinHeight = 400;
-      const containerMinWidth = 600; // Approximate container width
+      // react-easy-crop will automatically size the crop area to fit the container
+      // We just need to set an appropriate initial zoom
+      // For small images (like RSS feed thumbnails at 240x134), zoom in so they're usable
+      // For larger images, start at 1x and let the user adjust
       
-      // Calculate the scale needed to fit the image in the container
-      const scaleX = containerMinWidth / imageDimensions.width;
-      const scaleY = containerMinHeight / imageDimensions.height;
+      const minDimension = Math.min(imageDimensions.width, imageDimensions.height);
+      const maxDimension = Math.max(imageDimensions.width, imageDimensions.height);
       
-      // Use the smaller scale to ensure the image fits completely
-      const fitScale = Math.min(scaleX, scaleY);
-      
-      // Set initial zoom to fit the image, but ensure it's at least 1x
-      const calculatedZoom = Math.max(1, fitScale);
-      
-      console.log('[ImageEditor] Setting initial zoom:', calculatedZoom, 'for image:', imageDimensions, 'fitScale:', fitScale);
-      setZoom(calculatedZoom);
+      // If image is very small (like RSS thumbnails), zoom in significantly
+      if (minDimension < 300) {
+        // Target: make the smaller dimension at least 400px visible
+        const targetSize = 400;
+        const calculatedZoom = Math.max(1.5, targetSize / minDimension);
+        console.log('[ImageEditor] Small image detected, setting zoom:', calculatedZoom, 'for image:', imageDimensions);
+        setZoom(Math.min(calculatedZoom, 3)); // Cap at 3x to avoid too much zoom
+      } else if (maxDimension > 2000) {
+        // For very large images, zoom out slightly to fit better
+        console.log('[ImageEditor] Large image detected, setting zoom to 0.8 for image:', imageDimensions);
+        setZoom(0.8);
+      } else {
+        // For medium images, start at 1x
+        console.log('[ImageEditor] Medium image detected, setting zoom to 1 for image:', imageDimensions);
+        setZoom(1);
+      }
       
       // Reset crop position to center
-      if (imageDimensions.width && imageDimensions.height) {
-        setCrop({ x: 0, y: 0 });
-      }
+      setCrop({ x: 0, y: 0 });
     }
   }, [imageDimensions, imageReadyForCropper]);
   
