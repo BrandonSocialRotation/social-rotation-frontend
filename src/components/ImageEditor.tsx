@@ -40,46 +40,53 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   // The crop area size is determined by react-easy-crop based on container size
   // We need to ensure the zoom allows the crop area to cover the full image
   useEffect(() => {
-    if (imageDimensions && imageReadyForCropper) {
-      // react-easy-crop calculates crop area based on container size
-      // The container has min-height: 400px and fills available width
-      // We want the crop area to be able to cover the full image
+    if (imageDimensions && imageReadyForCropper && containerRef.current) {
+      // Get actual container dimensions
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const containerWidth = containerRect.width || 600; // Fallback to 600px
+      const containerHeight = containerRect.height || 400; // Fallback to 400px
       
-      const minDimension = Math.min(imageDimensions.width, imageDimensions.height);
-      const maxDimension = Math.max(imageDimensions.width, imageDimensions.height);
-      const aspectRatio = imageDimensions.width / imageDimensions.height;
+      const imageWidth = imageDimensions.width;
+      const imageHeight = imageDimensions.height;
+      const aspectRatio = imageWidth / imageHeight;
       
-      // Estimate container size (will be calculated by react-easy-crop)
-      // For now, assume container is roughly 600x400px
-      const estimatedContainerWidth = 600;
-      const estimatedContainerHeight = 400;
+      // react-easy-crop with aspect={undefined} creates a crop area that's resizable
+      // The crop area defaults to a size that fits within the container
+      // We need to calculate zoom so the image fits within the container
+      // This way, the crop area can cover the full image when resized
       
-      // Calculate what zoom we need so the image fills the container
+      // Calculate the scale needed to fit the image in the container (maintaining aspect ratio)
+      const scaleX = containerWidth / imageWidth;
+      const scaleY = containerHeight / imageHeight;
+      
+      // Use the smaller scale to ensure the entire image fits in the container
       // This ensures the crop area can cover the full image
-      const scaleX = estimatedContainerWidth / imageDimensions.width;
-      const scaleY = estimatedContainerHeight / imageDimensions.height;
-      
-      // Use the smaller scale to ensure image fits completely
       let calculatedZoom = Math.min(scaleX, scaleY);
       
-      // For very small images, zoom in more so they're usable
+      // For very small images (like RSS thumbnails), we want them to be larger
+      // so they're usable for cropping
+      const minDimension = Math.min(imageWidth, imageHeight);
       if (minDimension < 300) {
-        // Make sure small images are at least 300px visible
-        const minVisibleSize = 300;
-        const minZoom = minVisibleSize / minDimension;
+        // Make small images fill at least 60% of the container's smaller dimension
+        const targetSize = Math.min(containerWidth, containerHeight) * 0.6;
+        const minZoom = targetSize / minDimension;
         calculatedZoom = Math.max(calculatedZoom, minZoom);
-        calculatedZoom = Math.min(calculatedZoom, 3); // Cap at 3x
+        // Cap at 2x to avoid excessive zoom
+        calculatedZoom = Math.min(calculatedZoom, 2);
       }
       
-      // For very large images, ensure they fit
+      // For very large images, ensure they fit in the container
+      const maxDimension = Math.max(imageWidth, imageHeight);
       if (maxDimension > 2000) {
         calculatedZoom = Math.min(calculatedZoom, 0.8);
       }
       
-      // Ensure zoom is at least 0.5x and at most 3x
-      calculatedZoom = Math.max(0.5, Math.min(3, calculatedZoom));
+      // Ensure zoom is reasonable (between 0.3x and 2x)
+      calculatedZoom = Math.max(0.3, Math.min(2, calculatedZoom));
       
-      console.log('[ImageEditor] Setting initial zoom:', calculatedZoom.toFixed(2), 'for image:', imageDimensions, 'aspect:', aspectRatio.toFixed(2));
+      console.log('[ImageEditor] Container size:', containerWidth, 'x', containerHeight);
+      console.log('[ImageEditor] Image size:', imageWidth, 'x', imageHeight);
+      console.log('[ImageEditor] Calculated zoom:', calculatedZoom.toFixed(2), 'to fit image in container');
       setZoom(calculatedZoom);
       
       // Reset crop position to center
