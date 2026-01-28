@@ -267,9 +267,17 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         width: width,
         height: height
       });
+      
+      // Log crop area size for debugging
+      console.log('[ImageEditor] Crop area updated:', {
+        width: width.toFixed(0),
+        height: height.toFixed(0),
+        imageSize: `${imageDimensions.width}x${imageDimensions.height}`,
+        zoom: zoom.toFixed(2)
+      });
     }
     // Silently ignore invalid values - don't log warnings to reduce console spam
-  }, [imageLoaded, imageDimensions]);
+  }, [imageLoaded, imageDimensions, zoom]);
 
   const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
