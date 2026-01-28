@@ -609,7 +609,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                     showGrid={true}
                     zoomWithScroll={false}
                     minZoom={0.1}
-                    maxZoom={3}
+                    maxZoom={5}
+                    cropShape="rect"
                   />
                 </>
               ) : imageLoaded && imageDimensions ? (
