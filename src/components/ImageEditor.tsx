@@ -107,8 +107,22 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
             const imageData = testCtx.getImageData(0, 0, 1, 1);
             console.log('[ImageEditor] ✓✓✓ Canvas test SUCCESSFUL - image can be manipulated');
             console.log('[ImageEditor] Canvas test - first pixel:', imageData.data[0], imageData.data[1], imageData.data[2], imageData.data[3]);
-            setImageReadyForCropper(true);
-            console.log('[ImageEditor] ===== Canvas test complete - Cropper should now be enabled =====');
+            
+            // Convert canvas to blob URL for Cropper (this ensures CORS is fully resolved)
+            console.log('[ImageEditor] Converting image to blob URL for Cropper...');
+            testCanvas.toBlob((blob) => {
+              if (blob) {
+                const blobUrl = URL.createObjectURL(blob);
+                console.log('[ImageEditor] ✓✓✓ Created blob URL for Cropper:', blobUrl);
+                setCropperImageUrl(blobUrl);
+                setImageReadyForCropper(true);
+                console.log('[ImageEditor] ===== Canvas test complete - Cropper should now be enabled with blob URL =====');
+              } else {
+                console.error('[ImageEditor] ✗ Failed to create blob from canvas, using original URL');
+                setCropperImageUrl(imageUrl);
+                setImageReadyForCropper(true);
+              }
+            }, 'image/png');
           } catch (canvasError: any) {
             console.error('[ImageEditor] ✗✗✗ Canvas test FAILED:', canvasError);
             console.error('[ImageEditor] Canvas error type:', canvasError.name);
@@ -539,9 +553,10 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
               imageLoaded && imageDimensions && imageReadyForCropper ? (
                 <>
-                  {console.log('[ImageEditor] Rendering Cropper with image:', cropperImageUrl || imageUrl, 'States:', { imageLoaded, imageDimensions, imageReadyForCropper })}
-                  <Cropper
-                    image={cropperImageUrl || imageUrl}
+                  {console.log('[ImageEditor] Rendering Cropper - blob URL:', cropperImageUrl, 'original URL:', imageUrl, 'States:', { imageLoaded, imageDimensions, imageReadyForCropper })}
+                  {cropperImageUrl ? (
+                    <Cropper
+                      image={cropperImageUrl}
                     crop={crop}
                     zoom={zoom}
                     rotation={rotation}
