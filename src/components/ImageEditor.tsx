@@ -23,8 +23,8 @@ interface ImageEditorProps {
 
 export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: ImageEditorProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
+  const [zoom] = useState(1); // Fixed at 1 - no zoom controls
+  const [rotation] = useState(0); // Fixed at 0 - no rotation controls
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
@@ -36,58 +36,49 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     console.log('[ImageEditor] imageReadyForCropper state changed:', imageReadyForCropper);
   }, [imageReadyForCropper]);
   
-  // Calculate initial zoom to fit image properly in the container
-  // The crop area size is determined by react-easy-crop based on container size
-  // We need to ensure the zoom allows the crop area to cover the full image
+  // Calculate zoom to make image fill the container
+  // Image will always fill the container, crop area will match image size
+  const [calculatedZoom, setCalculatedZoom] = useState(1);
+  
   useEffect(() => {
     if (imageDimensions && imageReadyForCropper && containerRef.current) {
       // Get actual container dimensions
       const containerRect = containerRef.current.getBoundingClientRect();
-      const containerWidth = containerRect.width || 600; // Fallback to 600px
-      const containerHeight = containerRect.height || 400; // Fallback to 400px
+      const containerWidth = containerRect.width || 600;
+      const containerHeight = containerRect.height || 400;
       
       const imageWidth = imageDimensions.width;
       const imageHeight = imageDimensions.height;
-      const aspectRatio = imageWidth / imageHeight;
       
-      // react-easy-crop with aspect={undefined} creates a crop area that's resizable
-      // The crop area defaults to a size that fits within the container
-      // We need to calculate zoom so the image fits within the container
-      // This way, the crop area can cover the full image when resized
-      
-      // Calculate the scale needed to fit the image in the container (maintaining aspect ratio)
+      // Calculate zoom to fill the container (use larger scale to fill, not fit)
       const scaleX = containerWidth / imageWidth;
       const scaleY = containerHeight / imageHeight;
       
-      // Use the smaller scale to ensure the entire image fits in the container
-      // This ensures the crop area can cover the full image
-      let calculatedZoom = Math.min(scaleX, scaleY);
+      // Use the larger scale to fill the container
+      // This makes the image as big as possible while still fitting
+      let zoomValue = Math.min(scaleX, scaleY);
       
-      // For very small images (like RSS thumbnails), we want them to be larger
-      // so they're usable for cropping
+      // For very small images, ensure they're at least 80% of container
       const minDimension = Math.min(imageWidth, imageHeight);
       if (minDimension < 300) {
-        // Make small images fill at least 60% of the container's smaller dimension
-        const targetSize = Math.min(containerWidth, containerHeight) * 0.6;
+        const targetSize = Math.min(containerWidth, containerHeight) * 0.8;
         const minZoom = targetSize / minDimension;
-        calculatedZoom = Math.max(calculatedZoom, minZoom);
-        // Cap at 2x to avoid excessive zoom
-        calculatedZoom = Math.min(calculatedZoom, 2);
+        zoomValue = Math.max(zoomValue, minZoom);
+        zoomValue = Math.min(zoomValue, 3); // Cap at 3x
       }
       
-      // For very large images, ensure they fit in the container
+      // For very large images, ensure they fit
       const maxDimension = Math.max(imageWidth, imageHeight);
       if (maxDimension > 2000) {
-        calculatedZoom = Math.min(calculatedZoom, 0.8);
+        zoomValue = Math.min(zoomValue, 0.9);
       }
       
-      // Ensure zoom is reasonable (between 0.3x and 2x)
-      calculatedZoom = Math.max(0.3, Math.min(2, calculatedZoom));
+      zoomValue = Math.max(0.5, Math.min(3, zoomValue));
       
-      console.log('[ImageEditor] Container size:', containerWidth, 'x', containerHeight);
-      console.log('[ImageEditor] Image size:', imageWidth, 'x', imageHeight);
-      console.log('[ImageEditor] Calculated zoom:', calculatedZoom.toFixed(2), 'to fit image in container');
-      setZoom(calculatedZoom);
+      console.log('[ImageEditor] Container:', containerWidth, 'x', containerHeight);
+      console.log('[ImageEditor] Image:', imageWidth, 'x', imageHeight);
+      console.log('[ImageEditor] Zoom to fill container:', zoomValue.toFixed(2));
+      setCalculatedZoom(zoomValue);
       
       // Reset crop position to center
       setCrop({ x: 0, y: 0 });
@@ -294,21 +285,15 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         height: height
       });
       
-      // Log crop area size for debugging - check if it matches image size
-      const imageDisplayWidth = imageDimensions.width * zoom;
-      const imageDisplayHeight = imageDimensions.height * zoom;
-      const cropMatchesImage = Math.abs(width - imageDisplayWidth) < 10 && Math.abs(height - imageDisplayHeight) < 10;
-      
+      // Log crop area size for debugging
       console.log('[ImageEditor] Crop area:', {
         cropSize: `${width.toFixed(0)}x${height.toFixed(0)}`,
-        imageDisplaySize: `${imageDisplayWidth.toFixed(0)}x${imageDisplayHeight.toFixed(0)}`,
         imageActualSize: `${imageDimensions.width}x${imageDimensions.height}`,
-        zoom: zoom.toFixed(2),
-        matches: cropMatchesImage ? '✓' : '✗'
+        zoom: calculatedZoom.toFixed(2)
       });
     }
     // Silently ignore invalid values - don't log warnings to reduce console spam
-  }, [imageLoaded, imageDimensions, zoom]);
+  }, [imageLoaded, imageDimensions, calculatedZoom]);
 
   const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
@@ -345,8 +330,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
 
   const getCroppedImg = async (
     imageSrc: string,
-    pixelCrop: Area,
-    rotation = 0
+    pixelCrop: Area
   ): Promise<Blob> => {
     // Validate crop area first
     if (!pixelCrop || pixelCrop.width <= 0 || pixelCrop.height <= 0) {
@@ -372,46 +356,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       throw new Error(`Invalid natural image dimensions: width=${naturalWidth}, height=${naturalHeight}`);
     }
     
-    // Create a temporary canvas for rotation
-    const tempCanvas = document.createElement('canvas');
-    const tempCtx = tempCanvas.getContext('2d');
-
-    if (!tempCtx) {
-      throw new Error('No 2d context');
-    }
-
-    // Calculate safe area for rotation
-    // Use natural dimensions if available, otherwise use displayed dimensions
-    const imgWidth = image.naturalWidth || image.width;
-    const imgHeight = image.naturalHeight || image.height;
-    const maxSize = Math.max(imgWidth, imgHeight);
-    
-    if (maxSize <= 0 || !isFinite(maxSize)) {
-      throw new Error(`Invalid max size for rotation: ${maxSize} (image: ${imgWidth}x${imgHeight})`);
-    }
-    
-    const safeArea = Math.ceil(2 * ((maxSize / 2) * Math.sqrt(2)));
-
-    // Ensure safe area is valid
-    if (safeArea <= 0 || !isFinite(safeArea)) {
-      throw new Error(`Invalid safe area: ${safeArea}`);
-    }
-
-    tempCanvas.width = safeArea;
-    tempCanvas.height = safeArea;
-
-    // Center and rotate the image
-    tempCtx.translate(safeArea / 2, safeArea / 2);
-    tempCtx.rotate((rotation * Math.PI) / 180);
-    tempCtx.translate(-safeArea / 2, -safeArea / 2);
-
-    tempCtx.drawImage(
-      image,
-      safeArea / 2 - imgWidth * 0.5,
-      safeArea / 2 - imgHeight * 0.5
-    );
-
-    // Create final canvas for cropping
+    // Create canvas for cropping (no rotation needed)
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -420,7 +365,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     }
 
     // Set canvas size to crop area (ensure positive integers)
-    // Handle NaN, undefined, or invalid values
     const rawWidth = Number(pixelCrop.width) || 0;
     const rawHeight = Number(pixelCrop.height) || 0;
     const cropWidth = Math.max(1, Math.round(Math.abs(rawWidth)));
@@ -438,21 +382,20 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       throw new Error(`Canvas dimensions are 0 after setting: width=${canvas.width}, height=${canvas.height}`);
     }
 
-    // Calculate source coordinates in the rotated image
-    // pixelCrop coordinates from react-easy-crop are relative to the natural image size
-    const sourceX = Math.round(Math.max(0, safeArea / 2 - imgWidth * 0.5 + pixelCrop.x));
-    const sourceY = Math.round(Math.max(0, safeArea / 2 - imgHeight * 0.5 + pixelCrop.y));
-    const sourceWidth = Math.min(cropWidth, safeArea - sourceX);
-    const sourceHeight = Math.min(cropHeight, safeArea - sourceY);
+    // Calculate source coordinates (pixelCrop is relative to natural image size)
+    const sourceX = Math.round(Math.max(0, pixelCrop.x));
+    const sourceY = Math.round(Math.max(0, pixelCrop.y));
+    const sourceWidth = Math.min(cropWidth, naturalWidth - sourceX);
+    const sourceHeight = Math.min(cropHeight, naturalHeight - sourceY);
 
     // Validate source coordinates
     if (sourceWidth <= 0 || sourceHeight <= 0 || !isFinite(sourceX) || !isFinite(sourceY)) {
       throw new Error(`Invalid source coordinates: x=${sourceX}, y=${sourceY}, width=${sourceWidth}, height=${sourceHeight}`);
     }
 
-    // Draw the cropped portion from the rotated image
+    // Draw the cropped portion directly from the image (no rotation)
     ctx.drawImage(
-      tempCanvas,
+      image,
       sourceX,
       sourceY,
       sourceWidth,
@@ -629,13 +572,13 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                   <Cropper
                     image={cropperImageUrl}
                     crop={crop}
-                    zoom={zoom}
-                    rotation={rotation}
+                    zoom={calculatedZoom}
+                    rotation={0}
                     aspect={undefined}
                     onCropChange={setCrop}
                     onCropComplete={onCropComplete}
-                    onZoomChange={setZoom}
-                    onRotationChange={setRotation}
+                    onZoomChange={() => {}} // Disabled - no zoom control
+                    onRotationChange={() => {}} // Disabled - no rotation control
                     style={{
                       containerStyle: {
                         width: '100%',
@@ -670,8 +613,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                     restrictPosition={false}
                     showGrid={true}
                     zoomWithScroll={false}
-                    minZoom={0.1}
-                    maxZoom={5}
+                    minZoom={calculatedZoom}
+                    maxZoom={calculatedZoom}
                     cropShape="rect"
                   />
                 </>
