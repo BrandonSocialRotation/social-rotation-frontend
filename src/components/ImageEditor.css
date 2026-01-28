@@ -63,6 +63,13 @@
   justify-content: center;
 }
 
+/* Ensure react-easy-crop container has explicit dimensions */
+.crop-container > div[data-testid="container"] {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 400px !important;
+}
+
 .crop-container > div {
   width: 100% !important;
   height: 100% !important;
