@@ -450,8 +450,30 @@ export default function BucketImages() {
           onClose={() => setEditingImage(null)}
           onSave={async (editedBlob, newName) => {
             try {
+              // Ensure the blob has a proper filename with extension
+              // Extract extension from original image URL or default to .jpg
+              const originalImage = editingImage?.image;
+              const originalUrl = originalImage?.file_path || originalImage?.source_url || '';
+              let extension = '.jpg'; // Default to .jpg
+              
+              if (originalUrl) {
+                // Try to extract extension from URL
+                const urlMatch = originalUrl.match(/\.(jpg|jpeg|png|gif|webp)(\?|$)/i);
+                if (urlMatch) {
+                  extension = urlMatch[1].toLowerCase();
+                  if (extension === 'jpeg') extension = 'jpg';
+                  extension = `.${extension}`;
+                }
+              }
+              
+              // Create File object with proper name and extension
+              const fileName = `${newName || editingImage.friendly_name || 'edited-image'}${extension}`;
+              const file = new File([editedBlob], fileName, { 
+                type: editedBlob.type || 'image/jpeg' 
+              });
+              
               const formData = new FormData();
-              formData.append('file', editedBlob, newName || editingImage.friendly_name);
+              formData.append('file', file);
               
               await api.patch(
                 `/buckets/${bucketId}/images/${editingImage.id}`,
