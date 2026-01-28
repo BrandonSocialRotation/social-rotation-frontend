@@ -551,12 +551,11 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           {/* Crop Area */}
           <div className="crop-container">
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
-              imageLoaded && imageDimensions && imageReadyForCropper ? (
+              imageLoaded && imageDimensions && imageReadyForCropper && cropperImageUrl ? (
                 <>
-                  {console.log('[ImageEditor] Rendering Cropper - blob URL:', cropperImageUrl, 'original URL:', imageUrl, 'States:', { imageLoaded, imageDimensions, imageReadyForCropper })}
-                  {cropperImageUrl ? (
-                    <Cropper
-                      image={cropperImageUrl}
+                  {console.log('[ImageEditor] Rendering Cropper with blob URL:', cropperImageUrl)}
+                  <Cropper
+                    image={cropperImageUrl}
                     crop={crop}
                     zoom={zoom}
                     rotation={rotation}
