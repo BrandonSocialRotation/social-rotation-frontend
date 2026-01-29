@@ -76,6 +76,8 @@ export default function Schedule() {
   const [scheduleName, setScheduleName] = useState('');
   const [scheduleType, setScheduleType] = useState<number>(SCHEDULE_TYPE_MULTIPLE); // MULTIPLE or BUCKET_ROTATION
   const [bucketRotationTime, setBucketRotationTime] = useState(''); // Time for bucket rotation (HH:mm format)
+  // For bucket rotation: store captions per image {imageId: {description: string, twitterDescription: string}}
+  const [bucketRotationCaptions, setBucketRotationCaptions] = useState<Record<number, {description: string, twitterDescription: string}>>({});
   
   // For multiple images with different times - array of {imageId, dateTime, description, twitterDescription}
   const [scheduleItems, setScheduleItems] = useState<Array<{
@@ -245,6 +247,7 @@ export default function Schedule() {
     setScheduleName('');
     setScheduleType(SCHEDULE_TYPE_MULTIPLE);
     setBucketRotationTime('');
+    setBucketRotationCaptions({});
     setFacebook(true);
     setTwitter(true);
     setInstagram(false);
@@ -339,16 +342,36 @@ export default function Schedule() {
         return;
       }
 
+      // Get all images from bucket
+      if (!bucketImagesData || bucketImagesData.length === 0) {
+        setError('Bucket must have at least one image for bucket rotation');
+        return;
+      }
+
+      // Create schedule_items for each image with their captions
+      const dailyCron = generateDailyCronString(bucketRotationTime);
+      const scheduleItems = bucketImagesData.map((image, index) => {
+        const caption = bucketRotationCaptions[image.id] || { description: '', twitterDescription: '' };
+        return {
+          bucket_image_id: image.id,
+          schedule: dailyCron, // Same time for all images
+          description: caption.description || '',
+          twitter_description: caption.twitterDescription || caption.description || '',
+          timezone: selectedTimezone || userInfo?.timezone || 'UTC',
+          position: index // Order in rotation
+        };
+      });
+
       const scheduleData: any = {
         bucket_id: selectedBucket,
-        schedule: generateDailyCronString(bucketRotationTime), // Daily cron: "0 17 * * *" for 5:00 PM
+        schedule: dailyCron, // Base schedule (same for all)
         schedule_type: SCHEDULE_TYPE_BUCKET_ROTATION,
         post_to: postTo,
         name: scheduleName || `Bucket Rotation - ${bucketRotationTime}`,
-        description: '', // Can be set per image or globally
+        description: '', // Global description (can be empty, using per-image captions)
         twitter_description: '',
         timezone: selectedTimezone || userInfo?.timezone || 'UTC',
-        schedule_items: [] // No schedule items for bucket rotation
+        schedule_items: scheduleItems // One item per image with captions
       };
 
       // Include page/organization selections
@@ -510,6 +533,18 @@ export default function Schedule() {
       } else {
         setBucketRotationTime('17:00'); // Default to 5 PM
       }
+      
+      // Load captions from schedule_items
+      const captions: Record<number, {description: string, twitterDescription: string}> = {};
+      if (schedule.schedule_items && schedule.schedule_items.length > 0) {
+        schedule.schedule_items.forEach(item => {
+          captions[item.bucket_image_id] = {
+            description: item.description || '',
+            twitterDescription: item.twitter_description || ''
+          };
+        });
+      }
+      setBucketRotationCaptions(captions);
       setSelectedImages([]);
       setScheduleItems([]);
     } else if (schedule.schedule_items && schedule.schedule_items.length > 0) {
@@ -587,16 +622,38 @@ export default function Schedule() {
         return;
       }
 
+      // Get all images from bucket
+      if (!bucketImagesData || bucketImagesData.length === 0) {
+        setError('Bucket must have at least one image for bucket rotation');
+        return;
+      }
+
+      // Create schedule_items for each image with their captions
+      const dailyCron = generateDailyCronString(bucketRotationTime);
+      const scheduleItems = bucketImagesData.map((image, index) => {
+        const caption = bucketRotationCaptions[image.id] || { description: '', twitterDescription: '' };
+        const existingItem = editingSchedule?.schedule_items?.find(si => si.bucket_image_id === image.id);
+        return {
+          id: existingItem?.id, // Preserve existing IDs when updating
+          bucket_image_id: image.id,
+          schedule: dailyCron, // Same time for all images
+          description: caption.description || '',
+          twitter_description: caption.twitterDescription || caption.description || '',
+          timezone: selectedTimezone || userInfo?.timezone || 'UTC',
+          position: index // Order in rotation
+        };
+      });
+
       const scheduleData: any = {
         bucket_id: selectedBucket,
-        schedule: generateDailyCronString(bucketRotationTime),
+        schedule: dailyCron,
         schedule_type: SCHEDULE_TYPE_BUCKET_ROTATION,
         post_to: postTo,
         name: scheduleName || `Bucket Rotation - ${bucketRotationTime}`,
         description: '',
         twitter_description: '',
         timezone: selectedTimezone || userInfo?.timezone || 'UTC',
-        schedule_items: []
+        schedule_items: scheduleItems
       };
 
       // Include page/organization selections
@@ -915,6 +972,7 @@ export default function Schedule() {
                     setSelectedImages([]);
                     setScheduleItems([]);
                     setBucketRotationTime('');
+                    setBucketRotationCaptions({});
                   }}
                   required
                   disabled={!!editingSchedule} // Don't allow changing type when editing
@@ -966,20 +1024,23 @@ export default function Schedule() {
               {selectedBucket && (
                 <div className="form-group">
                   {scheduleType === SCHEDULE_TYPE_BUCKET_ROTATION ? (
-                    // Bucket Rotation: Just select time
+                    // Bucket Rotation: Select time and set captions for each image
                     <>
-                      <label htmlFor="bucketRotationTime">Daily Posting Time *</label>
+                      <label htmlFor="bucketRotationTime" style={{ fontSize: '15px', fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+                        Daily Posting Time *
+                      </label>
                       <input
                         id="bucketRotationTime"
                         type="time"
                         value={bucketRotationTime}
                         onChange={(e) => setBucketRotationTime(e.target.value)}
                         required
-                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                        style={{ width: '100%', padding: '10px', border: '2px solid #007bff', borderRadius: '4px', fontSize: '15px' }}
                       />
                       <small style={{ color: '#666', fontSize: '0.9em', display: 'block', marginTop: '5px' }}>
-                        One image from this bucket will be posted every day at this time. Images will rotate automatically, never posting the same image twice until all images have been posted.
+                        One image from this bucket will be posted every day at this time. Images will rotate automatically.
                       </small>
+                      
                       {!imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) && (
                         <div style={{ 
                           padding: '12px', 
@@ -995,20 +1056,93 @@ export default function Schedule() {
                           </p>
                         </div>
                       )}
+                      
                       {bucketImagesData && bucketImagesData.length > 0 && (
-                        <div style={{ 
-                          padding: '12px', 
-                          backgroundColor: '#d4edda', 
-                          border: '1px solid #28a745', 
-                          borderRadius: '4px',
-                          color: '#155724',
-                          marginTop: '15px'
-                        }}>
-                          <strong>✓ {bucketImagesData.length} image{bucketImagesData.length !== 1 ? 's' : ''} in bucket</strong>
-                          <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
-                            Images will be posted in order, one per day.
-                          </p>
-                        </div>
+                        <>
+                          <div style={{ 
+                            padding: '12px', 
+                            backgroundColor: '#d4edda', 
+                            border: '1px solid #28a745', 
+                            borderRadius: '4px',
+                            color: '#155724',
+                            marginTop: '15px',
+                            marginBottom: '15px'
+                          }}>
+                            <strong>✓ {bucketImagesData.length} image{bucketImagesData.length !== 1 ? 's' : ''} in bucket</strong>
+                            <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                              Set captions for each image below. Images will be posted in order, one per day.
+                            </p>
+                          </div>
+                          
+                          <label style={{ fontSize: '15px', fontWeight: '600', marginBottom: '10px', display: 'block' }}>
+                            Set Captions for Each Image:
+                          </label>
+                          <div style={{ maxHeight: '400px', overflowY: 'auto', border: '1px solid #ddd', borderRadius: '4px', padding: '10px' }}>
+                            {(bucketImagesData || []).map((image) => {
+                              const caption = bucketRotationCaptions[image.id] || { description: '', twitterDescription: '' };
+                              return (
+                                <div key={image.id} style={{ 
+                                  marginBottom: '15px', 
+                                  padding: '15px', 
+                                  backgroundColor: '#f9f9f9', 
+                                  borderRadius: '4px',
+                                  border: '1px solid #ddd'
+                                }}>
+                                  <strong style={{ display: 'block', marginBottom: '10px', fontSize: '14px' }}>
+                                    {image.friendly_name}
+                                  </strong>
+                                  
+                                  <div style={{ marginBottom: '10px' }}>
+                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
+                                      Caption (for all platforms)
+                                    </label>
+                                    <textarea
+                                      value={caption.description}
+                                      onChange={(e) => {
+                                        setBucketRotationCaptions({
+                                          ...bucketRotationCaptions,
+                                          [image.id]: {
+                                            ...caption,
+                                            description: e.target.value
+                                          }
+                                        });
+                                      }}
+                                      rows={3}
+                                      style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+                                      placeholder="Enter caption for this image..."
+                                    />
+                                  </div>
+                                  
+                                  <div>
+                                    <label style={{ display: 'block', marginBottom: '5px', fontSize: '13px', fontWeight: '500' }}>
+                                      Twitter Caption (optional, 280 char limit)
+                                    </label>
+                                    <textarea
+                                      value={caption.twitterDescription}
+                                      onChange={(e) => {
+                                        setBucketRotationCaptions({
+                                          ...bucketRotationCaptions,
+                                          [image.id]: {
+                                            ...caption,
+                                            twitterDescription: e.target.value
+                                          }
+                                        });
+                                      }}
+                                      rows={2}
+                                      style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', fontSize: '13px' }}
+                                      placeholder="Twitter-specific caption (optional)..."
+                                    />
+                                    {caption.twitterDescription.length > 280 && (
+                                      <small style={{ color: '#dc3545', display: 'block', marginTop: '5px' }}>
+                                        ⚠️ Twitter caption is {caption.twitterDescription.length} characters (limit: 280)
+                                      </small>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </>
                       )}
                     </>
                   ) : !imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) ? (
