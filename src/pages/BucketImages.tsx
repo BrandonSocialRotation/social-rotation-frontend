@@ -111,7 +111,7 @@ export default function BucketImages() {
     fetchBucketAndImages();
   }, [bucketId]);
 
-  // Handle clipboard paste for images
+  // Handle clipboard paste for images (keyboard shortcut)
   useEffect(() => {
     if (!canModifyBucket) return; // Only enable paste if user can modify bucket
 
@@ -163,13 +163,61 @@ export default function BucketImages() {
       }
     };
 
-    // Add paste event listener to window
+    // Add paste event listener to window (for Ctrl+V / Cmd+V)
     window.addEventListener('paste', handlePaste);
 
     return () => {
       window.removeEventListener('paste', handlePaste);
     };
   }, [canModifyBucket]);
+
+  // Helper function to handle paste from clipboard
+  const handlePasteClick = async () => {
+    try {
+      // Request clipboard read permission and get image
+      const clipboardItems = await navigator.clipboard.read();
+      
+      for (const item of clipboardItems) {
+        // Check if clipboard contains image
+        if (item.types.some(type => type.startsWith('image/'))) {
+          const imageType = item.types.find(type => type.startsWith('image/')) || 'image/png';
+          const blob = await item.getType(imageType);
+          
+          if (!blob) continue;
+
+          // Validate file size (max 10MB for pasted images)
+          if (blob.size > 10 * 1024 * 1024) {
+            setError('Pasted image is too large (max 10MB)');
+            return;
+          }
+
+          // Convert blob to File with a default name
+          const fileName = `pasted-image-${Date.now()}.${imageType.split('/')[1] || 'png'}`;
+          const file = new File([blob], fileName, { type: imageType });
+
+          // Set as selected file (this will trigger preview and allow upload)
+          setSelectedFile(file);
+          setError('');
+          setSuccess('Image pasted! Click Upload to add it to the bucket.');
+
+          // Create preview
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setPreviewUrl(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+          
+          return; // Only handle first image
+        }
+      }
+      
+      setError('No image found in clipboard. Copy an image first (Ctrl+C / Cmd+C).');
+    } catch (err: any) {
+      console.error('Error reading clipboard:', err);
+      // Fallback: try the old clipboard API via paste event
+      setError('Could not read clipboard. Try using Ctrl+V / Cmd+V to paste, or use the file upload button.');
+    }
+  };
 
   const fetchBucketAndImages = async () => {
     try {
@@ -381,12 +429,10 @@ export default function BucketImages() {
         <h2>Upload Images</h2>
         <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>
           Upload a single image file or a ZIP file containing multiple images (max 50MB for ZIP, 10MB per image)
-          <br />
-          <span style={{ fontSize: '0.85rem', color: '#007bff', fontWeight: '500' }}>
-            💡 Tip: You can also paste images from your clipboard (Ctrl+V / Cmd+V) - copy an image from Google Images or anywhere else and paste it here!
-          </span>
         </p>
-        <div className="upload-container">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+          {/* File Upload */}
+          <div className="upload-container">
           {!selectedFile ? (
             <div className="file-input-wrapper">
               <input
