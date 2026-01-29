@@ -482,6 +482,47 @@ export default function BucketImages() {
               </div>
             </div>
           )}
+          </div>
+
+          {/* Paste Upload */}
+          <div className="upload-container">
+            <div className="file-input-wrapper">
+              <button
+                type="button"
+                onClick={handlePasteClick}
+                className="file-input-label"
+                style={{ 
+                  width: '100%', 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  padding: '2rem',
+                  border: '2px dashed #007bff',
+                  borderRadius: '8px',
+                  backgroundColor: '#f8f9fa',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#e7f3ff';
+                  e.currentTarget.style.borderColor = '#0056b3';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f8f9fa';
+                  e.currentTarget.style.borderColor = '#007bff';
+                }}
+              >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                </svg>
+                <span style={{ fontSize: '0.9rem', fontWeight: '500' }}>Paste Image</span>
+                <span style={{ fontSize: '0.75rem', color: '#666' }}>Click to paste from clipboard</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       )}
