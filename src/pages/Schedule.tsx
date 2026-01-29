@@ -320,6 +320,22 @@ export default function Schedule() {
     }
   };
 
+  // Generate daily cron string for bucket rotation (e.g., "0 17 * * *" for 5:00 PM daily)
+  const generateDailyCronString = (timeStr: string) => {
+    try {
+      const [hour, minute] = timeStr.split(':').map(Number);
+      if (isNaN(hour) || isNaN(minute)) {
+        console.error('Invalid time format');
+        return '0 12 * * *'; // Default to noon
+      }
+      // Daily cron: minute hour * * * (runs every day at specified time)
+      return `${minute} ${hour} * * *`;
+    } catch (error) {
+      console.error('Error in generateDailyCronString:', error);
+      return '0 12 * * *'; // Default to noon
+    }
+  };
+
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
