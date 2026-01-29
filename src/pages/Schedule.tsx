@@ -53,8 +53,9 @@ interface BucketSchedule {
   schedule_items?: ScheduleItem[];
 }
 
-// Schedule type - only MULTIPLE is supported now
+// Schedule types
 const SCHEDULE_TYPE_MULTIPLE = 4;
+const SCHEDULE_TYPE_BUCKET_ROTATION = 5; // Posts one image per day, rotating through all images
 
 // Social media platforms
 const PLATFORMS = {
@@ -73,6 +74,8 @@ export default function Schedule() {
   const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
   const [selectedImages, setSelectedImages] = useState<number[]>([]); // Selected images from bucket
   const [scheduleName, setScheduleName] = useState('');
+  const [scheduleType, setScheduleType] = useState<number>(SCHEDULE_TYPE_MULTIPLE); // MULTIPLE or BUCKET_ROTATION
+  const [bucketRotationTime, setBucketRotationTime] = useState(''); // Time for bucket rotation (HH:mm format)
   
   // For multiple images with different times - array of {imageId, dateTime, description, twitterDescription}
   const [scheduleItems, setScheduleItems] = useState<Array<{
@@ -240,6 +243,8 @@ export default function Schedule() {
     setSelectedImages([]);
     setScheduleItems([]);
     setScheduleName('');
+    setScheduleType(SCHEDULE_TYPE_MULTIPLE);
+    setBucketRotationTime('');
     setFacebook(true);
     setTwitter(true);
     setInstagram(false);
@@ -321,6 +326,52 @@ export default function Schedule() {
       return;
     }
 
+    const postTo = calculatePostTo();
+    if (postTo === 0) {
+      setError('Please select at least one social media platform');
+      return;
+    }
+
+    // Handle bucket rotation schedule type
+    if (scheduleType === SCHEDULE_TYPE_BUCKET_ROTATION) {
+      if (!bucketRotationTime) {
+        setError('Please select a time for daily posting');
+        return;
+      }
+
+      const scheduleData: any = {
+        bucket_id: selectedBucket,
+        schedule: generateDailyCronString(bucketRotationTime), // Daily cron: "0 17 * * *" for 5:00 PM
+        schedule_type: SCHEDULE_TYPE_BUCKET_ROTATION,
+        post_to: postTo,
+        name: scheduleName || `Bucket Rotation - ${bucketRotationTime}`,
+        description: '', // Can be set per image or globally
+        twitter_description: '',
+        timezone: selectedTimezone || userInfo?.timezone || 'UTC',
+        schedule_items: [] // No schedule items for bucket rotation
+      };
+
+      // Include page/organization selections
+      if (facebook && selectedFacebookPage) {
+        scheduleData.facebook_page_id = selectedFacebookPage;
+      }
+      if (linkedin && selectedLinkedInOrg) {
+        scheduleData.linkedin_organization_urn = selectedLinkedInOrg;
+      }
+      if (instagram && selectedInstagramAccount) {
+        const pageWithInstagram = facebookPagesData?.find(p => p.instagram_account?.id === selectedInstagramAccount);
+        if (pageWithInstagram) {
+          scheduleData.facebook_page_id = pageWithInstagram.id;
+        }
+      }
+
+      createMutation.mutate({
+        bucket_schedule: scheduleData,
+      });
+      return;
+    }
+
+    // Handle MULTIPLE schedule type (existing logic)
     // Require at least one schedule item
     if (scheduleItems.length === 0) {
       setError('Please select at least one image and configure its schedule');
@@ -331,12 +382,6 @@ export default function Schedule() {
     const invalidItems = scheduleItems.filter(item => !item.imageId || !item.dateTime);
     if (invalidItems.length > 0) {
       setError('Please ensure all selected images have a date and time configured');
-      return;
-    }
-
-    const postTo = calculatePostTo();
-    if (postTo === 0) {
-      setError('Please select at least one social media platform');
       return;
     }
 
@@ -428,6 +473,7 @@ export default function Schedule() {
     setSelectedBucket(schedule.bucket_id);
     setScheduleName(schedule.name || '');
     setSelectedTimezone(schedule.timezone || userInfo?.timezone || 'UTC');
+    setScheduleType(schedule.schedule_type || SCHEDULE_TYPE_MULTIPLE);
     
     // Set platforms based on post_to flags
     setFacebook((schedule.post_to & PLATFORMS.FACEBOOK) !== 0);
@@ -452,8 +498,22 @@ export default function Schedule() {
       setSelectedLinkedInOrg(schedule.linkedin_organization_urn);
     }
     
-    // Load schedule items if they exist
-    if (schedule.schedule_items && schedule.schedule_items.length > 0) {
+    // Handle bucket rotation schedule type
+    if (schedule.schedule_type === SCHEDULE_TYPE_BUCKET_ROTATION) {
+      // Parse cron string to extract time (format: "0 17 * * *" = 5:00 PM)
+      const parts = schedule.schedule.split(' ');
+      if (parts.length === 5) {
+        const [minute, hour] = parts;
+        const hourNum = hour === '*' ? 17 : parseInt(hour); // Default to 5 PM if not set
+        const minNum = minute === '*' ? 0 : parseInt(minute);
+        setBucketRotationTime(`${String(hourNum).padStart(2, '0')}:${String(minNum).padStart(2, '0')}`);
+      } else {
+        setBucketRotationTime('17:00'); // Default to 5 PM
+      }
+      setSelectedImages([]);
+      setScheduleItems([]);
+    } else if (schedule.schedule_items && schedule.schedule_items.length > 0) {
+      // Load schedule items if they exist (MULTIPLE type)
       const imageIds = schedule.schedule_items.map(item => item.bucket_image_id);
       setSelectedImages(imageIds);
       
@@ -514,6 +574,53 @@ export default function Schedule() {
       return;
     }
 
+    const postTo = calculatePostTo();
+    if (postTo === 0) {
+      setError('Please select at least one social media platform');
+      return;
+    }
+
+    // Handle bucket rotation schedule type
+    if (scheduleType === SCHEDULE_TYPE_BUCKET_ROTATION) {
+      if (!bucketRotationTime) {
+        setError('Please select a time for daily posting');
+        return;
+      }
+
+      const scheduleData: any = {
+        bucket_id: selectedBucket,
+        schedule: generateDailyCronString(bucketRotationTime),
+        schedule_type: SCHEDULE_TYPE_BUCKET_ROTATION,
+        post_to: postTo,
+        name: scheduleName || `Bucket Rotation - ${bucketRotationTime}`,
+        description: '',
+        twitter_description: '',
+        timezone: selectedTimezone || userInfo?.timezone || 'UTC',
+        schedule_items: []
+      };
+
+      // Include page/organization selections
+      if (facebook && selectedFacebookPage) {
+        scheduleData.facebook_page_id = selectedFacebookPage;
+      }
+      if (linkedin && selectedLinkedInOrg) {
+        scheduleData.linkedin_organization_urn = selectedLinkedInOrg;
+      }
+      if (instagram && selectedInstagramAccount) {
+        const pageWithInstagram = facebookPagesData?.find(p => p.instagram_account?.id === selectedInstagramAccount);
+        if (pageWithInstagram) {
+          scheduleData.facebook_page_id = pageWithInstagram.id;
+        }
+      }
+
+      updateMutation.mutate({
+        id: editingSchedule.id,
+        data: { bucket_schedule: scheduleData },
+      });
+      return;
+    }
+
+    // Handle MULTIPLE schedule type (existing logic)
     // Require at least one schedule item
     if (scheduleItems.length === 0) {
       setError('Please select at least one image and configure its schedule');
@@ -524,12 +631,6 @@ export default function Schedule() {
     const invalidItems = scheduleItems.filter(item => !item.imageId || !item.dateTime);
     if (invalidItems.length > 0) {
       setError('Please ensure all selected images have a date and time configured');
-      return;
-    }
-
-    const postTo = calculatePostTo();
-    if (postTo === 0) {
-      setError('Please select at least one social media platform');
       return;
     }
 
@@ -804,6 +905,29 @@ export default function Schedule() {
                   required
                 />
                 
+                <label htmlFor="scheduleType">Schedule Type *</label>
+                <select
+                  id="scheduleType"
+                  value={scheduleType}
+                  onChange={(e) => {
+                    setScheduleType(Number(e.target.value));
+                    // Reset form when switching types
+                    setSelectedImages([]);
+                    setScheduleItems([]);
+                    setBucketRotationTime('');
+                  }}
+                  required
+                  disabled={!!editingSchedule} // Don't allow changing type when editing
+                >
+                  <option value={SCHEDULE_TYPE_MULTIPLE}>Multiple Images (Different Times)</option>
+                  <option value={SCHEDULE_TYPE_BUCKET_ROTATION}>Bucket Rotation (One Image Per Day)</option>
+                </select>
+                <small style={{ color: '#666', fontSize: '0.9em' }}>
+                  {scheduleType === SCHEDULE_TYPE_BUCKET_ROTATION 
+                    ? 'Posts one image from the bucket each day at the specified time, rotating through all images'
+                    : 'Schedule multiple images with different dates and times'}
+                </small>
+                
                 <label htmlFor="timezone">Timezone *</label>
                 <select
                   id="timezone"
@@ -841,7 +965,54 @@ export default function Schedule() {
 
               {selectedBucket && (
                 <div className="form-group">
-                  {!imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) ? (
+                  {scheduleType === SCHEDULE_TYPE_BUCKET_ROTATION ? (
+                    // Bucket Rotation: Just select time
+                    <>
+                      <label htmlFor="bucketRotationTime">Daily Posting Time *</label>
+                      <input
+                        id="bucketRotationTime"
+                        type="time"
+                        value={bucketRotationTime}
+                        onChange={(e) => setBucketRotationTime(e.target.value)}
+                        required
+                        style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px' }}
+                      />
+                      <small style={{ color: '#666', fontSize: '0.9em', display: 'block', marginTop: '5px' }}>
+                        One image from this bucket will be posted every day at this time. Images will rotate automatically, never posting the same image twice until all images have been posted.
+                      </small>
+                      {!imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) && (
+                        <div style={{ 
+                          padding: '12px', 
+                          backgroundColor: '#fff3cd', 
+                          border: '1px solid #ffc107', 
+                          borderRadius: '4px',
+                          color: '#856404',
+                          marginTop: '15px'
+                        }}>
+                          <strong>No images in this bucket</strong>
+                          <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                            This bucket doesn't have any images. Please add images to the bucket before creating a schedule.
+                          </p>
+                        </div>
+                      )}
+                      {bucketImagesData && bucketImagesData.length > 0 && (
+                        <div style={{ 
+                          padding: '12px', 
+                          backgroundColor: '#d4edda', 
+                          border: '1px solid #28a745', 
+                          borderRadius: '4px',
+                          color: '#155724',
+                          marginTop: '15px'
+                        }}>
+                          <strong>✓ {bucketImagesData.length} image{bucketImagesData.length !== 1 ? 's' : ''} in bucket</strong>
+                          <p style={{ margin: '8px 0 0 0', fontSize: '14px' }}>
+                            Images will be posted in order, one per day.
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : !imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) ? (
+                    // Multiple Images: Show image selection
                     <div style={{ 
                       padding: '12px', 
                       backgroundColor: '#fff3cd', 
