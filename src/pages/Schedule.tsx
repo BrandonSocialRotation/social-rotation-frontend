@@ -51,6 +51,7 @@ interface BucketSchedule {
   facebook_page_id?: string;
   linkedin_organization_urn?: string;
   schedule_items?: ScheduleItem[];
+  selected_days?: number[]; // Days of week for bucket rotation (0=Sun, 1=Mon, ..., 6=Sat)
 }
 
 // Schedule types
@@ -76,6 +77,7 @@ export default function Schedule() {
   const [scheduleName, setScheduleName] = useState('');
   const [scheduleType, setScheduleType] = useState<number>(SCHEDULE_TYPE_MULTIPLE); // MULTIPLE or BUCKET_ROTATION
   const [bucketRotationTime, setBucketRotationTime] = useState(''); // Time for bucket rotation (HH:mm format)
+  const [bucketRotationDays, setBucketRotationDays] = useState<number[]>([0, 1, 2, 3, 4, 5, 6]); // Days of week (0=Sun, 1=Mon, ..., 6=Sat) - default to all days
   // For bucket rotation: store captions per image {imageId: {description: string, twitterDescription: string}}
   const [bucketRotationCaptions, setBucketRotationCaptions] = useState<Record<number, {description: string, twitterDescription: string}>>({});
   
@@ -247,6 +249,7 @@ export default function Schedule() {
     setScheduleName('');
     setScheduleType(SCHEDULE_TYPE_MULTIPLE);
     setBucketRotationTime('');
+    setBucketRotationDays([0, 1, 2, 3, 4, 5, 6]); // Reset to all days
     setBucketRotationCaptions({});
     setFacebook(true);
     setTwitter(true);
@@ -406,6 +409,7 @@ export default function Schedule() {
 
       createMutation.mutate({
         bucket_schedule: scheduleData,
+        days: bucketRotationDays, // Include selected days
       });
       return;
     }
@@ -542,12 +546,24 @@ export default function Schedule() {
       // Parse cron string to extract time (format: "0 17 * * *" = 5:00 PM)
       const parts = schedule.schedule.split(' ');
       if (parts.length === 5) {
-        const [minute, hour] = parts;
+        const [minute, hour, , , weekday] = parts;
         const hourNum = hour === '*' ? 17 : parseInt(hour); // Default to 5 PM if not set
         const minNum = minute === '*' ? 0 : parseInt(minute);
         setBucketRotationTime(`${String(hourNum).padStart(2, '0')}:${String(minNum).padStart(2, '0')}`);
+        
+        // Parse selected days from cron string (weekday field) or use selected_days from API
+        if (schedule.selected_days && schedule.selected_days.length > 0) {
+          setBucketRotationDays(schedule.selected_days);
+        } else if (weekday && weekday !== '*') {
+          const days = weekday.split(',').map(d => parseInt(d));
+          setBucketRotationDays(days);
+        } else {
+          // Default to all days if wildcard
+          setBucketRotationDays([0, 1, 2, 3, 4, 5, 6]);
+        }
       } else {
         setBucketRotationTime('17:00'); // Default to 5 PM
+        setBucketRotationDays([0, 1, 2, 3, 4, 5, 6]); // Default to all days
       }
       
       // Load captions from schedule_items
@@ -637,6 +653,11 @@ export default function Schedule() {
         setError('Please select a time for daily posting');
         return;
       }
+      
+      if (!bucketRotationDays || bucketRotationDays.length === 0) {
+        setError('Please select at least one day of the week');
+        return;
+      }
 
       // Get all images from bucket
       if (!bucketImagesData || bucketImagesData.length === 0) {
@@ -688,7 +709,10 @@ export default function Schedule() {
 
       updateMutation.mutate({
         id: editingSchedule.id,
-        data: { bucket_schedule: scheduleData },
+        data: { 
+          bucket_schedule: scheduleData,
+          days: bucketRotationDays, // Include selected days
+        },
       });
       return;
     }
@@ -988,6 +1012,7 @@ export default function Schedule() {
                     setSelectedImages([]);
                     setScheduleItems([]);
                     setBucketRotationTime('');
+                    setBucketRotationDays([0, 1, 2, 3, 4, 5, 6]); // Reset to all days
                     setBucketRotationCaptions({});
                   }}
                   required
@@ -1054,7 +1079,69 @@ export default function Schedule() {
                         style={{ width: '100%', padding: '10px', border: '2px solid #007bff', borderRadius: '4px', fontSize: '15px' }}
                       />
                       <small style={{ color: '#666', fontSize: '0.9em', display: 'block', marginTop: '5px' }}>
-                        One image from this bucket will be posted every day at this time. Images will rotate automatically.
+                        One image from this bucket will be posted on selected days at this time. Images will rotate automatically.
+                      </small>
+                      
+                      <label style={{ fontSize: '15px', fontWeight: '600', marginTop: '20px', marginBottom: '10px', display: 'block' }}>
+                        Select Days of Week *
+                      </label>
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(7, 1fr)', 
+                        gap: '10px',
+                        marginBottom: '15px'
+                      }}>
+                        {[
+                          { value: 0, label: 'Sun' },
+                          { value: 1, label: 'Mon' },
+                          { value: 2, label: 'Tue' },
+                          { value: 3, label: 'Wed' },
+                          { value: 4, label: 'Thu' },
+                          { value: 5, label: 'Fri' },
+                          { value: 6, label: 'Sat' },
+                        ].map((day) => (
+                          <label
+                            key={day.value}
+                            style={{
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              padding: '10px',
+                              border: bucketRotationDays.includes(day.value) ? '2px solid #007bff' : '2px solid #ddd',
+                              borderRadius: '4px',
+                              backgroundColor: bucketRotationDays.includes(day.value) ? '#e7f3ff' : '#fff',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={bucketRotationDays.includes(day.value)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setBucketRotationDays([...bucketRotationDays, day.value].sort());
+                                } else {
+                                  // Prevent unchecking all days
+                                  if (bucketRotationDays.length > 1) {
+                                    setBucketRotationDays(bucketRotationDays.filter(d => d !== day.value));
+                                  } else {
+                                    alert('You must select at least one day');
+                                  }
+                                }
+                              }}
+                              style={{ marginBottom: '5px' }}
+                            />
+                            <span style={{ 
+                              fontSize: '13px', 
+                              fontWeight: bucketRotationDays.includes(day.value) ? '600' : '400' 
+                            }}>
+                              {day.label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      <small style={{ color: '#666', fontSize: '0.9em', display: 'block', marginBottom: '15px' }}>
+                        Select which days of the week to post. At least one day must be selected.
                       </small>
                       
                       {!imagesLoading && (!bucketImagesData || bucketImagesData.length === 0) && (
