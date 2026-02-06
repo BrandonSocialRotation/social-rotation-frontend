@@ -1466,6 +1466,20 @@ export default function Schedule() {
                   </label>
                   {instagram && (
                     <div className="platform-select" style={{ marginLeft: '20px', marginTop: '5px', marginBottom: '10px' }}>
+                      {(() => {
+                        // Debug logging
+                        if (process.env.NODE_ENV === 'development') {
+                          console.log('Instagram Debug:', {
+                            facebook_connected: userInfo?.facebook_connected,
+                            instagram_connected: userInfo?.instagram_connected,
+                            instagram_business_id: userInfo?.instagram_business_id,
+                            instagram_can_post: userInfo?.instagram_can_post,
+                            facebookPagesData: facebookPagesData,
+                            pagesWithInstagram: facebookPagesData?.filter(p => p.instagram_account)
+                          });
+                        }
+                        return null;
+                      })()}
                       {facebookPagesLoading ? (
                         <small>Loading Instagram accounts...</small>
                       ) : facebookPagesError ? (
