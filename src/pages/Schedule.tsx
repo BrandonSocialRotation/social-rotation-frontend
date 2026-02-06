@@ -1476,7 +1476,7 @@ export default function Schedule() {
                         <small style={{ color: '#666' }}>
                           Facebook must be connected to post to Instagram. Instagram posting requires a Business or Creator account linked to a Facebook Page.
                         </small>
-                      ) : !userInfo?.instagram_connected || !userInfo?.instagram_business_id ? (
+                      ) : !userInfo?.instagram_connected ? (
                         <small style={{ color: '#666' }}>
                           Instagram is not connected. Please connect your Instagram Business or Creator account in your profile settings.
                         </small>
@@ -1508,6 +1508,10 @@ export default function Schedule() {
                               </option>
                             ))}
                         </select>
+                      ) : userInfo?.instagram_connected && userInfo?.instagram_can_post !== false ? (
+                        <small style={{ color: '#666' }}>
+                          Instagram is connected but no accounts found in Facebook pages. Please ensure your Instagram Business/Creator account is linked to a Facebook Page.
+                        </small>
                       ) : (
                         <small style={{ color: '#666' }}>
                           No Instagram accounts found. Please ensure your Instagram Business/Creator account is linked to a Facebook Page.
