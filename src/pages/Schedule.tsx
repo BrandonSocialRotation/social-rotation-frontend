@@ -1522,9 +1522,13 @@ export default function Schedule() {
                               </option>
                             ))}
                         </select>
-                      ) : userInfo?.instagram_connected && userInfo?.instagram_can_post !== false ? (
+                      ) : facebookPagesData && facebookPagesData.length > 0 && !facebookPagesData.some(p => p.instagram_account) ? (
                         <small style={{ color: '#666' }}>
                           Instagram is connected but no accounts found in Facebook pages. Please ensure your Instagram Business/Creator account is linked to a Facebook Page.
+                        </small>
+                      ) : userInfo?.instagram_connected && userInfo?.instagram_can_post !== false ? (
+                        <small style={{ color: '#666' }}>
+                          Loading Instagram accounts from Facebook pages...
                         </small>
                       ) : (
                         <small style={{ color: '#666' }}>
