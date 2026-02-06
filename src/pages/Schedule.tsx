@@ -107,12 +107,17 @@ export default function Schedule() {
   // Timezone selector - defaults to user's profile timezone
   const [selectedTimezone, setSelectedTimezone] = useState<string>('');
 
-  // Fetch user timezone from profile
+  // Fetch user info from profile (includes timezone and Instagram validation)
   const { data: userInfo } = useQuery({
     queryKey: ['user_info'],
     queryFn: async () => {
       const response = await api.get('/user_info');
-      return response.data.user as { timezone?: string };
+      return response.data.user as { 
+        timezone?: string;
+        instagram_can_post?: boolean;
+        instagram_connected?: boolean;
+        facebook_connected?: boolean;
+      };
     },
   });
   
@@ -1466,7 +1471,7 @@ export default function Schedule() {
                         <small style={{ color: '#d32f2f' }}>
                           {(facebookPagesError as any).response?.data?.error || 'Failed to load Instagram accounts'}
                         </small>
-                      ) : facebookPagesData && facebookPagesData.some(p => p.instagram_account) ? (
+                      ) : userInfo?.instagram_can_post && facebookPagesData && facebookPagesData.some(p => p.instagram_account) ? (
                         <select
                           value={selectedInstagramAccount}
                           onChange={(e) => {
@@ -1475,7 +1480,7 @@ export default function Schedule() {
                             const page = facebookPagesData.find(p => p.instagram_account?.id === e.target.value);
                             if (page) {
                               setSelectedFacebookPage(page.id);
-                              if (!facebook) setFacebook(true);
+                              // Don't auto-select Facebook - Instagram can post independently
                             }
                           }}
                           style={{ width: '100%', padding: '5px' }}
@@ -1489,15 +1494,22 @@ export default function Schedule() {
                               </option>
                             ))}
                         </select>
-                      ) : facebookPagesData && facebookPagesData.length > 0 ? (
+                      ) : !userInfo?.facebook_connected ? (
                         <small style={{ color: '#666' }}>
-                          Your Instagram account is not a Business or Creator account. Personal accounts cannot be posted to. 
-                          Please change your account status if you want to be able to post.
+                          Facebook must be connected to post to Instagram. Instagram posting requires a Business or Creator account linked to a Facebook Page.
+                        </small>
+                      ) : !userInfo?.instagram_connected ? (
+                        <small style={{ color: '#666' }}>
+                          Instagram is not connected. Please connect your Instagram Business or Creator account in your profile settings.
+                        </small>
+                      ) : !userInfo?.instagram_can_post ? (
+                        <small style={{ color: '#666' }}>
+                          Your Instagram account is not set up for posting. Instagram posting requires a Business or Creator account linked to a Facebook Page. 
+                          Please ensure your Instagram account is a Business/Creator account and is linked to a Facebook Page, then reconnect Instagram.
                         </small>
                       ) : (
                         <small style={{ color: '#666' }}>
-                          No Instagram accounts found. Instagram posting requires a Business or Creator account linked to a Facebook Page. 
-                          Personal Instagram accounts cannot be used for API posting. Please convert your account to Business/Creator and link it to a Facebook Page.
+                          Loading Instagram account information...
                         </small>
                       )}
                     </div>
