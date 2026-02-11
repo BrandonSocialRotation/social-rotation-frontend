@@ -43,14 +43,21 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid - log user out and redirect to login
+      // Token expired or invalid - force logout and redirect to login
       useAuthStore.getState().logout()
-      // Only redirect if we're not already on the login/register page
+      // Always redirect to login unless already on auth pages
       const currentPath = window.location.pathname
-      if (!currentPath.includes('/login') && !currentPath.includes('/register') && !currentPath.includes('/reset-password')) {
-        window.location.href = '/login'
+      const isAuthPage = currentPath === '/login' || 
+                         currentPath === '/register' || 
+                         currentPath === '/reset-password' ||
+                         currentPath.startsWith('/reset-password/')
+      
+      if (!isAuthPage) {
+        // Force redirect - this will prevent any error messages from showing
+        window.location.replace('/login')
       }
-      // Return the error so components can handle it
+      // Don't reject the promise to prevent error messages
+      return Promise.resolve({ data: null, status: 401 })
     } else if (error.response?.status === 403 && error.response?.data?.subscription_required) {
       // Subscription required, canceled, or suspended - redirect appropriately
       // Don't logout, just redirect so they can manage subscription
