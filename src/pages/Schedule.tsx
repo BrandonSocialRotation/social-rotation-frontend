@@ -1468,7 +1468,7 @@ export default function Schedule() {
                     <div className="platform-select" style={{ marginLeft: '20px', marginTop: '5px', marginBottom: '10px' }}>
                       {(() => {
                         // Debug logging
-                        if (process.env.NODE_ENV === 'development') {
+                        if (import.meta.env.DEV) {
                           console.log('Instagram Debug:', {
                             facebook_connected: userInfo?.facebook_connected,
                             instagram_connected: userInfo?.instagram_connected,
@@ -1526,7 +1526,7 @@ export default function Schedule() {
                         <small style={{ color: '#666' }}>
                           Instagram is connected but no accounts found in Facebook pages. Please ensure your Instagram Business/Creator account is linked to a Facebook Page.
                         </small>
-                      ) : userInfo?.instagram_connected && userInfo?.instagram_can_post !== false ? (
+                      ) : userInfo?.instagram_connected && userInfo?.instagram_can_post === true ? (
                         <small style={{ color: '#666' }}>
                           Loading Instagram accounts from Facebook pages...
                         </small>
