@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './ImageEditor.css';
 
 interface ImageEditorProps {
@@ -115,7 +115,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
         }
         resolve(image);
       });
-      image.addEventListener('error', (error) => {
+      image.addEventListener('error', () => {
         reject(new Error(`Failed to load image from ${url}`));
       });
       
