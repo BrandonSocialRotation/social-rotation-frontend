@@ -522,6 +522,9 @@ export default function Profile() {
         </form>
       </div>
 
+      {/* Watermark Logo */}
+      <WatermarkLogoSection />
+
       {/* Connected Accounts */}
       <div className="profile-section">
         <h2>Connected Social Media Accounts</h2>
@@ -1411,6 +1414,186 @@ function ConvertToAgencyButton() {
         </div>
       )}
     </>
+  );
+}
+
+// Watermark Logo Section Component
+function WatermarkLogoSection() {
+  const queryClient = useQueryClient();
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState('');
+
+  const { data: userData } = useQuery({
+    queryKey: ['user_info'],
+    queryFn: async () => {
+      const response = await api.get('/user_info');
+      return response.data;
+    },
+  });
+
+  const watermarkLogoUrl = userData?.user?.watermark_logo_url;
+  const hasWatermark = !!userData?.user?.watermark_logo;
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError('File size must be less than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+    setUploadSuccess('');
+
+    try {
+      const formData = new FormData();
+      formData.append('watermark_logo', file);
+
+      const response = await api.post('/user_info/watermark', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data) {
+        setUploadSuccess('Watermark logo uploaded successfully!');
+        queryClient.invalidateQueries({ queryKey: ['user_info'] });
+        setTimeout(() => setUploadSuccess(''), 3000);
+      }
+    } catch (err: any) {
+      console.error('Error uploading watermark logo:', err);
+      setUploadError(err.response?.data?.error || 'Failed to upload logo. Please try again.');
+    } finally {
+      setUploading(false);
+      // Reset file input
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    if (!confirm('Are you sure you want to remove your watermark logo?')) {
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      // Send null to remove logo
+      const formData = new FormData();
+      formData.append('watermark_logo', 'null');
+
+      await api.post('/user_info/watermark', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setUploadSuccess('Watermark logo removed successfully!');
+      queryClient.invalidateQueries({ queryKey: ['user_info'] });
+      setTimeout(() => setUploadSuccess(''), 3000);
+    } catch (err: any) {
+      console.error('Error removing watermark logo:', err);
+      setUploadError(err.response?.data?.error || 'Failed to remove logo. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="profile-section">
+      <h2>Watermark Logo</h2>
+      <p className="section-description">
+        Upload your logo to automatically add it as a watermark to your posts. You can control the position and opacity in the image editor.
+      </p>
+
+      {uploadError && <div className="error-message">{uploadError}</div>}
+      {uploadSuccess && <div className="success-message">{uploadSuccess}</div>}
+
+      {hasWatermark && watermarkLogoUrl && (
+        <div style={{ marginBottom: '20px' }}>
+          <p style={{ marginBottom: '10px', fontWeight: 'bold' }}>Current Logo:</p>
+          <div style={{
+            display: 'inline-block',
+            padding: '10px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            backgroundColor: '#f9f9f9'
+          }}>
+            <img
+              src={watermarkLogoUrl}
+              alt="Watermark logo"
+              style={{
+                maxWidth: '200px',
+                maxHeight: '100px',
+                objectFit: 'contain'
+              }}
+              onError={(e) => {
+                console.error('Failed to load watermark logo:', watermarkLogoUrl);
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <label
+          htmlFor="watermark-upload"
+          style={{
+            padding: '10px 20px',
+            background: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            opacity: uploading ? 0.6 : 1,
+            display: 'inline-block'
+          }}
+        >
+          {uploading ? 'Uploading...' : hasWatermark ? 'Replace Logo' : 'Upload Logo'}
+        </label>
+        <input
+          id="watermark-upload"
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          disabled={uploading}
+          style={{ display: 'none' }}
+        />
+        {hasWatermark && (
+          <button
+            onClick={handleRemoveLogo}
+            disabled={uploading}
+            style={{
+              padding: '10px 20px',
+              background: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: uploading ? 'not-allowed' : 'pointer',
+              opacity: uploading ? 0.6 : 1
+            }}
+          >
+            Remove Logo
+          </button>
+        )}
+      </div>
+
+      <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
+        Recommended: PNG with transparent background, max 5MB. The logo will be resized automatically when applied to images.
+      </p>
+    </div>
   );
 }
 

@@ -1,17 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import Cropper from 'react-easy-crop';
-// Define types locally since react-easy-crop/types is not available
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface Area {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
 import './ImageEditor.css';
 
 interface ImageEditorProps {
@@ -19,69 +6,13 @@ interface ImageEditorProps {
   imageName: string;
   onSave: (editedImageBlob: Blob, newName: string) => Promise<void>;
   onClose: () => void;
+  watermarkLogoUrl?: string | null;
 }
 
-export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: ImageEditorProps) {
-  const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+export default function ImageEditor({ imageUrl, imageName, onSave, onClose, watermarkLogoUrl }: ImageEditorProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
-  const [imageReadyForCropper, setImageReadyForCropper] = useState(false);
-  const [cropperImageUrl, setCropperImageUrl] = useState<string | null>(null); // Blob URL for Cropper
-  
-  // Debug: Log when imageReadyForCropper changes
-  useEffect(() => {
-    console.log('[ImageEditor] imageReadyForCropper state changed:', imageReadyForCropper);
-  }, [imageReadyForCropper]);
-  
-  // Calculate zoom to make image fill the container
-  // Image will always fill the container, crop area will match image size
-  const [calculatedZoom, setCalculatedZoom] = useState(1);
-  
-  useEffect(() => {
-    if (imageDimensions && imageReadyForCropper && containerRef.current) {
-      // Get actual container dimensions
-      const containerRect = containerRef.current.getBoundingClientRect();
-      const containerWidth = containerRect.width || 600;
-      const containerHeight = containerRect.height || 400;
-      
-      const imageWidth = imageDimensions.width;
-      const imageHeight = imageDimensions.height;
-      
-      // Calculate zoom to fill the container (use larger scale to fill, not fit)
-      const scaleX = containerWidth / imageWidth;
-      const scaleY = containerHeight / imageHeight;
-      
-      // Use the larger scale to fill the container
-      // This makes the image as big as possible while still fitting
-      let zoomValue = Math.min(scaleX, scaleY);
-      
-      // For very small images, ensure they're at least 80% of container
-      const minDimension = Math.min(imageWidth, imageHeight);
-      if (minDimension < 300) {
-        const targetSize = Math.min(containerWidth, containerHeight) * 0.8;
-        const minZoom = targetSize / minDimension;
-        zoomValue = Math.max(zoomValue, minZoom);
-        zoomValue = Math.min(zoomValue, 3); // Cap at 3x
-      }
-      
-      // For very large images, ensure they fit
-      const maxDimension = Math.max(imageWidth, imageHeight);
-      if (maxDimension > 2000) {
-        zoomValue = Math.min(zoomValue, 0.9);
-      }
-      
-      zoomValue = Math.max(0.5, Math.min(3, zoomValue));
-      
-      console.log('[ImageEditor] Container:', containerWidth, 'x', containerHeight);
-      console.log('[ImageEditor] Image:', imageWidth, 'x', imageHeight);
-      console.log('[ImageEditor] Zoom to fill container:', zoomValue.toFixed(2));
-      setCalculatedZoom(zoomValue);
-      
-      // Reset crop position to center
-      setCrop({ x: 0, y: 0 });
-    }
-  }, [imageDimensions, imageReadyForCropper]);
+  const [imageUrlState, setImageUrlState] = useState<string | null>(null);
   
   // Image name
   const [name, setName] = useState(imageName);
@@ -94,20 +25,42 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   const [grayscale, setGrayscale] = useState(0);
   const [sepia, setSepia] = useState(0);
   
+  // Watermark states
+  const [watermarkEnabled, setWatermarkEnabled] = useState(false);
+  const [watermarkOpacity, setWatermarkOpacity] = useState(50);
+  const [watermarkScale, setWatermarkScale] = useState(20); // Percentage of image size
+  const [watermarkPosition, setWatermarkPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center'>('bottom-right');
+  const [watermarkLoaded, setWatermarkLoaded] = useState(false);
+  
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   
-  // Load image to get dimensions when component mounts
+  // Load watermark logo if available
+  useEffect(() => {
+    if (watermarkLogoUrl) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        setWatermarkLoaded(true);
+        setWatermarkEnabled(true);
+      };
+      img.onerror = () => {
+        console.error('Failed to load watermark logo:', watermarkLogoUrl);
+        setWatermarkLoaded(false);
+      };
+      img.src = watermarkLogoUrl;
+    }
+  }, [watermarkLogoUrl]);
+  
+  // Load image when component mounts
   useEffect(() => {
     const loadImage = async () => {
       try {
         setImageLoaded(false);
         setImageDimensions(null);
-        setCroppedAreaPixels(null); // Reset crop area when image changes
-        setError(''); // Clear previous errors
+        setError('');
         
         console.log('[ImageEditor] Loading image:', imageUrl);
         
@@ -117,130 +70,15 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         }
         
         const img = await createImage(imageUrl);
-        console.log('[ImageEditor] Image created, complete:', img.complete, 'dimensions:', img.width, 'x', img.height, 'crossOrigin:', img.crossOrigin);
+        console.log('[ImageEditor] Image loaded, dimensions:', img.naturalWidth, 'x', img.naturalHeight);
         
-        // Function to test if we can draw the image to a canvas (required for Cropper)
-        // This verifies CORS is working correctly
-        const testCanvasAccess = () => {
-          console.log('[ImageEditor] ===== Starting canvas test =====');
-          console.log('[ImageEditor] Image object:', { 
-            complete: img.complete, 
-            naturalWidth: img.naturalWidth, 
-            naturalHeight: img.naturalHeight,
-            width: img.width,
-            height: img.height,
-            crossOrigin: img.crossOrigin
-          });
-          
-          try {
-            const testCanvas = document.createElement('canvas');
-            const naturalWidth = img.naturalWidth || img.width || 100;
-            const naturalHeight = img.naturalHeight || img.height || 100;
-            testCanvas.width = naturalWidth;
-            testCanvas.height = naturalHeight;
-            const testCtx = testCanvas.getContext('2d');
-            
-            if (!testCtx) {
-              console.error('[ImageEditor] ✗ Canvas context not available');
-              setError('Canvas not supported in this browser');
-              setImageReadyForCropper(false);
-              return;
-            }
-            
-            console.log('[ImageEditor] Drawing image to canvas...');
-            testCtx.drawImage(img, 0, 0);
-            console.log('[ImageEditor] Image drawn successfully, attempting to read pixel data...');
-            
-            // Try to read pixel data to verify CORS is working
-            const imageData = testCtx.getImageData(0, 0, 1, 1);
-            console.log('[ImageEditor] ✓✓✓ Canvas test SUCCESSFUL - image can be manipulated');
-            console.log('[ImageEditor] Canvas test - first pixel:', imageData.data[0], imageData.data[1], imageData.data[2], imageData.data[3]);
-            
-            // Convert canvas to blob URL for Cropper (this ensures CORS is fully resolved)
-            console.log('[ImageEditor] Converting image to blob URL for Cropper...');
-            testCanvas.toBlob((blob) => {
-              if (blob) {
-                const blobUrl = URL.createObjectURL(blob);
-                console.log('[ImageEditor] ✓✓✓ Created blob URL for Cropper:', blobUrl);
-                setCropperImageUrl(blobUrl);
-                setImageReadyForCropper(true);
-                console.log('[ImageEditor] ===== Canvas test complete - Cropper should now be enabled with blob URL =====');
-              } else {
-                console.error('[ImageEditor] ✗ Failed to create blob from canvas, using original URL');
-                setCropperImageUrl(imageUrl);
-                setImageReadyForCropper(true);
-              }
-            }, 'image/png');
-          } catch (canvasError: any) {
-            console.error('[ImageEditor] ✗✗✗ Canvas test FAILED:', canvasError);
-            console.error('[ImageEditor] Canvas error type:', canvasError.name);
-            console.error('[ImageEditor] Canvas error message:', canvasError.message);
-            console.error('[ImageEditor] Canvas error stack:', canvasError.stack);
-            
-            if (canvasError.message && (canvasError.message.includes('tainted') || canvasError.message.includes('cross-origin') || canvasError.name === 'SecurityError')) {
-              console.error('[ImageEditor] CORS/tainted canvas error detected - Cropper will NOT work');
-              setError('Image cannot be edited due to CORS restrictions. The proxy may not be setting CORS headers correctly.');
-              setImageReadyForCropper(false);
-            } else {
-              console.warn('[ImageEditor] Canvas error (non-CORS) - allowing Cropper to try anyway');
-              setImageReadyForCropper(true);
-            }
-            console.log('[ImageEditor] ===== Canvas test complete =====');
-          }
-        };
-        
-        // Function to check and set image dimensions
-        const checkAndSetDimensions = () => {
-          if (img.complete && img.width > 0 && img.height > 0) {
-            const naturalWidth = img.naturalWidth || img.width;
-            const naturalHeight = img.naturalHeight || img.height;
-            if (naturalWidth > 0 && naturalHeight > 0) {
-              console.log('[ImageEditor] Image dimensions set:', naturalWidth, 'x', naturalHeight);
-              setImageDimensions({ width: naturalWidth, height: naturalHeight });
-              setImageLoaded(true);
-              return true;
-            }
-          }
-          return false;
-        };
-        
-        // Wait for image to load if not complete
-        const loadHandler = () => {
-          console.log('[ImageEditor] Image load event fired');
-          if (checkAndSetDimensions()) {
-            console.log('[ImageEditor] Image loaded successfully');
-            // Run canvas test now that image is fully loaded
-            testCanvasAccess();
-          } else {
-            console.warn('[ImageEditor] Image loaded but dimensions invalid');
-            setError('Image loaded but has invalid dimensions');
-          }
-        };
-        
-        // Check if already loaded
-        if (checkAndSetDimensions()) {
-          // Image is already loaded, run canvas test immediately
-          testCanvasAccess();
+        if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+          setImageDimensions({ width: img.naturalWidth, height: img.naturalHeight });
+          setImageLoaded(true);
+          setImageUrlState(imageUrl);
+        } else {
+          setError('Image has invalid dimensions');
         }
-        
-        const errorHandler = (e: any) => {
-          console.error('[ImageEditor] Image load error:', e, 'URL:', imageUrl);
-          setError(`Failed to load image from: ${imageUrl}. The image may be blocked by CORS or the URL may be invalid.`);
-          setImageLoaded(false);
-        };
-        
-        img.addEventListener('load', loadHandler, { once: true });
-        img.addEventListener('error', errorHandler, { once: true });
-        
-        // Cleanup
-        return () => {
-          img.removeEventListener('load', loadHandler);
-          img.removeEventListener('error', errorHandler);
-          // Clean up blob URL if it exists
-          if (cropperImageUrl && cropperImageUrl.startsWith('blob:')) {
-            URL.revokeObjectURL(cropperImageUrl);
-          }
-        };
       } catch (err: any) {
         console.error('[ImageEditor] Failed to load image:', err, 'URL:', imageUrl);
         setError(err.message || `Failed to load image from: ${imageUrl}`);
@@ -252,65 +90,25 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     if (imageUrl && !imageUrl.includes('via.placeholder.com')) {
       loadImage();
     } else {
-      setImageLoaded(true); // Allow placeholder images
-      setImageDimensions({ width: 800, height: 600 }); // Default dimensions for placeholders
+      setImageLoaded(true);
+      setImageDimensions({ width: 800, height: 600 });
+      setImageUrlState(imageUrl);
     }
   }, [imageUrl]);
-
-  const onCropComplete = useCallback((_croppedArea: Area, croppedAreaPixels: Area) => {
-    // Don't process crop area if image isn't fully loaded yet
-    if (!imageLoaded || !imageDimensions) {
-      return; // Silently ignore until image is ready
-    }
-    
-    // Validate crop area before setting - reject NaN, undefined, or invalid values
-    if (!croppedAreaPixels) {
-      return; // Silently ignore null/undefined
-    }
-    
-    const width = Number(croppedAreaPixels.width);
-    const height = Number(croppedAreaPixels.height);
-    const x = Number(croppedAreaPixels.x);
-    const y = Number(croppedAreaPixels.y);
-    
-    // Check for valid numbers (not NaN, not Infinity, positive dimensions)
-    if (isFinite(width) && isFinite(height) && isFinite(x) && isFinite(y) &&
-        width > 0 && height > 0 && !isNaN(width) && !isNaN(height) && !isNaN(x) && !isNaN(y)) {
-      setCroppedAreaPixels({
-        x: x,
-        y: y,
-        width: width,
-        height: height
-      });
-      
-      // Log crop area size for debugging
-      console.log('[ImageEditor] Crop area:', {
-        cropSize: `${width.toFixed(0)}x${height.toFixed(0)}`,
-        imageActualSize: `${imageDimensions.width}x${imageDimensions.height}`,
-        zoom: calculatedZoom.toFixed(2)
-      });
-    }
-    // Silently ignore invalid values - don't log warnings to reduce console spam
-  }, [imageLoaded, imageDimensions, calculatedZoom]);
 
   const createImage = (url: string): Promise<HTMLImageElement> =>
     new Promise((resolve, reject) => {
       const image = new Image();
       
-      // Always set CORS for images from different origins (including proxied URLs)
-      // This is required for the Cropper component to work with canvas manipulation
-      const imageUrl = new URL(url, window.location.href);
+      // Set CORS for cross-origin images
+      const imageUrlObj = new URL(url, window.location.href);
       const currentOrigin = window.location.origin;
       
-      // If it's a proxied URL (from our backend), we still need CORS because
-      // the frontend and backend are on different domains
-      if (imageUrl.origin !== currentOrigin || url.includes('/api/v1/images/proxy')) {
+      if (imageUrlObj.origin !== currentOrigin || url.includes('/api/v1/images/proxy')) {
         image.setAttribute('crossOrigin', 'anonymous');
-        console.log('[ImageEditor] Setting CORS for image:', url.substring(0, 80) + '...');
       }
       
       image.addEventListener('load', () => {
-        console.log('[ImageEditor] Image loaded successfully, dimensions:', image.width, 'x', image.height, 'natural:', image.naturalWidth, 'x', image.naturalHeight);
         if (image.width === 0 || image.height === 0) {
           reject(new Error('Image loaded but has zero dimensions'));
           return;
@@ -318,35 +116,25 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         resolve(image);
       });
       image.addEventListener('error', (error) => {
-        console.error('[ImageEditor] Image load error:', error, 'URL:', url);
-        reject(new Error(`Failed to load image from ${url}. The image may be blocked by CORS policy or the URL may be invalid.`));
+        reject(new Error(`Failed to load image from ${url}`));
       });
       
-      console.log('[ImageEditor] Starting to load image:', url.substring(0, 80) + '...');
       image.src = url;
     });
 
-  const getCroppedImg = async (
-    imageSrc: string,
-    pixelCrop: Area
+  const getEditedImg = async (
+    imageSrc: string
   ): Promise<Blob> => {
-    // Validate crop area first
-    if (!pixelCrop || pixelCrop.width <= 0 || pixelCrop.height <= 0) {
-      throw new Error(`Invalid crop area: width=${pixelCrop?.width}, height=${pixelCrop?.height}`);
-    }
-
     const image = await createImage(imageSrc);
     
-    // Ensure image is fully loaded and has valid dimensions
     if (!image.complete) {
       throw new Error('Image is not fully loaded');
     }
     
     if (!image.width || !image.height || image.width <= 0 || image.height <= 0) {
-      throw new Error(`Invalid image dimensions: width=${image.width}, height=${image.height}. Image may not have loaded correctly.`);
+      throw new Error(`Invalid image dimensions: width=${image.width}, height=${image.height}`);
     }
     
-    // Ensure image natural dimensions are available
     const naturalWidth = image.naturalWidth || image.width;
     const naturalHeight = image.naturalHeight || image.height;
     
@@ -354,7 +142,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       throw new Error(`Invalid natural image dimensions: width=${naturalWidth}, height=${naturalHeight}`);
     }
     
-    // Create canvas for cropping (no rotation needed)
+    // Create canvas for the full image (no cropping)
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
@@ -362,47 +150,12 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       throw new Error('No 2d context');
     }
 
-    // Set canvas size to crop area (ensure positive integers)
-    const rawWidth = Number(pixelCrop.width) || 0;
-    const rawHeight = Number(pixelCrop.height) || 0;
-    const cropWidth = Math.max(1, Math.round(Math.abs(rawWidth)));
-    const cropHeight = Math.max(1, Math.round(Math.abs(rawHeight)));
-    
-    if (cropWidth <= 0 || cropHeight <= 0 || !isFinite(cropWidth) || !isFinite(cropHeight) || isNaN(cropWidth) || isNaN(cropHeight)) {
-      throw new Error(`Invalid crop dimensions: width=${cropWidth}, height=${cropHeight} (original: ${pixelCrop.width}, ${pixelCrop.height})`);
-    }
+    // Set canvas size to full image dimensions
+    canvas.width = naturalWidth;
+    canvas.height = naturalHeight;
 
-    canvas.width = cropWidth;
-    canvas.height = cropHeight;
-    
-    // Double-check canvas dimensions were set correctly
-    if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error(`Canvas dimensions are 0 after setting: width=${canvas.width}, height=${canvas.height}`);
-    }
-
-    // Calculate source coordinates (pixelCrop is relative to natural image size)
-    const sourceX = Math.round(Math.max(0, pixelCrop.x));
-    const sourceY = Math.round(Math.max(0, pixelCrop.y));
-    const sourceWidth = Math.min(cropWidth, naturalWidth - sourceX);
-    const sourceHeight = Math.min(cropHeight, naturalHeight - sourceY);
-
-    // Validate source coordinates
-    if (sourceWidth <= 0 || sourceHeight <= 0 || !isFinite(sourceX) || !isFinite(sourceY)) {
-      throw new Error(`Invalid source coordinates: x=${sourceX}, y=${sourceY}, width=${sourceWidth}, height=${sourceHeight}`);
-    }
-
-    // Draw the cropped portion directly from the image (no rotation)
-    ctx.drawImage(
-      image,
-      sourceX,
-      sourceY,
-      sourceWidth,
-      sourceHeight,
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    // Draw the full image
+    ctx.drawImage(image, 0, 0, naturalWidth, naturalHeight);
 
     // Apply filters using a new canvas to avoid filter stacking issues
     const filteredCanvas = document.createElement('canvas');
@@ -426,6 +179,55 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
     
     filteredCtx.drawImage(canvas, 0, 0);
 
+    // Apply watermark if enabled and available
+    if (watermarkEnabled && watermarkLogoUrl && watermarkLoaded) {
+      try {
+        const watermarkImg = await createImage(watermarkLogoUrl);
+        
+        // Calculate watermark size based on scale percentage
+        const watermarkSize = Math.min(naturalWidth, naturalHeight) * (watermarkScale / 100);
+        const watermarkAspectRatio = watermarkImg.width / watermarkImg.height;
+        const watermarkWidth = watermarkSize;
+        const watermarkHeight = watermarkSize / watermarkAspectRatio;
+        
+        // Calculate position
+        const padding = Math.min(naturalWidth, naturalHeight) * 0.02; // 2% padding
+        let x = 0;
+        let y = 0;
+        
+        switch (watermarkPosition) {
+          case 'bottom-right':
+            x = naturalWidth - watermarkWidth - padding;
+            y = naturalHeight - watermarkHeight - padding;
+            break;
+          case 'bottom-left':
+            x = padding;
+            y = naturalHeight - watermarkHeight - padding;
+            break;
+          case 'top-right':
+            x = naturalWidth - watermarkWidth - padding;
+            y = padding;
+            break;
+          case 'top-left':
+            x = padding;
+            y = padding;
+            break;
+          case 'center':
+            x = (naturalWidth - watermarkWidth) / 2;
+            y = (naturalHeight - watermarkHeight) / 2;
+            break;
+        }
+        
+        // Draw watermark with opacity
+        filteredCtx.globalAlpha = watermarkOpacity / 100;
+        filteredCtx.drawImage(watermarkImg, x, y, watermarkWidth, watermarkHeight);
+        filteredCtx.globalAlpha = 1.0; // Reset alpha
+      } catch (err) {
+        console.error('Error applying watermark:', err);
+        // Continue without watermark if it fails
+      }
+    }
+
     return new Promise((resolve, reject) => {
       filteredCanvas.toBlob((blob) => {
         if (blob) {
@@ -438,22 +240,13 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
   };
 
   const handleSave = async () => {
-    // Validate crop area
-    if (!croppedAreaPixels) {
-      setError('Please adjust the crop area');
-      return;
-    }
-
-    // Validate crop area dimensions
-    if (!croppedAreaPixels.width || !croppedAreaPixels.height || 
-        croppedAreaPixels.width <= 0 || croppedAreaPixels.height <= 0 ||
-        !isFinite(croppedAreaPixels.width) || !isFinite(croppedAreaPixels.height)) {
-      setError('Invalid crop area. Please adjust the crop selection.');
-      return;
-    }
-
     if (!name.trim()) {
       setError('Please enter an image name');
+      return;
+    }
+
+    if (!imageUrlState) {
+      setError('No image loaded');
       return;
     }
 
@@ -461,10 +254,10 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
       setSaving(true);
       setError('');
 
-      // First, verify the image can be loaded and has valid dimensions
+      // Verify the image can be loaded
       let testImage: HTMLImageElement;
       try {
-        testImage = await createImage(imageUrl);
+        testImage = await createImage(imageUrlState);
         if (!testImage.width || !testImage.height || testImage.width <= 0 || testImage.height <= 0) {
           throw new Error('Image has invalid dimensions');
         }
@@ -474,12 +267,10 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         return;
       }
 
-      const croppedImage = await getCroppedImg(
-        imageUrl,
-        croppedAreaPixels
-      );
+      // Get edited image (full image with filters applied)
+      const editedImage = await getEditedImg(imageUrlState);
 
-      await onSave(croppedImage, name.trim());
+      await onSave(editedImage, name.trim());
       onClose();
     } catch (err: any) {
       console.error('Error saving edited image:', err);
@@ -560,62 +351,10 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
         )}
 
         <div className="editor-body">
-          {/* Crop Area */}
+          {/* Image Display */}
           <div className="crop-container" ref={containerRef}>
             {imageUrl && !imageUrl.includes('via.placeholder.com') ? (
-              imageLoaded && imageDimensions && imageReadyForCropper && cropperImageUrl ? (
-                <>
-                  {console.log('[ImageEditor] Rendering Cropper with blob URL:', cropperImageUrl)}
-                  <Cropper
-                    image={cropperImageUrl}
-                    crop={crop}
-                    zoom={calculatedZoom}
-                    rotation={0}
-                    aspect={undefined}
-                    onCropChange={setCrop}
-                    onCropComplete={onCropComplete}
-                    onZoomChange={() => {}} // Disabled - no zoom control
-                    onRotationChange={() => {}} // Disabled - no rotation control
-                    style={{
-                      containerStyle: {
-                        width: '100%',
-                        height: '100%',
-                        minWidth: '600px',
-                        minHeight: '400px',
-                        position: 'relative',
-                        backgroundColor: '#1a1a1a',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        filter: `
-                          brightness(${brightness}%)
-                          contrast(${contrast}%)
-                          saturate(${saturation}%)
-                          blur(${blur}px)
-                          grayscale(${grayscale}%)
-                          sepia(${sepia}%)
-                        `
-                      },
-                      cropAreaStyle: {
-                        border: '2px solid #007bff',
-                        boxShadow: '0 0 0 9999em rgba(0, 0, 0, 0.5)'
-                      },
-                      mediaStyle: {
-                        maxWidth: '100%',
-                        maxHeight: '100%',
-                        objectFit: 'contain',
-                        display: 'block'
-                      }
-                    }}
-                    restrictPosition={false}
-                    showGrid={true}
-                    zoomWithScroll={false}
-                    minZoom={calculatedZoom}
-                    maxZoom={calculatedZoom}
-                    cropShape="rect"
-                  />
-                </>
-              ) : imageLoaded && imageDimensions ? (
+              imageLoaded && imageDimensions && imageUrlState ? (
                 <div style={{
                   width: '100%',
                   height: '100%',
@@ -623,23 +362,27 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: '#1a1a1a',
-                  color: '#fff'
+                  padding: '20px',
+                  overflow: 'auto'
                 }}>
-                  <div style={{ textAlign: 'center' }}>
-                    <p>Preparing image for editing...</p>
-                    <img 
-                      src={imageUrl} 
-                      alt="Loading preview" 
-                      style={{ 
-                        maxWidth: '50%', 
-                        maxHeight: '50%',
-                        objectFit: 'contain',
-                        opacity: 0.3
-                      }}
-                      crossOrigin="anonymous"
-                      onLoad={() => console.log('[ImageEditor] Preview image loaded')}
-                    />
-                  </div>
+                  <img
+                    src={imageUrlState}
+                    alt="Editing preview"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      filter: `
+                        brightness(${brightness}%)
+                        contrast(${contrast}%)
+                        saturate(${saturation}%)
+                        blur(${blur}px)
+                        grayscale(${grayscale}%)
+                        sepia(${sepia}%)
+                      `
+                    }}
+                    crossOrigin="anonymous"
+                  />
                 </div>
               ) : (
                 <div style={{ 
@@ -709,7 +452,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
               </div>
             </div>
 
-
             {/* Filter Presets */}
             <div className="control-section">
               <h3>Presets</h3>
@@ -762,11 +504,94 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
                   type="range"
                   min={0}
                   max={10}
+                  step={0.1}
                   value={blur}
                   onChange={(e) => setBlur(Number(e.target.value))}
                 />
               </div>
+              <div className="control-group">
+                <label>Grayscale: {grayscale}%</label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={grayscale}
+                  onChange={(e) => setGrayscale(Number(e.target.value))}
+                />
+              </div>
+              <div className="control-group">
+                <label>Sepia: {sepia}%</label>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={sepia}
+                  onChange={(e) => setSepia(Number(e.target.value))}
+                />
+              </div>
             </div>
+
+            {/* Watermark Controls */}
+            {watermarkLogoUrl && (
+              <div className="control-section">
+                <h3>Watermark</h3>
+                <div className="control-group">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <input
+                      type="checkbox"
+                      checked={watermarkEnabled}
+                      onChange={(e) => setWatermarkEnabled(e.target.checked)}
+                      disabled={!watermarkLoaded}
+                    />
+                    <span>Enable Watermark</span>
+                  </label>
+                  {!watermarkLoaded && (
+                    <small style={{ color: '#666', fontSize: '0.85em' }}>Loading watermark logo...</small>
+                  )}
+                </div>
+                {watermarkEnabled && watermarkLoaded && (
+                  <>
+                    <div className="control-group">
+                      <label>Position</label>
+                      <select
+                        value={watermarkPosition}
+                        onChange={(e) => setWatermarkPosition(e.target.value as any)}
+                        style={{ width: '100%', padding: '5px' }}
+                      >
+                        <option value="bottom-right">Bottom Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="top-left">Top Left</option>
+                        <option value="center">Center</option>
+                      </select>
+                    </div>
+                    <div className="control-group">
+                      <label>Opacity: {watermarkOpacity}%</label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={watermarkOpacity}
+                        onChange={(e) => setWatermarkOpacity(Number(e.target.value))}
+                      />
+                    </div>
+                    <div className="control-group">
+                      <label>Size: {watermarkScale}%</label>
+                      <input
+                        type="range"
+                        min={5}
+                        max={50}
+                        value={watermarkScale}
+                        onChange={(e) => setWatermarkScale(Number(e.target.value))}
+                      />
+                      <small style={{ color: '#666', fontSize: '0.85em' }}>
+                        Percentage of image size
+                      </small>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -784,9 +609,6 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose }: Im
           </button>
         </div>
       </div>
-      
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   );
 }
-

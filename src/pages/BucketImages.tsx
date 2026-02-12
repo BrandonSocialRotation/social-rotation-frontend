@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import ImageEditor from '../components/ImageEditor';
@@ -50,6 +51,17 @@ export default function BucketImages() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [editingImage, setEditingImage] = useState<BucketImage | null>(null);
+  
+  // Fetch user info for watermark logo
+  const { data: userData } = useQuery({
+    queryKey: ['user_info'],
+    queryFn: async () => {
+      const response = await api.get('/user_info');
+      return response.data;
+    },
+  });
+  
+  const watermarkLogoUrl = userData?.user?.watermark_logo_url;
   
   // Check if user can modify this bucket (super admin for global buckets, or owner for regular buckets)
   const canModifyBucket = bucket ? (bucket.is_global ? isSuperAdmin : true) : false;
@@ -606,6 +618,7 @@ export default function BucketImages() {
         <ImageEditor
           imageUrl={editorImageUrl}
           imageName={editingImage.friendly_name}
+          watermarkLogoUrl={watermarkLogoUrl}
           onClose={() => setEditingImage(null)}
           onSave={async (editedBlob, newName) => {
             try {
