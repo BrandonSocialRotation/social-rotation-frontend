@@ -1442,13 +1442,13 @@ function WatermarkLogoSection() {
     setUploadError('');
     setUploadSuccess('');
 
-    // Validate file type - must be PNG
-    const validTypes = ['image/png'];
-    const validExtensions = ['.png'];
+    // Validate file type - allow common image types
+    const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+    const validExtensions = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
     const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
     
     if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
-      setUploadError('Only PNG files are allowed. Please upload a PNG image.');
+      setUploadError('Please upload an image file (PNG, JPG, JPEG, GIF, or WEBP).');
       e.target.value = '';
       return;
     }
@@ -1461,7 +1461,7 @@ function WatermarkLogoSection() {
       return;
     }
 
-    // Validate that the file is actually a valid PNG image
+    // Validate that the file is actually a valid image that can be loaded
     try {
       const img = new Image();
       const objectUrl = URL.createObjectURL(file);
@@ -1478,12 +1478,12 @@ function WatermarkLogoSection() {
         };
         img.onerror = () => {
           URL.revokeObjectURL(objectUrl);
-          reject(new Error('File is not a valid PNG image'));
+          reject(new Error('File is not a valid image or is corrupted'));
         };
         img.src = objectUrl;
       });
     } catch (validationError: any) {
-      setUploadError(validationError.message || 'File is not a valid PNG image. Please upload a valid PNG file.');
+      setUploadError(validationError.message || 'File is not a valid image or is corrupted. Please upload a valid image file.');
       e.target.value = '';
       return;
     }
@@ -1501,9 +1501,52 @@ function WatermarkLogoSection() {
       });
 
       if (response.data) {
-        setUploadSuccess('Watermark logo uploaded successfully!');
-        queryClient.invalidateQueries({ queryKey: ['user_info'] });
-        setTimeout(() => setUploadSuccess(''), 3000);
+        // After upload, validate the image can actually be loaded
+        const uploadedLogoUrl = response.data.user?.watermark_logo_url;
+        if (uploadedLogoUrl) {
+          try {
+            const testImg = new Image();
+            await new Promise((resolve, reject) => {
+              testImg.onload = () => {
+                // Check if image has valid dimensions
+                if (testImg.width > 0 && testImg.height > 0) {
+                  resolve(true);
+                } else {
+                  reject(new Error('Image has invalid dimensions'));
+                }
+              };
+              testImg.onerror = () => {
+                reject(new Error('Image failed to load'));
+              };
+              // Set crossOrigin for CORS
+              testImg.crossOrigin = 'anonymous';
+              testImg.src = uploadedLogoUrl;
+            });
+            
+            // Image loaded successfully
+            setUploadSuccess('Watermark logo uploaded successfully!');
+            queryClient.invalidateQueries({ queryKey: ['user_info'] });
+            setTimeout(() => setUploadSuccess(''), 3000);
+          } catch (imgError: any) {
+            // Image is broken, try to remove it
+            console.error('Uploaded image is broken:', imgError);
+            try {
+              const removeFormData = new FormData();
+              removeFormData.append('watermark_logo', 'null');
+              await api.post('/user_info/watermark', removeFormData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+              });
+            } catch (removeError) {
+              console.error('Failed to remove broken image:', removeError);
+            }
+            setUploadError('The uploaded image appears to be broken or corrupted. Please try uploading a different image.');
+            queryClient.invalidateQueries({ queryKey: ['user_info'] });
+          }
+        } else {
+          setUploadSuccess('Watermark logo uploaded successfully!');
+          queryClient.invalidateQueries({ queryKey: ['user_info'] });
+          setTimeout(() => setUploadSuccess(''), 3000);
+        }
       }
     } catch (err: any) {
       console.error('Error uploading watermark logo:', err);
@@ -1601,7 +1644,7 @@ function WatermarkLogoSection() {
         <input
           id="watermark-upload"
           type="file"
-          accept="image/png,.png"
+          accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp"
           onChange={handleFileSelect}
           disabled={uploading}
           style={{ display: 'none' }}
@@ -1626,7 +1669,7 @@ function WatermarkLogoSection() {
       </div>
 
       <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
-        <strong>Requirements:</strong> PNG format only, max 5MB. PNG with transparent background recommended. The logo will be resized automatically when applied to images.
+        <strong>Requirements:</strong> Image file (PNG, JPG, JPEG, GIF, or WEBP), max 5MB. PNG with transparent background recommended. The logo will be resized automatically when applied to images.
       </p>
     </div>
   );
