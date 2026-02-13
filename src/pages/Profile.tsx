@@ -1439,21 +1439,56 @@ function WatermarkLogoSection() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Please select an image file');
+    setUploadError('');
+    setUploadSuccess('');
+
+    // Validate file type - must be PNG
+    const validTypes = ['image/png'];
+    const validExtensions = ['.png'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!validTypes.includes(file.type) && !validExtensions.includes(fileExtension)) {
+      setUploadError('Only PNG files are allowed. Please upload a PNG image.');
+      e.target.value = '';
       return;
     }
 
     // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError('File size must be less than 5MB');
+    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+    if (file.size > maxSize) {
+      setUploadError(`File size must be less than 5MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB.`);
+      e.target.value = '';
+      return;
+    }
+
+    // Validate that the file is actually a valid PNG image
+    try {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      
+      await new Promise((resolve, reject) => {
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          // Check if image loaded successfully and has valid dimensions
+          if (img.width > 0 && img.height > 0) {
+            resolve(true);
+          } else {
+            reject(new Error('Image has invalid dimensions'));
+          }
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('File is not a valid PNG image'));
+        };
+        img.src = objectUrl;
+      });
+    } catch (validationError: any) {
+      setUploadError(validationError.message || 'File is not a valid PNG image. Please upload a valid PNG file.');
+      e.target.value = '';
       return;
     }
 
     setUploading(true);
-    setUploadError('');
-    setUploadSuccess('');
 
     try {
       const formData = new FormData();
@@ -1566,7 +1601,7 @@ function WatermarkLogoSection() {
         <input
           id="watermark-upload"
           type="file"
-          accept="image/*"
+          accept="image/png,.png"
           onChange={handleFileSelect}
           disabled={uploading}
           style={{ display: 'none' }}
@@ -1591,7 +1626,7 @@ function WatermarkLogoSection() {
       </div>
 
       <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
-        Recommended: PNG with transparent background, max 5MB. The logo will be resized automatically when applied to images.
+        <strong>Requirements:</strong> PNG format only, max 5MB. PNG with transparent background recommended. The logo will be resized automatically when applied to images.
       </p>
     </div>
   );
