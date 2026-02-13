@@ -1423,6 +1423,8 @@ function WatermarkLogoSection() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState('');
+  const [useUrl, setUseUrl] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('');
 
   const { data: userData } = useQuery({
     queryKey: ['user_info'],
@@ -1558,6 +1560,134 @@ function WatermarkLogoSection() {
     }
   };
 
+  const handleUrlUpload = async () => {
+    if (!logoUrl.trim()) {
+      setUploadError('Please enter a valid image URL');
+      return;
+    }
+
+    setUploading(true);
+    setUploadError('');
+    setUploadSuccess('');
+
+    try {
+      // Validate URL format
+      try {
+        new URL(logoUrl);
+      } catch {
+        setUploadError('Please enter a valid URL (must start with http:// or https://)');
+        setUploading(false);
+        return;
+      }
+
+      // Download the image from URL
+      const response = await fetch(logoUrl, { mode: 'cors' });
+      if (!response.ok) {
+        throw new Error(`Failed to download image: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      
+      // Validate it's an image
+      if (!blob.type.startsWith('image/')) {
+        throw new Error('URL does not point to an image file');
+      }
+
+      // Validate file size (max 5MB)
+      if (blob.size > 5 * 1024 * 1024) {
+        setUploadError(`Image is too large (${(blob.size / 1024 / 1024).toFixed(2)}MB). Maximum size is 5MB.`);
+        setUploading(false);
+        return;
+      }
+
+      // Validate image can be loaded
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(blob);
+      
+      await new Promise((resolve, reject) => {
+        img.onload = () => {
+          URL.revokeObjectURL(objectUrl);
+          if (img.width > 0 && img.height > 0) {
+            resolve(true);
+          } else {
+            reject(new Error('Image has invalid dimensions'));
+          }
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Image failed to load'));
+        };
+        img.src = objectUrl;
+      });
+
+      // Create a File object from the blob
+      const filename = logoUrl.split('/').pop() || 'logo.png';
+      const file = new File([blob], filename, { type: blob.type });
+
+      // Upload using the same logic as file upload
+      const formData = new FormData();
+      formData.append('watermark_logo', file);
+
+      const uploadResponse = await api.post('/user_info/watermark', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (uploadResponse.data) {
+        // Validate the uploaded image loads
+        const uploadedLogoUrl = uploadResponse.data.user?.watermark_logo_url;
+        if (uploadedLogoUrl) {
+          try {
+            const testImg = new Image();
+            await new Promise((resolve, reject) => {
+              testImg.onload = () => {
+                if (testImg.width > 0 && testImg.height > 0) {
+                  resolve(true);
+                } else {
+                  reject(new Error('Image has invalid dimensions'));
+                }
+              };
+              testImg.onerror = () => {
+                reject(new Error('Image failed to load'));
+              };
+              testImg.crossOrigin = 'anonymous';
+              testImg.src = uploadedLogoUrl;
+            });
+            
+            setUploadSuccess('Watermark logo uploaded successfully!');
+            queryClient.invalidateQueries({ queryKey: ['user_info'] });
+            setLogoUrl('');
+            setTimeout(() => setUploadSuccess(''), 3000);
+          } catch (imgError: any) {
+            console.error('Uploaded image is broken:', imgError);
+            try {
+              const removeFormData = new FormData();
+              removeFormData.append('watermark_logo', 'null');
+              await api.post('/user_info/watermark', removeFormData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+              });
+            } catch (removeError) {
+              console.error('Failed to remove broken image:', removeError);
+            }
+            setUploadError('The image from this URL appears to be broken or corrupted. Please try a different URL.');
+            queryClient.invalidateQueries({ queryKey: ['user_info'] });
+          }
+        } else {
+          setUploadSuccess('Watermark logo uploaded successfully!');
+          queryClient.invalidateQueries({ queryKey: ['user_info'] });
+          setLogoUrl('');
+          setTimeout(() => setUploadSuccess(''), 3000);
+        }
+      }
+    } catch (err: any) {
+      console.error('Error uploading watermark logo from URL:', err);
+      setUploadError(err.message || 'Failed to download or upload logo from URL. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleRemoveLogo = async () => {
     if (!confirm('Are you sure you want to remove your watermark logo?')) {
       return;
@@ -1595,6 +1725,19 @@ function WatermarkLogoSection() {
         Upload your logo to automatically add it as a watermark to your posts. You can control the position and opacity in the image editor.
       </p>
 
+      <div style={{ marginBottom: '15px', padding: '12px', backgroundColor: '#f0f8ff', borderRadius: '6px', fontSize: '0.9em' }}>
+        <strong>Don't have a logo?</strong> Get a free logo from:
+        <ul style={{ margin: '8px 0 0 20px', padding: 0 }}>
+          <li><a href="https://www.canva.com/create/logos/" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>Canva Logo Maker</a> (free templates)</li>
+          <li><a href="https://www.flaticon.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>Flaticon</a> (free icons/logos)</li>
+          <li><a href="https://www.logomaker.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>LogoMaker</a> (free logo generator)</li>
+          <li><a href="https://www.namecheap.com/logo-maker/" target="_blank" rel="noopener noreferrer" style={{ color: '#007bff' }}>Namecheap Logo Maker</a> (free)</li>
+        </ul>
+        <p style={{ margin: '8px 0 0 0', fontSize: '0.85em', color: '#666' }}>
+          After creating/downloading your logo, save it as a PNG file and upload it here.
+        </p>
+      </div>
+
       {uploadError && <div className="error-message">{uploadError}</div>}
       {uploadSuccess && <div className="success-message">{uploadSuccess}</div>}
 
@@ -1625,48 +1768,121 @@ function WatermarkLogoSection() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <label
-          htmlFor="watermark-upload"
-          style={{
-            padding: '10px 20px',
-            background: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: uploading ? 'not-allowed' : 'pointer',
-            opacity: uploading ? 0.6 : 1,
-            display: 'inline-block'
-          }}
-        >
-          {uploading ? 'Uploading...' : hasWatermark ? 'Replace Logo' : 'Upload Logo'}
-        </label>
-        <input
-          id="watermark-upload"
-          type="file"
-          accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp"
-          onChange={handleFileSelect}
-          disabled={uploading}
-          style={{ display: 'none' }}
-        />
-        {hasWatermark && (
-          <button
-            onClick={handleRemoveLogo}
+      <div style={{ marginBottom: '15px' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', cursor: 'pointer' }}>
+          <input
+            type="radio"
+            checked={!useUrl}
+            onChange={() => setUseUrl(false)}
             disabled={uploading}
+          />
+          <span>Upload from computer</span>
+        </label>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+          <input
+            type="radio"
+            checked={useUrl}
+            onChange={() => setUseUrl(true)}
+            disabled={uploading}
+          />
+          <span>Use logo from URL</span>
+        </label>
+      </div>
+
+      {!useUrl ? (
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <label
+            htmlFor="watermark-upload"
             style={{
               padding: '10px 20px',
-              background: '#dc3545',
+              background: '#007bff',
               color: 'white',
               border: 'none',
               borderRadius: '5px',
               cursor: uploading ? 'not-allowed' : 'pointer',
-              opacity: uploading ? 0.6 : 1
+              opacity: uploading ? 0.6 : 1,
+              display: 'inline-block'
             }}
           >
-            Remove Logo
+            {uploading ? 'Uploading...' : hasWatermark ? 'Replace Logo' : 'Upload Logo'}
+          </label>
+          <input
+            id="watermark-upload"
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,.png,.jpg,.jpeg,.gif,.webp"
+            onChange={handleFileSelect}
+            disabled={uploading}
+            style={{ display: 'none' }}
+          />
+          {hasWatermark && (
+            <button
+              onClick={handleRemoveLogo}
+              disabled={uploading}
+              style={{
+                padding: '10px 20px',
+                background: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                opacity: uploading ? 0.6 : 1
+              }}
+            >
+              Remove Logo
+            </button>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <input
+            type="url"
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            placeholder="https://example.com/logo.png"
+            disabled={uploading}
+            style={{
+              flex: 1,
+              minWidth: '300px',
+              padding: '10px',
+              border: '1px solid #ddd',
+              borderRadius: '5px',
+              fontSize: '14px'
+            }}
+          />
+          <button
+            onClick={handleUrlUpload}
+            disabled={uploading || !logoUrl.trim()}
+            style={{
+              padding: '10px 20px',
+              background: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: (uploading || !logoUrl.trim()) ? 'not-allowed' : 'pointer',
+              opacity: (uploading || !logoUrl.trim()) ? 0.6 : 1
+            }}
+          >
+            {uploading ? 'Downloading...' : 'Use This Logo'}
           </button>
-        )}
-      </div>
+          {hasWatermark && (
+            <button
+              onClick={handleRemoveLogo}
+              disabled={uploading}
+              style={{
+                padding: '10px 20px',
+                background: '#dc3545',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: uploading ? 'not-allowed' : 'pointer',
+                opacity: uploading ? 0.6 : 1
+              }}
+            >
+              Remove Logo
+            </button>
+          )}
+        </div>
+      )}
 
       <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#666' }}>
         <strong>Requirements:</strong> Image file (PNG, JPG, JPEG, GIF, or WEBP), max 5MB. PNG with transparent background recommended. The logo will be resized automatically when applied to images.
