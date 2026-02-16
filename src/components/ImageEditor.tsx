@@ -365,24 +365,69 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                   padding: '20px',
                   overflow: 'auto'
                 }}>
-                  <img
-                    src={imageUrlState}
-                    alt="Editing preview"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
-                      filter: `
-                        brightness(${brightness}%)
-                        contrast(${contrast}%)
-                        saturate(${saturation}%)
-                        blur(${blur}px)
-                        grayscale(${grayscale}%)
-                        sepia(${sepia}%)
-                      `
-                    }}
-                    crossOrigin="anonymous"
-                  />
+                  {(() => {
+                    // Calculate display size to fit container while maintaining aspect ratio
+                    // Use a consistent target size that fits most images well
+                    const containerWidth = containerRef.current?.clientWidth || 800;
+                    const containerHeight = containerRef.current?.clientHeight || 600;
+                    
+                    // Target display area (leave 40px padding)
+                    const maxDisplayWidth = containerWidth - 40;
+                    const maxDisplayHeight = containerHeight - 40;
+                    
+                    // Minimum display size to prevent tiny images
+                    const minDisplaySize = 400;
+                    
+                    // Calculate scale to fit while maintaining aspect ratio
+                    const imageAspectRatio = imageDimensions.width / imageDimensions.height;
+                    const containerAspectRatio = maxDisplayWidth / maxDisplayHeight;
+                    
+                    let displayWidth: number;
+                    let displayHeight: number;
+                    
+                    if (imageAspectRatio > containerAspectRatio) {
+                      // Image is wider - fit to width
+                      displayWidth = Math.max(minDisplaySize, Math.min(maxDisplayWidth, imageDimensions.width));
+                      displayHeight = displayWidth / imageAspectRatio;
+                      
+                      // If height exceeds container, scale down
+                      if (displayHeight > maxDisplayHeight) {
+                        displayHeight = maxDisplayHeight;
+                        displayWidth = displayHeight * imageAspectRatio;
+                      }
+                    } else {
+                      // Image is taller - fit to height
+                      displayHeight = Math.max(minDisplaySize, Math.min(maxDisplayHeight, imageDimensions.height));
+                      displayWidth = displayHeight * imageAspectRatio;
+                      
+                      // If width exceeds container, scale down
+                      if (displayWidth > maxDisplayWidth) {
+                        displayWidth = maxDisplayWidth;
+                        displayHeight = displayWidth / imageAspectRatio;
+                      }
+                    }
+                    
+                    return (
+                      <img
+                        src={imageUrlState}
+                        alt="Editing preview"
+                        style={{
+                          width: `${displayWidth}px`,
+                          height: `${displayHeight}px`,
+                          objectFit: 'contain',
+                          filter: `
+                            brightness(${brightness}%)
+                            contrast(${contrast}%)
+                            saturate(${saturation}%)
+                            blur(${blur}px)
+                            grayscale(${grayscale}%)
+                            sepia(${sepia}%)
+                          `
+                        }}
+                        crossOrigin="anonymous"
+                      />
+                    );
+                  })()}
                 </div>
               ) : (
                 <div style={{ 
