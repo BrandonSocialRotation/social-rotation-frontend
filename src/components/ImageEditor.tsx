@@ -30,6 +30,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
   const [watermarkOpacity, setWatermarkOpacity] = useState(50);
   const [watermarkScale, setWatermarkScale] = useState(20); // Percentage of image size
   const [watermarkPosition, setWatermarkPosition] = useState<'bottom-right' | 'bottom-left' | 'top-right' | 'top-left' | 'center'>('bottom-right');
+  const [watermarkKey, setWatermarkKey] = useState(0); // Force re-render when position changes
   const [watermarkLoaded, setWatermarkLoaded] = useState(false);
   
   const [saving, setSaving] = useState(false);
@@ -412,15 +413,17 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                     const displayWidth = displaySize.width;
                     const displayHeight = displaySize.height;
                     
-                    // Only calculate watermark if enabled
+                    // Only calculate watermark if enabled - strict check
+                    const shouldShowWatermark = watermarkEnabled === true && watermarkImg !== null && watermarkLoaded === true && watermarkLogoUrl !== null && watermarkLogoUrl !== '';
+                    
                     let watermarkDisplayWidth = 0;
                     let watermarkDisplayHeight = 0;
                     let watermarkX = 0;
                     let watermarkY = 0;
                     
-                    if (watermarkEnabled === true && watermarkImg && watermarkLoaded && watermarkLogoUrl) {
+                    if (shouldShowWatermark) {
                       const watermarkSize = Math.min(displayWidth, displayHeight) * (watermarkScale / 100);
-                      const watermarkAspectRatio = watermarkImg.width / watermarkImg.height;
+                      const watermarkAspectRatio = watermarkImg!.width / watermarkImg!.height;
                       watermarkDisplayWidth = watermarkSize;
                       watermarkDisplayHeight = watermarkSize / watermarkAspectRatio;
                       
@@ -471,11 +474,11 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                           }}
                           crossOrigin="anonymous"
                         />
-                        {/* Only show watermark when checkbox is explicitly checked */}
-                        {watermarkEnabled === true && watermarkImg && watermarkLoaded && watermarkLogoUrl && watermarkDisplayWidth > 0 && watermarkDisplayHeight > 0 && (
+                        {/* Only render watermark element when checkbox is checked - completely conditional */}
+                        {shouldShowWatermark && watermarkDisplayWidth > 0 && watermarkDisplayHeight > 0 ? (
                           <img
-                            key={`watermark-${watermarkPosition}-${watermarkOpacity}-${watermarkScale}`}
-                            src={watermarkLogoUrl}
+                            key={`watermark-${watermarkKey}-${watermarkPosition}`}
+                            src={watermarkLogoUrl!}
                             alt="Watermark"
                             style={{
                               position: 'absolute',
@@ -490,7 +493,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                             }}
                             crossOrigin="anonymous"
                           />
-                        )}
+                        ) : null}
                       </div>
                     );
                   })()}
@@ -666,7 +669,10 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                       <label>Position</label>
                       <select
                         value={watermarkPosition}
-                        onChange={(e) => setWatermarkPosition(e.target.value as any)}
+                        onChange={(e) => {
+                          setWatermarkPosition(e.target.value as any);
+                          setWatermarkKey(prev => prev + 1); // Force re-render to remove old watermark
+                        }}
                         style={{ width: '100%', padding: '5px' }}
                       >
                         <option value="bottom-right">Bottom Right</option>
