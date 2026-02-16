@@ -38,19 +38,26 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
   const containerRef = useRef<HTMLDivElement>(null);
   
   // Load watermark logo if available
+  const [watermarkImg, setWatermarkImg] = useState<HTMLImageElement | null>(null);
+  
   useEffect(() => {
     if (watermarkLogoUrl) {
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         setWatermarkLoaded(true);
-        setWatermarkEnabled(true);
+        setWatermarkImg(img);
+        // Don't auto-enable watermark - keep it off by default
       };
       img.onerror = () => {
         console.error('Failed to load watermark logo:', watermarkLogoUrl);
         setWatermarkLoaded(false);
+        setWatermarkImg(null);
       };
       img.src = watermarkLogoUrl;
+    } else {
+      setWatermarkLoaded(false);
+      setWatermarkImg(null);
     }
   }, [watermarkLogoUrl]);
   
@@ -407,25 +414,81 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                       }
                     }
                     
+                    // Calculate watermark size and position for preview
+                    let watermarkDisplayWidth = 0;
+                    let watermarkDisplayHeight = 0;
+                    let watermarkX = 0;
+                    let watermarkY = 0;
+                    
+                    if (watermarkEnabled && watermarkImg && watermarkLoaded) {
+                      const watermarkSize = Math.min(displayWidth, displayHeight) * (watermarkScale / 100);
+                      const watermarkAspectRatio = watermarkImg.width / watermarkImg.height;
+                      watermarkDisplayWidth = watermarkSize;
+                      watermarkDisplayHeight = watermarkSize / watermarkAspectRatio;
+                      
+                      const padding = Math.min(displayWidth, displayHeight) * 0.02;
+                      
+                      switch (watermarkPosition) {
+                        case 'bottom-right':
+                          watermarkX = displayWidth - watermarkDisplayWidth - padding;
+                          watermarkY = displayHeight - watermarkDisplayHeight - padding;
+                          break;
+                        case 'bottom-left':
+                          watermarkX = padding;
+                          watermarkY = displayHeight - watermarkDisplayHeight - padding;
+                          break;
+                        case 'top-right':
+                          watermarkX = displayWidth - watermarkDisplayWidth - padding;
+                          watermarkY = padding;
+                          break;
+                        case 'top-left':
+                          watermarkX = padding;
+                          watermarkY = padding;
+                          break;
+                        case 'center':
+                          watermarkX = (displayWidth - watermarkDisplayWidth) / 2;
+                          watermarkY = (displayHeight - watermarkDisplayHeight) / 2;
+                          break;
+                      }
+                    }
+                    
                     return (
-                      <img
-                        src={imageUrlState}
-                        alt="Editing preview"
-                        style={{
-                          width: `${displayWidth}px`,
-                          height: `${displayHeight}px`,
-                          objectFit: 'contain',
-                          filter: `
-                            brightness(${brightness}%)
-                            contrast(${contrast}%)
-                            saturate(${saturation}%)
-                            blur(${blur}px)
-                            grayscale(${grayscale}%)
-                            sepia(${sepia}%)
-                          `
-                        }}
-                        crossOrigin="anonymous"
-                      />
+                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                        <img
+                          src={imageUrlState}
+                          alt="Editing preview"
+                          style={{
+                            width: `${displayWidth}px`,
+                            height: `${displayHeight}px`,
+                            objectFit: 'contain',
+                            filter: `
+                              brightness(${brightness}%)
+                              contrast(${contrast}%)
+                              saturate(${saturation}%)
+                              blur(${blur}px)
+                              grayscale(${grayscale}%)
+                              sepia(${sepia}%)
+                            `
+                          }}
+                          crossOrigin="anonymous"
+                        />
+                        {watermarkEnabled && watermarkImg && watermarkLoaded && (
+                          <img
+                            src={watermarkLogoUrl!}
+                            alt="Watermark"
+                            style={{
+                              position: 'absolute',
+                              left: `${watermarkX}px`,
+                              top: `${watermarkY}px`,
+                              width: `${watermarkDisplayWidth}px`,
+                              height: `${watermarkDisplayHeight}px`,
+                              opacity: watermarkOpacity / 100,
+                              pointerEvents: 'none'
+                            }}
+                            crossOrigin="anonymous"
+                          />
+                        )}
+                      </div>
                     );
                   })()}
                 </div>
