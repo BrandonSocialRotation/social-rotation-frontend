@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import './ImageEditor.css';
 
 interface ImageEditorProps {
@@ -39,6 +39,41 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
   
   // Load watermark logo if available
   const [watermarkImg, setWatermarkImg] = useState<HTMLImageElement | null>(null);
+  
+  // Calculate stable display size based only on image dimensions (not watermark state)
+  const displaySize = useMemo(() => {
+    if (!imageDimensions) return { width: 800, height: 600 };
+    
+    const containerWidth = containerRef.current?.clientWidth || 800;
+    const containerHeight = containerRef.current?.clientHeight || 600;
+    const maxDisplayWidth = containerWidth - 40;
+    const maxDisplayHeight = containerHeight - 40;
+    const minDisplaySize = 400;
+    
+    const imageAspectRatio = imageDimensions.width / imageDimensions.height;
+    const containerAspectRatio = maxDisplayWidth / maxDisplayHeight;
+    
+    let displayWidth: number;
+    let displayHeight: number;
+    
+    if (imageAspectRatio > containerAspectRatio) {
+      displayWidth = Math.max(minDisplaySize, Math.min(maxDisplayWidth, imageDimensions.width));
+      displayHeight = displayWidth / imageAspectRatio;
+      if (displayHeight > maxDisplayHeight) {
+        displayHeight = maxDisplayHeight;
+        displayWidth = displayHeight * imageAspectRatio;
+      }
+    } else {
+      displayHeight = Math.max(minDisplaySize, Math.min(maxDisplayHeight, imageDimensions.height));
+      displayWidth = displayHeight * imageAspectRatio;
+      if (displayWidth > maxDisplayWidth) {
+        displayWidth = maxDisplayWidth;
+        displayHeight = displayWidth / imageAspectRatio;
+      }
+    }
+    
+    return { width: displayWidth, height: displayHeight };
+  }, [imageDimensions?.width, imageDimensions?.height]);
   
   useEffect(() => {
     if (watermarkLogoUrl) {
@@ -373,54 +408,17 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                   overflow: 'auto'
                 }}>
                   {(() => {
-                    // Calculate display size to fit container while maintaining aspect ratio
-                    // Use a consistent target size that fits most images well
-                    const containerWidth = containerRef.current?.clientWidth || 800;
-                    const containerHeight = containerRef.current?.clientHeight || 600;
+                    // Use stable display size from useMemo (doesn't change with watermark state)
+                    const displayWidth = displaySize.width;
+                    const displayHeight = displaySize.height;
                     
-                    // Target display area (leave 40px padding)
-                    const maxDisplayWidth = containerWidth - 40;
-                    const maxDisplayHeight = containerHeight - 40;
-                    
-                    // Minimum display size to prevent tiny images
-                    const minDisplaySize = 400;
-                    
-                    // Calculate scale to fit while maintaining aspect ratio
-                    const imageAspectRatio = imageDimensions.width / imageDimensions.height;
-                    const containerAspectRatio = maxDisplayWidth / maxDisplayHeight;
-                    
-                    let displayWidth: number;
-                    let displayHeight: number;
-                    
-                    if (imageAspectRatio > containerAspectRatio) {
-                      // Image is wider - fit to width
-                      displayWidth = Math.max(minDisplaySize, Math.min(maxDisplayWidth, imageDimensions.width));
-                      displayHeight = displayWidth / imageAspectRatio;
-                      
-                      // If height exceeds container, scale down
-                      if (displayHeight > maxDisplayHeight) {
-                        displayHeight = maxDisplayHeight;
-                        displayWidth = displayHeight * imageAspectRatio;
-                      }
-                    } else {
-                      // Image is taller - fit to height
-                      displayHeight = Math.max(minDisplaySize, Math.min(maxDisplayHeight, imageDimensions.height));
-                      displayWidth = displayHeight * imageAspectRatio;
-                      
-                      // If width exceeds container, scale down
-                      if (displayWidth > maxDisplayWidth) {
-                        displayWidth = maxDisplayWidth;
-                        displayHeight = displayWidth / imageAspectRatio;
-                      }
-                    }
-                    
-                    // Calculate watermark size and position for preview
+                    // Only calculate watermark if enabled
                     let watermarkDisplayWidth = 0;
                     let watermarkDisplayHeight = 0;
                     let watermarkX = 0;
                     let watermarkY = 0;
                     
-                    if (watermarkEnabled && watermarkImg && watermarkLoaded) {
+                    if (watermarkEnabled === true && watermarkImg && watermarkLoaded && watermarkLogoUrl) {
                       const watermarkSize = Math.min(displayWidth, displayHeight) * (watermarkScale / 100);
                       const watermarkAspectRatio = watermarkImg.width / watermarkImg.height;
                       watermarkDisplayWidth = watermarkSize;
@@ -453,7 +451,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                     }
                     
                     return (
-                      <div style={{ position: 'relative', display: 'inline-block' }}>
+                      <div style={{ position: 'relative', display: 'inline-block', width: `${displayWidth}px`, height: `${displayHeight}px` }}>
                         <img
                           src={imageUrlState}
                           alt="Editing preview"
@@ -461,6 +459,7 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                             width: `${displayWidth}px`,
                             height: `${displayHeight}px`,
                             objectFit: 'contain',
+                            display: 'block',
                             filter: `
                               brightness(${brightness}%)
                               contrast(${contrast}%)
@@ -472,9 +471,11 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                           }}
                           crossOrigin="anonymous"
                         />
-                        {watermarkEnabled && watermarkImg && watermarkLoaded && (
+                        {/* Only show watermark when checkbox is explicitly checked */}
+                        {watermarkEnabled === true && watermarkImg && watermarkLoaded && watermarkLogoUrl && watermarkDisplayWidth > 0 && watermarkDisplayHeight > 0 && (
                           <img
-                            src={watermarkLogoUrl!}
+                            key={`watermark-${watermarkPosition}-${watermarkOpacity}-${watermarkScale}`}
+                            src={watermarkLogoUrl}
                             alt="Watermark"
                             style={{
                               position: 'absolute',
@@ -483,7 +484,9 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                               width: `${watermarkDisplayWidth}px`,
                               height: `${watermarkDisplayHeight}px`,
                               opacity: watermarkOpacity / 100,
-                              pointerEvents: 'none'
+                              pointerEvents: 'none',
+                              zIndex: 10,
+                              display: 'block'
                             }}
                             crossOrigin="anonymous"
                           />
