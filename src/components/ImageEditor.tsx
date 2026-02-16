@@ -413,21 +413,23 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                     const displayWidth = displaySize.width;
                     const displayHeight = displaySize.height;
                     
-                    // Only calculate watermark if enabled - strict check
-                    const shouldShowWatermark = watermarkEnabled === true && watermarkImg !== null && watermarkLoaded === true && watermarkLogoUrl !== null && watermarkLogoUrl !== '';
+                    // STRICT: Only calculate and render watermark if checkbox is explicitly checked
+                    // Early return pattern - don't calculate anything if disabled
+                    const isWatermarkEnabled = watermarkEnabled === true;
                     
-                    let watermarkDisplayWidth = 0;
-                    let watermarkDisplayHeight = 0;
-                    let watermarkX = 0;
-                    let watermarkY = 0;
+                    // Calculate watermark dimensions and position ONLY if enabled
+                    let watermarkElement = null;
                     
-                    if (shouldShowWatermark) {
+                    if (isWatermarkEnabled && watermarkImg !== null && watermarkLoaded === true && watermarkLogoUrl !== null && watermarkLogoUrl !== '') {
                       const watermarkSize = Math.min(displayWidth, displayHeight) * (watermarkScale / 100);
-                      const watermarkAspectRatio = watermarkImg!.width / watermarkImg!.height;
-                      watermarkDisplayWidth = watermarkSize;
-                      watermarkDisplayHeight = watermarkSize / watermarkAspectRatio;
+                      const watermarkAspectRatio = watermarkImg.width / watermarkImg.height;
+                      const watermarkDisplayWidth = watermarkSize;
+                      const watermarkDisplayHeight = watermarkSize / watermarkAspectRatio;
                       
                       const padding = Math.min(displayWidth, displayHeight) * 0.02;
+                      
+                      let watermarkX = 0;
+                      let watermarkY = 0;
                       
                       switch (watermarkPosition) {
                         case 'bottom-right':
@@ -450,6 +452,29 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                           watermarkX = (displayWidth - watermarkDisplayWidth) / 2;
                           watermarkY = (displayHeight - watermarkDisplayHeight) / 2;
                           break;
+                      }
+                      
+                      // Only create element if dimensions are valid
+                      if (watermarkDisplayWidth > 0 && watermarkDisplayHeight > 0) {
+                        watermarkElement = (
+                          <img
+                            key={`watermark-${watermarkKey}-${watermarkPosition}`}
+                            src={watermarkLogoUrl}
+                            alt="Watermark"
+                            style={{
+                              position: 'absolute',
+                              left: `${watermarkX}px`,
+                              top: `${watermarkY}px`,
+                              width: `${watermarkDisplayWidth}px`,
+                              height: `${watermarkDisplayHeight}px`,
+                              opacity: watermarkOpacity / 100,
+                              pointerEvents: 'none',
+                              zIndex: 10,
+                              display: 'block'
+                            }}
+                            crossOrigin="anonymous"
+                          />
+                        );
                       }
                     }
                     
@@ -474,26 +499,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                           }}
                           crossOrigin="anonymous"
                         />
-                        {/* Only render watermark element when checkbox is checked - completely conditional */}
-                        {shouldShowWatermark && watermarkDisplayWidth > 0 && watermarkDisplayHeight > 0 ? (
-                          <img
-                            key={`watermark-${watermarkKey}-${watermarkPosition}`}
-                            src={watermarkLogoUrl!}
-                            alt="Watermark"
-                            style={{
-                              position: 'absolute',
-                              left: `${watermarkX}px`,
-                              top: `${watermarkY}px`,
-                              width: `${watermarkDisplayWidth}px`,
-                              height: `${watermarkDisplayHeight}px`,
-                              opacity: watermarkOpacity / 100,
-                              pointerEvents: 'none',
-                              zIndex: 10,
-                              display: 'block'
-                            }}
-                            crossOrigin="anonymous"
-                          />
-                        ) : null}
+                        {/* Render watermark element ONLY if checkbox is checked and element was created */}
+                        {watermarkElement}
                       </div>
                     );
                   })()}
