@@ -417,10 +417,24 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                     // Early return pattern - don't calculate anything if disabled
                     const isWatermarkEnabled = watermarkEnabled === true;
                     
+                    // DEBUG: Log state to help diagnose
+                    if (import.meta.env.DEV) {
+                      console.log('[Watermark Debug]', {
+                        watermarkEnabled,
+                        isWatermarkEnabled,
+                        watermarkImg: watermarkImg !== null,
+                        watermarkLoaded,
+                        watermarkLogoUrl: watermarkLogoUrl !== null && watermarkLogoUrl !== ''
+                      });
+                    }
+                    
                     // Calculate watermark dimensions and position ONLY if enabled
                     let watermarkElement = null;
                     
-                    if (isWatermarkEnabled && watermarkImg !== null && watermarkLoaded === true && watermarkLogoUrl !== null && watermarkLogoUrl !== '') {
+                    // DOUBLE CHECK: Only proceed if checkbox is explicitly checked
+                    if (watermarkEnabled !== true) {
+                      // Checkbox is unchecked - do nothing, watermarkElement stays null
+                    } else if (watermarkImg !== null && watermarkLoaded === true && watermarkLogoUrl !== null && watermarkLogoUrl !== '') {
                       const watermarkSize = Math.min(displayWidth, displayHeight) * (watermarkScale / 100);
                       const watermarkAspectRatio = watermarkImg.width / watermarkImg.height;
                       const watermarkDisplayWidth = watermarkSize;
@@ -500,7 +514,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                           crossOrigin="anonymous"
                         />
                         {/* Render watermark element ONLY if checkbox is checked and element was created */}
-                        {watermarkElement}
+                        {/* Explicitly check watermarkEnabled again before rendering */}
+                        {watermarkEnabled === true && watermarkElement !== null ? watermarkElement : null}
                       </div>
                     );
                   })()}
