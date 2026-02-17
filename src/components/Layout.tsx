@@ -115,6 +115,9 @@ function Layout() {
             <Link to="/privacy-policy" className="legal-link">
               Privacy Policy
             </Link>
+            <a href="mailto:support@socialrotation.com" className="legal-link">
+              Support
+            </a>
           </div>
           {originalUser && (
             <button onClick={handleSwitchBack} className="switch-back-btn">

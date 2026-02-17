@@ -231,6 +231,7 @@ export default function Landing() {
           <div className="footer-links">
             <Link to="/terms-of-service">Terms of Service</Link>
             <Link to="/privacy-policy">Privacy Policy</Link>
+            <a href="mailto:support@socialrotation.com">Support</a>
           </div>
           <p className="footer-copyright">
             © {new Date().getFullYear()} Social Rotation. All rights reserved.
