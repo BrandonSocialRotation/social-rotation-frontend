@@ -424,16 +424,19 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                         isWatermarkEnabled,
                         watermarkImg: watermarkImg !== null,
                         watermarkLoaded,
-                        watermarkLogoUrl: watermarkLogoUrl !== null && watermarkLogoUrl !== ''
+                        watermarkLogoUrl: watermarkLogoUrl !== null && watermarkLogoUrl !== '',
+                        willRender: watermarkEnabled === true && watermarkImg !== null && watermarkLoaded === true && watermarkLogoUrl !== null && watermarkLogoUrl !== ''
                       });
                     }
                     
                     // Calculate watermark dimensions and position ONLY if enabled
                     let watermarkElement = null;
                     
-                    // DOUBLE CHECK: Only proceed if checkbox is explicitly checked
+                    // TRIPLE CHECK: Only proceed if checkbox is explicitly checked
+                    // This is the most important check - if false, nothing happens
                     if (watermarkEnabled !== true) {
-                      // Checkbox is unchecked - do nothing, watermarkElement stays null
+                      // Checkbox is unchecked - watermarkElement MUST stay null
+                      watermarkElement = null;
                     } else if (watermarkImg !== null && watermarkLoaded === true && watermarkLogoUrl !== null && watermarkLogoUrl !== '') {
                       const watermarkSize = Math.min(displayWidth, displayHeight) * (watermarkScale / 100);
                       const watermarkAspectRatio = watermarkImg.width / watermarkImg.height;
@@ -484,7 +487,8 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                               opacity: watermarkOpacity / 100,
                               pointerEvents: 'none',
                               zIndex: 10,
-                              display: 'block'
+                              display: watermarkEnabled === true ? 'block' : 'none', // Explicit display control
+                              visibility: watermarkEnabled === true ? 'visible' : 'hidden' // Double safety
                             }}
                             crossOrigin="anonymous"
                           />
@@ -514,8 +518,18 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                           crossOrigin="anonymous"
                         />
                         {/* Render watermark element ONLY if checkbox is checked and element was created */}
-                        {/* Explicitly check watermarkEnabled again before rendering */}
-                        {watermarkEnabled === true && watermarkElement !== null ? watermarkElement : null}
+                        {/* Multiple explicit checks to ensure nothing renders when disabled */}
+                        {(() => {
+                          // Final gate check - if any condition fails, return null
+                          if (watermarkEnabled !== true) {
+                            return null;
+                          }
+                          if (watermarkElement === null) {
+                            return null;
+                          }
+                          // Only render if we pass all checks
+                          return watermarkElement;
+                        })()}
                       </div>
                     );
                   })()}
