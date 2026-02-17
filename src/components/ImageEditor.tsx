@@ -522,12 +522,22 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                         {(() => {
                           // Final gate check - if any condition fails, return null
                           if (watermarkEnabled !== true) {
+                            // Log when we're preventing render
+                            if (import.meta.env.DEV) {
+                              console.log('[Watermark Render] Blocked - watermarkEnabled is not true:', watermarkEnabled);
+                            }
                             return null;
                           }
                           if (watermarkElement === null) {
+                            if (import.meta.env.DEV) {
+                              console.log('[Watermark Render] Blocked - watermarkElement is null');
+                            }
                             return null;
                           }
                           // Only render if we pass all checks
+                          if (import.meta.env.DEV) {
+                            console.log('[Watermark Render] Allowing render');
+                          }
                           return watermarkElement;
                         })()}
                       </div>
@@ -690,7 +700,15 @@ export default function ImageEditor({ imageUrl, imageName, onSave, onClose, wate
                     <input
                       type="checkbox"
                       checked={watermarkEnabled}
-                      onChange={(e) => setWatermarkEnabled(e.target.checked)}
+                      onChange={(e) => {
+                        const newValue = e.target.checked;
+                        console.log('[Watermark Checkbox] Changing to:', newValue);
+                        setWatermarkEnabled(newValue);
+                        // Force re-render by updating key when disabling
+                        if (!newValue) {
+                          setWatermarkKey(prev => prev + 1000); // Large increment to force complete removal
+                        }
+                      }}
                       disabled={!watermarkLoaded}
                     />
                     <span>Enable Watermark</span>
