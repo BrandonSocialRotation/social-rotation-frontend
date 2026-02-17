@@ -16,9 +16,8 @@ export default function Landing() {
       <header className="landing-header">
         <div className="landing-header-content">
           <div className="landing-logo">
-            {/* Logo placeholder - add logo_negative.png here when available */}
             <img 
-              src="/logo_negative.png" 
+              src="/logo.png" 
               alt="Social Rotation" 
               className="logo-image"
               onError={(e) => {
