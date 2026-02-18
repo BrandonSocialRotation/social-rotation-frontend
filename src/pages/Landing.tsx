@@ -21,14 +21,10 @@ export default function Landing() {
               alt="Social Rotation" 
               className="logo-image"
               onError={(e) => {
-                // Fallback to existing logo if new logo not found
-                e.currentTarget.src = '/logo_negative.png'
-                e.currentTarget.onerror = () => {
-                  // Final fallback to text
-                  e.currentTarget.style.display = 'none'
-                  const textLogo = e.currentTarget.nextElementSibling as HTMLElement
-                  if (textLogo) textLogo.style.display = 'block'
-                }
+                // Fallback to text if logo not found
+                e.currentTarget.style.display = 'none'
+                const textLogo = e.currentTarget.nextElementSibling as HTMLElement
+                if (textLogo) textLogo.style.display = 'block'
               }}
             />
             <h1 style={{ display: 'none' }}>Social Rotation</h1>
