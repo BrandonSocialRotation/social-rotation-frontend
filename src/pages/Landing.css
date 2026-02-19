@@ -29,9 +29,9 @@
 }
 
 .landing-logo .logo-image {
-  height: 120px;
+  height: 100px;
   width: auto;
-  max-width: 500px;
+  max-width: 450px;
   object-fit: contain;
 }
 
