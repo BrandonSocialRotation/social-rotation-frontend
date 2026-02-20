@@ -406,7 +406,7 @@ function Register() {
             </div>
             
             <button type="submit" disabled={loading} className="submit-btn">
-              {loading ? 'Creating account...' : 'Continue to Payment'}
+              {loading ? 'Creating account...' : 'Start Free Trial'}
             </button>
           </form>
         )}
@@ -796,7 +796,7 @@ function Register() {
                 className="submit-btn"
                 style={{ flex: 2 }}
               >
-                {processingPayment ? 'Processing...' : plansLoading ? 'Loading plans...' : `Continue to Payment - ${formatPrice(calculatePrice())}`}
+                {processingPayment ? 'Processing...' : plansLoading ? 'Loading plans...' : `Start Free Trial - ${formatPrice(calculatePrice())}`}
               </button>
             </div>
           </form>
