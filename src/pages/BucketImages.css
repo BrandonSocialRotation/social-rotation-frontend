@@ -255,14 +255,28 @@
   margin: 0 0 1rem 0;
 }
 
+.cover-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #667eea;
+  background: #eef0ff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.25rem;
+}
+
 .image-actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
+.btn-set-cover,
 .btn-edit,
 .btn-delete {
   flex: 1;
+  min-width: 0;
   padding: 0.5rem;
   border: none;
   border-radius: 4px;
@@ -274,6 +288,16 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+}
+
+.btn-set-cover {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-set-cover:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
 }
 
 .btn-edit {
@@ -345,6 +369,7 @@
     flex-direction: column;
   }
 
+  .btn-set-cover,
   .btn-edit,
   .btn-delete {
     width: 100%;

@@ -23,6 +23,8 @@ interface Bucket {
   is_global?: boolean
   images_count: number
   schedules_count: number
+  cover_image_url?: string | null
+  cover_image_id?: number | null
   created_at: string
   owner?: {
     id: number
@@ -295,6 +297,15 @@ function Buckets() {
           <div className="buckets-grid">
             {buckets.map((bucket) => (
               <div key={bucket.id} className="bucket-card">
+                {bucket.cover_image_url ? (
+                  <div className="bucket-card-cover">
+                    <img src={bucket.cover_image_url} alt="" />
+                  </div>
+                ) : (
+                  <div className="bucket-card-cover bucket-card-cover-placeholder">
+                    <span>No image</span>
+                  </div>
+                )}
                 <div className="bucket-header">
                   <h3>{bucket.name}</h3>
                   <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -383,6 +394,15 @@ function Buckets() {
           <div className="buckets-grid">
             {globalBuckets.map((bucket) => (
               <div key={bucket.id} className="bucket-card global-bucket">
+                {bucket.cover_image_url ? (
+                  <div className="bucket-card-cover">
+                    <img src={bucket.cover_image_url} alt="" />
+                  </div>
+                ) : (
+                  <div className="bucket-card-cover bucket-card-cover-placeholder">
+                    <span>No image</span>
+                  </div>
+                )}
                 <div className="bucket-header">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <h3>{bucket.name}</h3>

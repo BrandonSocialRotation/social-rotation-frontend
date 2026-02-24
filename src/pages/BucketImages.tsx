@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import api from '../services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import api, { bucketsAPI } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import ImageEditor from '../components/ImageEditor';
 import './BucketImages.css';
@@ -36,11 +36,13 @@ interface Bucket {
   is_global?: boolean;
   images_count: number;
   schedules_count: number;
+  cover_image_id?: number | null;
 }
 
 export default function BucketImages() {
   const { bucketId } = useParams<{ bucketId: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const isSuperAdmin = user?.super_admin || false;
   const [bucket, setBucket] = useState<Bucket | null>(null);
@@ -379,6 +381,20 @@ export default function BucketImages() {
     }
   };
 
+  const handleSetCover = async (imageId: number) => {
+    if (!bucketId) return;
+    try {
+      await bucketsAPI.update(Number(bucketId), { cover_image_id: imageId });
+      setSuccess('Cover image updated!');
+      await fetchBucketAndImages();
+      queryClient.invalidateQueries({ queryKey: ['buckets'] });
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      console.error('Error setting cover:', err);
+      setError(err.response?.data?.error || 'Failed to set cover image');
+    }
+  };
+
   const cancelUpload = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
@@ -564,11 +580,26 @@ export default function BucketImages() {
                 </div>
                 <div className="image-info">
                   <h3 className="image-name">{bucketImage.friendly_name}</h3>
+                  {bucket?.cover_image_id === bucketImage.image?.id && (
+                    <span className="cover-badge" title="This is the bucket cover image">Cover</span>
+                  )}
                   {bucketImage.description && (
                     <p className="image-description">{bucketImage.description}</p>
                   )}
                   {canModifyBucket && (
                   <div className="image-actions">
+                    <button
+                      onClick={() => handleSetCover(bucketImage.image.id)}
+                      className="btn-set-cover"
+                      title="Use as bucket card image"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                        <circle cx="8.5" cy="8.5" r="1.5"/>
+                        <polyline points="21 15 16 10 5 21"/>
+                      </svg>
+                      Set as cover
+                    </button>
                     <button
                       onClick={() => handleEdit(bucketImage)}
                       className="btn-edit"
