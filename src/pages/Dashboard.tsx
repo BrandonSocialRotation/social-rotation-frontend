@@ -16,6 +16,7 @@ function Dashboard() {
   const [selectedPlatforms, setSelectedPlatforms] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'aggregated' | 'individual'>('aggregated')
   const [selectedIndividualPlatform, setSelectedIndividualPlatform] = useState<string | null>(null)
+  const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string>('')
 
   // Fetch user info to get connected platforms
   const { data: userInfo } = useQuery({
@@ -33,6 +34,17 @@ function Dashboard() {
     { key: 'twitter', name: 'Twitter', connected: userInfo.user.twitter_connected },
     { key: 'linkedin', name: 'LinkedIn', connected: userInfo.user.linkedin_connected },
   ].filter(p => p.connected) : []
+
+  // Fetch Facebook pages (for page selector when Facebook is selected)
+  const { data: facebookPagesData } = useQuery({
+    queryKey: ['facebook_pages'],
+    queryFn: async () => {
+      const response = await api.get('/user_info/facebook_pages')
+      return response.data.pages as Array<{ id: string; name: string }>
+    },
+    enabled: userInfo?.user?.facebook_connected === true,
+    staleTime: 5 * 60 * 1000,
+  })
 
   // Initialize selected platforms to all connected platforms on first load
   useEffect(() => {
@@ -59,20 +71,30 @@ function Dashboard() {
 
   // Overall analytics from selected platforms
   // When in individual mode, fetch all platforms so we can switch between them instantly
-  // When in aggregated mode, fetch only selected platforms
+  // When in aggregated mode, fetch only selected platforms (empty = none selected, returns zeros)
+  const facebookSelected = viewMode === 'aggregated'
+    ? selectedPlatforms.has('facebook')
+    : selectedIndividualPlatform === 'facebook'
   const { data: overallAnalytics, isLoading: isLoadingAnalytics } = useQuery({
-    queryKey: ['analytics_overall', timeRange, viewMode, viewMode === 'aggregated' ? Array.from(selectedPlatforms).sort().join(',') : 'all'],
+    queryKey: [
+      'analytics_overall',
+      timeRange,
+      viewMode,
+      viewMode === 'aggregated' ? Array.from(selectedPlatforms).sort().join(',') : selectedIndividualPlatform,
+      facebookSelected ? selectedFacebookPageId : '',
+    ],
     queryFn: async () => {
-      const params: any = { range: timeRange }
-      // In aggregated mode, use selected platforms; in individual mode, fetch all
-      if (viewMode === 'aggregated' && selectedPlatforms.size > 0) {
+      const params: Record<string, unknown> = { range: timeRange }
+      if (viewMode === 'aggregated') {
         params.platforms = Array.from(selectedPlatforms)
       }
-      // In individual mode, don't specify platforms - backend will return all
+      if (facebookSelected && selectedFacebookPageId) {
+        params.facebook_page_id = selectedFacebookPageId
+      }
       const response = await api.get('/analytics/overall', { params })
       return response.data
     },
-    enabled: !!user, // Only need user to be loaded, backend handles platform selection
+    enabled: !!user,
   })
 
   const getTimeRangeLabel = (range: string) => {
@@ -252,6 +274,23 @@ function Dashboard() {
                   </select>
                 </div>
               )}
+              {facebookSelected && facebookPagesData && facebookPagesData.length > 0 && (
+                <div className="platform-filter-wrapper" style={{ marginLeft: '0.5rem' }}>
+                  <select
+                    className="platform-select-dropdown"
+                    value={selectedFacebookPageId}
+                    onChange={(e) => setSelectedFacebookPageId(e.target.value)}
+                    title="Choose which Facebook Page to show analytics for"
+                  >
+                    <option value="">All Facebook Pages</option>
+                    {facebookPagesData.map((page) => (
+                      <option key={page.id} value={page.id}>
+                        {page.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </>
           ) : (
             <p style={{ fontSize: '0.9rem', color: '#666' }}>
@@ -264,8 +303,8 @@ function Dashboard() {
       {hasOnlyPlaceholders && (
         <div className="analytics-warning">
           <p>
-            <strong>Analytics Not Available:</strong> The selected platforms (Facebook, Twitter, LinkedIn) don't have analytics implemented yet. 
-            Only Instagram analytics are currently available. Please select Instagram or check back later.
+            <strong>Analytics Not Available:</strong> The selected platforms don't have analytics data yet. 
+            Instagram and Facebook analytics are available when connected. Please select a connected platform or check back later.
           </p>
         </div>
       )}
