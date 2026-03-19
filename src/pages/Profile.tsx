@@ -1144,9 +1144,7 @@ function SubscriptionPlansSection() {
               Renews: {new Date(currentSubscription.current_period_end).toLocaleDateString()}
             </p>
           )}
-          {userData?.user?.is_account_admin && (
-            <UpdatePaymentButton />
-          )}
+          <UpdatePaymentButton />
         </div>
       )}
 
