@@ -985,7 +985,6 @@ export default function Profile() {
 
 // Update Payment Method button - only for account admins
 function UpdatePaymentButton() {
-  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
 
   const handleUpdatePayment = async () => {
