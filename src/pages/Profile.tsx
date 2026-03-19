@@ -47,6 +47,11 @@ export default function Profile() {
       // Refresh subscription data
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
     }
+    if (urlParams.get('payment_updated') === '1') {
+      setSuccess('Payment method updated successfully. Your next charge will use the new card.');
+      window.history.replaceState({}, '', '/profile');
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+    }
     if (urlParams.get('error') === 'subscription_canceled') {
       setError('Payment was canceled. Please try again.');
       window.history.replaceState({}, '', '/profile');
@@ -978,6 +983,46 @@ export default function Profile() {
   );
 }
 
+// Update Payment Method button - only for account admins
+function UpdatePaymentButton() {
+  const queryClient = useQueryClient();
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdatePayment = async () => {
+    setLoading(true);
+    try {
+      const response = await api.post('/subscriptions/billing_portal_session');
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      } else {
+        alert('Failed to open payment settings. Please try again.');
+      }
+    } catch (err: any) {
+      console.error('Billing portal error:', err);
+      alert(err.response?.data?.error || err.response?.data?.message || 'Failed to open payment settings. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ marginTop: '15px' }}>
+      <button
+        type="button"
+        onClick={handleUpdatePayment}
+        disabled={loading}
+        className="btn btn-secondary"
+        style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+      >
+        {loading ? 'Loading...' : 'Update payment method'}
+      </button>
+      <p style={{ fontSize: '0.85em', color: '#666', marginTop: '6px' }}>
+        Change your card or billing details. Your next charge will use the new payment method.
+      </p>
+    </div>
+  );
+}
+
 // Subscription Plans Component
 function SubscriptionPlansSection() {
   const [loadingCheckout, setLoadingCheckout] = useState<number | null>(null);
@@ -1099,6 +1144,9 @@ function SubscriptionPlansSection() {
             <p>
               Renews: {new Date(currentSubscription.current_period_end).toLocaleDateString()}
             </p>
+          )}
+          {userData?.user?.is_account_admin && (
+            <UpdatePaymentButton />
           )}
         </div>
       )}
