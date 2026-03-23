@@ -136,6 +136,9 @@ function Dashboard() {
         comments: platformData?.comments ?? 0,
         shares: platformData?.shares ?? 0,
         followers: platformData?.followers ?? 0,
+        reach: platformData?.reach ?? 0,
+        impressions: platformData?.impressions ?? 0,
+        saves: platformData?.saves ?? 0,
       }
     } else {
       // Show aggregated data
@@ -145,6 +148,9 @@ function Dashboard() {
         comments: overallAnalytics.total_comments,
         shares: overallAnalytics.total_shares,
         followers: overallAnalytics.total_followers,
+        reach: overallAnalytics.total_reach ?? 0,
+        impressions: overallAnalytics.total_impressions ?? 0,
+        saves: overallAnalytics.total_saves ?? 0,
       }
     }
   })() : null
@@ -385,6 +391,46 @@ function Dashboard() {
           <p className="stat-number">
             {isLoadingAnalytics ? 'Loading...' : (analyticsData?.followers?.toLocaleString() ?? '—')}
           </p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            <h3>Reach</h3>
+          </div>
+          <p className="stat-number">
+            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.reach?.toLocaleString() ?? '—')}
+          </p>
+          <p className="stat-label">Unique accounts that saw your content</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            </svg>
+            <h3>Impressions</h3>
+          </div>
+          <p className="stat-number">
+            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.impressions?.toLocaleString() ?? '—')}
+          </p>
+          <p className="stat-label">Total views of your content</p>
+        </div>
+
+        <div className="stat-card">
+          <div className="stat-card-header">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            <h3>Saves</h3>
+          </div>
+          <p className="stat-number">
+            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.saves?.toLocaleString() ?? '—')}
+          </p>
+          <p className="stat-label">Post saves (Instagram)</p>
         </div>
 
         <div className="stat-card">

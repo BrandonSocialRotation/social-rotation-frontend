@@ -56,6 +56,10 @@ export default function Profile() {
       setError('Payment was canceled. Please try again.');
       window.history.replaceState({}, '', '/profile');
     }
+    if (urlParams.get('error') === 'free_trial_expired') {
+      setError('Your free trial has ended. Payment information is needed for the app to continue. Please choose a plan below to add payment and continue.');
+      window.history.replaceState({}, '', '/profile');
+    }
   }, [queryClient]);
 
   // Fetch user info

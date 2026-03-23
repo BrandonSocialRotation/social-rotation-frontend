@@ -63,17 +63,23 @@ api.interceptors.response.use(
       // Don't logout, just redirect so they can manage subscription
       const subscriptionStatus = error.response.data.subscription_status
       const redirectTo = error.response.data.redirect_to
+      const errorParam = subscriptionStatus === 'expired' ? 'free_trial_expired' : null
       
+      let targetUrl = redirectTo || '/profile'
       if (subscriptionStatus === 'canceled' || subscriptionStatus === 'suspended' || subscriptionStatus === 'past_due' || subscriptionStatus === 'unpaid') {
-        // Subscription is canceled/suspended - redirect to profile to resubscribe
-        window.location.href = redirectTo || '/profile'
+        targetUrl = redirectTo || '/profile'
       } else if (redirectTo) {
-        // Use the redirect_to from the backend response
-        window.location.href = redirectTo
+        targetUrl = redirectTo
       } else {
-        // Default: redirect to register to complete payment
-        window.location.href = '/register'
+        targetUrl = '/register'
       }
+      
+      // Pass error param so Profile can show the message (e.g. free trial expired)
+      if (errorParam && (targetUrl === '/profile' || targetUrl.startsWith('/profile'))) {
+        targetUrl += targetUrl.includes('?') ? '&' : '?'
+        targetUrl += `error=${errorParam}`
+      }
+      window.location.href = targetUrl
     }
     return Promise.reject(error)
   }
