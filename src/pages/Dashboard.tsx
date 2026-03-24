@@ -125,9 +125,14 @@ function Dashboard() {
     if (viewMode === 'individual' && selectedIndividualPlatform && overallAnalytics.platforms?.[selectedIndividualPlatform]) {
       // Show individual platform data
       const platformData = overallAnalytics.platforms[selectedIndividualPlatform]
-      // Skip if it's a placeholder message
-      if (platformData && platformData.message) {
-        return null
+      // Only hide when there is a message and no usable metrics (warnings like monthly cap still include followers)
+      if (platformData?.message) {
+        const hasMetrics =
+          platformData.followers != null ||
+          platformData.likes != null ||
+          platformData.comments != null ||
+          platformData.shares != null
+        if (!hasMetrics) return null
       }
       // Return data even if some values are 0 (Twitter has 0 likes/comments/shares but has followers)
       return {
