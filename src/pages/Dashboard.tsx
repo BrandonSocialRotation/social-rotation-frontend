@@ -430,7 +430,7 @@ function Dashboard() {
           <p className="stat-number">
             {isLoadingAnalytics ? 'Loading...' : (analyticsData?.saves?.toLocaleString() ?? '—')}
           </p>
-          <p className="stat-label">Post saves (Instagram)</p>
+          <p className="stat-label">Instagram saves &amp; X bookmarks</p>
         </div>
 
         <div className="stat-card">
