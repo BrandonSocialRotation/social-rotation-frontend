@@ -115,7 +115,7 @@ export default function Landing() {
               </div>
               <h4>Analytics & Insights</h4>
               <p>
-                Track your performance with detailed analytics. Monitor engagement, reach, impressions, 
+                Track your performance with detailed analytics. Monitor likes, comments, shares, saves,
                 and follower growth across platforms.
               </p>
             </div>

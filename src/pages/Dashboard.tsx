@@ -136,25 +136,19 @@ function Dashboard() {
       }
       // Return data even if some values are 0 (Twitter has 0 likes/comments/shares but has followers)
       return {
-        engagement_rate: platformData?.engagement_rate ?? null,
         likes: platformData?.likes ?? 0,
         comments: platformData?.comments ?? 0,
         shares: platformData?.shares ?? 0,
         followers: platformData?.followers ?? 0,
-        reach: platformData?.reach ?? 0,
-        impressions: platformData?.impressions ?? 0,
         saves: platformData?.saves ?? 0,
       }
     } else {
       // Show aggregated data
       return {
-        engagement_rate: overallAnalytics.engagement_rate,
         likes: overallAnalytics.total_likes,
         comments: overallAnalytics.total_comments,
         shares: overallAnalytics.total_shares,
         followers: overallAnalytics.total_followers,
-        reach: overallAnalytics.total_reach ?? 0,
-        impressions: overallAnalytics.total_impressions ?? 0,
         saves: overallAnalytics.total_saves ?? 0,
       }
     }
@@ -332,19 +326,6 @@ function Dashboard() {
       )}
       
       <div className="stats-grid">
-        {/* Hootsuite-style Analytics */}
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
-            </svg>
-            <h3>Engagement Rate</h3>
-          </div>
-          <p className="stat-number">
-            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.engagement_rate ? `${analyticsData.engagement_rate}%` : '—')}
-          </p>
-        </div>
-
         <div className="stat-card">
           <div className="stat-card-header">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -396,33 +377,6 @@ function Dashboard() {
           <p className="stat-number">
             {isLoadingAnalytics ? 'Loading...' : (analyticsData?.followers?.toLocaleString() ?? '—')}
           </p>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-            <h3>Reach</h3>
-          </div>
-          <p className="stat-number">
-            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.reach?.toLocaleString() ?? '—')}
-          </p>
-          <p className="stat-label">Unique accounts that saw your content</p>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-card-header">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
-            </svg>
-            <h3>Impressions</h3>
-          </div>
-          <p className="stat-number">
-            {isLoadingAnalytics ? 'Loading...' : (analyticsData?.impressions?.toLocaleString() ?? '—')}
-          </p>
-          <p className="stat-label">Total views of your content</p>
         </div>
 
         <div className="stat-card">
