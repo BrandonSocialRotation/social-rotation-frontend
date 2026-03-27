@@ -107,7 +107,7 @@ export default function Profile() {
 
   // Disconnect mutations
   const disconnectFacebookMutation = useMutation({
-    mutationFn: () => api.post('/user_info/disconnect_facebook'),
+    mutationFn: () => api.post('/social/disconnect', { platform: 'facebook' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('Facebook disconnected successfully!');
@@ -116,7 +116,7 @@ export default function Profile() {
   });
 
   const disconnectXMutation = useMutation({
-    mutationFn: () => api.post('/user_info/disconnect_twitter'),
+    mutationFn: () => api.post('/social/disconnect', { platform: 'twitter' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('X disconnected successfully!');
@@ -125,7 +125,7 @@ export default function Profile() {
   });
 
   const disconnectLinkedInMutation = useMutation({
-    mutationFn: () => api.post('/user_info/disconnect_linkedin'),
+    mutationFn: () => api.post('/social/disconnect', { platform: 'linkedin' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('LinkedIn disconnected successfully!');
@@ -134,7 +134,7 @@ export default function Profile() {
   });
 
   const disconnectGoogleMutation = useMutation({
-    mutationFn: () => api.post('/user_info/disconnect_google'),
+    mutationFn: () => api.post('/social/disconnect', { platform: 'google' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('Google My Business disconnected successfully!');
@@ -143,7 +143,7 @@ export default function Profile() {
   });
 
   const disconnectInstagramMutation = useMutation({
-    mutationFn: () => api.post('/user_info/disconnect_instagram'),
+    mutationFn: () => api.post('/social/disconnect', { platform: 'instagram' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('Instagram disconnected successfully!');
@@ -152,7 +152,7 @@ export default function Profile() {
   });
 
   const disconnectTikTokMutation = useMutation({
-    mutationFn: () => api.post('/user_info/disconnect_tiktok'),
+    mutationFn: () => api.post('/social/disconnect', { platform: 'tiktok' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('TikTok disconnected successfully!');
@@ -161,7 +161,7 @@ export default function Profile() {
   });
 
   const disconnectYouTubeMutation = useMutation({
-    mutationFn: () => api.post('/user_info/disconnect_youtube'),
+    mutationFn: () => api.post('/social/disconnect', { platform: 'youtube' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('YouTube disconnected successfully!');
@@ -170,7 +170,7 @@ export default function Profile() {
   });
 
   const disconnectPinterestMutation = useMutation({
-    mutationFn: () => api.post('/user_info/disconnect_pinterest'),
+    mutationFn: () => api.post('/social/disconnect', { platform: 'pinterest' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user_info'] });
       setSuccess('Pinterest disconnected successfully!');
