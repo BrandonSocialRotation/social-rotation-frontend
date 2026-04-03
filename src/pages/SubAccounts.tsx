@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
@@ -17,7 +18,11 @@ interface SubAccount {
 
 export default function SubAccounts() {
   const queryClient = useQueryClient();
-  const { switchToSubAccount } = useAuthStore();
+  const { switchToSubAccount, user } = useAuthStore();
+
+  if (user?.client_portal_only) {
+    return <Navigate to="/dashboard" replace />;
+  }
   
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [name, setName] = useState('');

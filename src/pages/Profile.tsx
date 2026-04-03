@@ -453,6 +453,38 @@ export default function Profile() {
     return <div className="loading">Loading profile...</div>;
   }
 
+  if (userData?.user?.client_portal_only) {
+    return (
+      <div className="profile-page">
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%)',
+            border: '1px solid #c7d2fe',
+            borderRadius: '8px',
+            padding: '1rem 1.25rem',
+            marginBottom: '1.5rem',
+            color: '#334155',
+          }}
+        >
+          <strong>Client portal</strong> — view only. Your agency manages billing, social connections, and content.
+        </div>
+        <h1>Profile</h1>
+        <div className="profile-section">
+          <p>
+            <strong>Name:</strong> {userData.user.name}
+          </p>
+          <p>
+            <strong>Email:</strong> {userData.user.email}
+          </p>
+          <p>
+            <strong>Timezone:</strong> {userData.user.timezone || '—'}
+          </p>
+        </div>
+        <p style={{ marginTop: '1rem', color: '#64748b' }}>Need updates? Contact your agency.</p>
+      </div>
+    );
+  }
+
   // const _user = userData?.user as User;
   // Extract connected accounts from user object (backend provides boolean flags)
   const connectedAccounts: ConnectedAccounts = userData?.user ? {

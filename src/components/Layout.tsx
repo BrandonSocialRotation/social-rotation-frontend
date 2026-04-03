@@ -8,6 +8,7 @@ import './Layout.css'
 
 function Layout() {
   const { user, originalUser, logout, switchBackToOriginal } = useAuthStore()
+  const isClientPortal = user?.client_portal_only === true
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
@@ -45,7 +46,7 @@ function Layout() {
       {/* Sidebar navigation */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
-          <h1>Social Rotation</h1>
+          <h1>{isClientPortal ? 'Client portal' : 'Social Rotation'}</h1>
           <button 
             className="sidebar-toggle-in-header"
             onClick={toggleSidebar}
@@ -67,12 +68,14 @@ function Layout() {
             </svg>
             Dashboard
           </Link>
+          {!isClientPortal && (
           <Link to="/buckets" className="nav-link">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
             </svg>
             Content Buckets
           </Link>
+          )}
           <Link to="/schedule" className="nav-link">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10"/>
@@ -80,7 +83,7 @@ function Layout() {
             </svg>
             Schedule
           </Link>
-          {(user as any)?.reseller && !originalUser && (
+          {(user as any)?.reseller && !originalUser && !isClientPortal && (
             <Link to="/sub-accounts" className="nav-link">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -91,6 +94,7 @@ function Layout() {
               Sub-Accounts
             </Link>
           )}
+          {!isClientPortal && (
           <Link to="/rss-feeds" className="nav-link">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -98,6 +102,7 @@ function Layout() {
             </svg>
             RSS Feeds
           </Link>
+          )}
           <Link to="/profile" className="nav-link">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="3"/>
@@ -131,6 +136,9 @@ function Layout() {
             <strong>{user?.name}</strong>
             <small>{user?.email}</small>
             {originalUser && <small style={{color: '#ffa500', marginTop: '0.25rem'}}>Viewing as Sub-Account</small>}
+            {isClientPortal && !originalUser && (
+              <small style={{ color: '#94a3b8', marginTop: '0.25rem', display: 'block' }}>View-only · contact your agency for changes</small>
+            )}
           </div>
           <button onClick={handleLogout} className="logout-btn">
             Logout

@@ -10,6 +10,7 @@ import './Dashboard.css'
 
 function Dashboard() {
   const user = useAuthStore((state) => state.user)
+  const isClientPortal = user?.client_portal_only === true
   const navigate = useNavigate()
   const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('7d')
   const [showPlatformFilter, setShowPlatformFilter] = useState(false)
@@ -175,7 +176,11 @@ function Dashboard() {
         <div>
           <h1>Welcome back, {userInfo?.user?.name || user?.name || 'User'}!</h1>
           <p style={{ color: '#666', marginTop: '0.5rem' }}>
-            {user?.reseller ? 'Manage your agency and sub-accounts' : "Here's an overview of your content"}
+            {isClientPortal
+              ? 'Your performance and scheduled content (view only)'
+              : user?.reseller
+                ? 'Manage your agency and sub-accounts'
+                : "Here's an overview of your content"}
           </p>
         </div>
         <div className="time-range-dropdown-wrapper">
@@ -406,7 +411,7 @@ function Dashboard() {
           <p className="stat-number">{postsData?.total_posts?.toLocaleString() ?? '—'}</p>
         </div>
         {/* Sub-Accounts Card - Only for resellers */}
-        {user?.reseller && (
+        {user?.reseller && !isClientPortal && (
           <div 
             className="stat-card clickable"
             onClick={() => navigate('/sub-accounts')}

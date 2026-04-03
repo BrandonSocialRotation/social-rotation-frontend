@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
+import { useAuthStore } from '../store/authStore';
 import './Schedule.css';
 
 interface Bucket {
@@ -70,6 +71,7 @@ const PLATFORMS = {
 
 export default function Schedule() {
   const queryClient = useQueryClient();
+  const isClientPortal = useAuthStore((s) => s.user?.client_portal_only === true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<BucketSchedule | null>(null);
   const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
@@ -137,7 +139,7 @@ export default function Schedule() {
       const response = await api.get(`/buckets/${selectedBucket}/images`);
       return response.data.bucket_images as BucketImage[];
     },
-    enabled: !!selectedBucket,
+    enabled: !!selectedBucket && !isClientPortal,
   });
 
   // Fetch all schedules
@@ -159,6 +161,7 @@ export default function Schedule() {
       // Combine both arrays for the dropdown
       return [...userBuckets, ...globalBuckets];
     },
+    enabled: !isClientPortal,
   });
 
   // Fetch Facebook pages (with Instagram accounts) - always fetch so we can show them
@@ -173,6 +176,7 @@ export default function Schedule() {
         instagram_account?: { id: string; username: string };
       }>;
     },
+    enabled: !isClientPortal,
     retry: 1,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
@@ -188,6 +192,7 @@ export default function Schedule() {
         urn: string;
       }>;
     },
+    enabled: !isClientPortal,
     retry: 1,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
@@ -835,6 +840,7 @@ export default function Schedule() {
     <div className="schedule-page">
       <div className="page-header">
         <h1>Schedules</h1>
+        {!isClientPortal && (
         <div style={{ display: 'flex', gap: '10px' }}>
           <button 
             onClick={async () => {
@@ -865,11 +871,19 @@ export default function Schedule() {
             Create Schedule
           </button>
         </div>
+        )}
+        {isClientPortal && (
+          <p style={{ margin: 0, fontSize: '0.95rem', color: '#64748b' }}>View only — your agency manages scheduling</p>
+        )}
       </div>
 
       {schedules.length === 0 ? (
         <div className="empty-state">
-          <p>No schedules yet. Create your first schedule to start automating posts!</p>
+          <p>
+            {isClientPortal
+              ? 'No schedules to show yet. Your agency will add posts here.'
+              : 'No schedules yet. Create your first schedule to start automating posts!'}
+          </p>
         </div>
       ) : (
         <div className="schedules-list">
@@ -895,6 +909,7 @@ export default function Schedule() {
                     </div>
                   )}
                 </div>
+                {!isClientPortal && (
                 <div className="schedule-actions">
                   <button
                     onClick={() => handleEdit(schedule)}
@@ -928,13 +943,16 @@ export default function Schedule() {
                     </svg>
                   </button>
                 </div>
+                )}
               </div>
               
               <div className="schedule-info">
+                {!isClientPortal && schedule.bucket_id != null && (
                 <div className="info-row">
                   <span className="label">Bucket:</span>
                   <span className="value">{schedule.bucket_name || `Bucket #${schedule.bucket_id}`}</span>
                 </div>
+                )}
                 <div className="info-row">
                   <span className="label">Platforms:</span>
                   <span className="value">{getPlatformNames(schedule.post_to)}</span>

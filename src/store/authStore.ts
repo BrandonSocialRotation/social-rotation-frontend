@@ -17,6 +17,8 @@ interface User {
   can_create_sub_account?: boolean
   can_manage_rss_feeds?: boolean
   can_access_rss_feeds?: boolean
+  /** Read-only client portal (agency sub-account); hide buckets/RSS and editing */
+  client_portal_only?: boolean
 }
 
 interface AuthState {
