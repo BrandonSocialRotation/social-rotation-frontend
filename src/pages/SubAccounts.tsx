@@ -59,7 +59,14 @@ export default function SubAccounts() {
       setError('');
     },
     onError: (err: any) => {
-      setError(err.response?.data?.errors?.join(', ') || 'Failed to create sub-account');
+      const d = err.response?.data;
+      const fromArray = Array.isArray(d?.errors) ? d.errors.join(', ') : '';
+      const fromError = typeof d?.error === 'string' ? d.error : '';
+      const fromDetails = typeof d?.message === 'string' ? d.message : '';
+      setError(
+        [fromArray, fromError, fromDetails].filter(Boolean).join(' ') ||
+          'Failed to create sub-account'
+      );
     },
   });
 
