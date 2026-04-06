@@ -23,6 +23,7 @@ import BucketImages from './pages/BucketImages'
 import Schedule from './pages/Schedule'
 import Profile from './pages/Profile'
 import SubAccounts from './pages/SubAccounts'
+import WhiteLabel from './pages/WhiteLabel'
 import RssFeeds from './pages/RssFeeds'
 import RssPosts from './pages/RssPosts'
 import Terms from './pages/Terms'
@@ -73,6 +74,7 @@ function App() {
         <Route path="buckets/:bucketId/images" element={<BucketImages />} />
         <Route path="schedule" element={<Schedule />} />
         <Route path="sub-accounts" element={<SubAccounts />} />
+        <Route path="white-label" element={<WhiteLabel />} />
         <Route path="rss-feeds" element={<RssFeeds />} />
         <Route path="rss-feeds/:feedId/posts" element={<RssPosts />} />
         <Route path="profile" element={<Profile />} />

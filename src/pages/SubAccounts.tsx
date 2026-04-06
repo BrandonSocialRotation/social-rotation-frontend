@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
@@ -136,6 +136,20 @@ export default function SubAccounts() {
           + Create Sub-Account
         </button>
       </div>
+
+      {(user?.reseller || user?.super_admin) && (
+        <div className="sub-accounts-wl-banner" role="region" aria-label="White label">
+          <div className="sub-accounts-wl-banner-text">
+            <strong>Client portal &amp; white label</strong>
+            <span>
+              Map a hostname to a client sub-account and set branding (logo, colors) for their login experience.
+            </span>
+          </div>
+          <Link to="/white-label" className="sub-accounts-wl-link">
+            Open white label
+          </Link>
+        </div>
+      )}
 
       {subAccounts.length === 0 ? (
         <div className="empty-state">

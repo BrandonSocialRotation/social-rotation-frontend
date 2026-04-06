@@ -2,6 +2,47 @@
   max-width: 1200px;
 }
 
+.sub-accounts-wl-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+}
+
+.sub-accounts-wl-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 42rem;
+  font-size: 0.9rem;
+  color: #0c4a6e;
+}
+
+.sub-accounts-wl-banner-text strong {
+  font-size: 0.95rem;
+}
+
+.sub-accounts-wl-link {
+  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  background: #0284c7;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.sub-accounts-wl-link:hover {
+  background: #0369a1;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;

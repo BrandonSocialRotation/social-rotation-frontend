@@ -83,7 +83,7 @@ function Layout() {
             </svg>
             Schedule
           </Link>
-          {(user as any)?.reseller && !originalUser && !isClientPortal && (
+          {(user?.reseller || user?.super_admin) && !originalUser && !isClientPortal && (
             <Link to="/sub-accounts" className="nav-link">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -92,6 +92,16 @@ function Layout() {
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
               </svg>
               Sub-Accounts
+            </Link>
+          )}
+          {(user?.reseller || user?.super_admin) && !originalUser && !isClientPortal && (
+            <Link to="/white-label" className="nav-link">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M2 12h20"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              White label
             </Link>
           )}
           {!isClientPortal && (
