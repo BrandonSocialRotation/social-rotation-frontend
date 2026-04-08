@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -561,8 +562,17 @@ export default function Profile() {
         </form>
       </div>
 
-      {/* Watermark Logo */}
-      <WatermarkLogoSection />
+      {(userData?.user?.reseller || userData?.user?.super_admin) ? (
+        <div className="profile-section">
+          <h2>Logo &amp; branding</h2>
+          <p className="section-description">
+            Upload your logo and favicon, and set business details for your white-label client portal on the{' '}
+            <Link to="/white-label">White label settings</Link> page.
+          </p>
+        </div>
+      ) : (
+        <WatermarkLogoSection />
+      )}
 
       {/* Connected Accounts */}
       <div className="profile-section">

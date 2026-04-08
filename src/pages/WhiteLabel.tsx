@@ -1,32 +1,34 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
 import api from '../services/api'
 import './WhiteLabel.css'
 
-interface BrandingPayload {
-  app_name?: string
-  primary_color?: string
-  logo_url?: string
-  favicon_url?: string
-}
+/** Must match Api::V1::UserInfoController::ALLOWED_WHITE_LABEL_DOMAINS */
+const TOP_LEVEL_DOMAIN_OPTIONS = [
+  'contentrotation.com',
+  'contentrotator.com',
+  'postrotation.com',
+  'postrotator.com',
+  'secureorderforms.com',
+  'secureorderformsdev.com',
+  'socialrotation.app',
+  'socialrotation.com',
+  'socialrotation.dev',
+] as const
 
-interface ClientPortalDomainRow {
-  id: number
-  hostname: string
-  user_id: number
-  account_id: number
-  branding: BrandingPayload
-  created_at: string
-  updated_at: string
-}
-
-interface SubAccountOption {
-  id: number
-  name: string
-  email: string
-  client_portal_only?: boolean
+interface WhiteLabelPayload {
+  top_level_domain?: string | null
+  business_name?: string | null
+  software_title?: string | null
+  business_address?: string | null
+  business_city?: string | null
+  business_state?: string | null
+  business_country?: string | null
+  business_postal_code?: string | null
+  logo_url?: string | null
+  favicon_url?: string | null
 }
 
 export default function WhiteLabel() {
@@ -35,377 +37,272 @@ export default function WhiteLabel() {
   const isAgency = Boolean(user?.reseller || user?.super_admin)
   const isClientPortal = user?.client_portal_only === true
 
-  const [showForm, setShowForm] = useState(false)
-  const [hostname, setHostname] = useState('')
-  const [userId, setUserId] = useState<number | ''>('')
-  const [appName, setAppName] = useState('')
-  const [primaryColor, setPrimaryColor] = useState('#4f46e5')
-  const [logoUrl, setLogoUrl] = useState('')
-  const [faviconUrl, setFaviconUrl] = useState('')
+  const [topLevelDomain, setTopLevelDomain] = useState('')
+  const [businessName, setBusinessName] = useState('')
+  const [softwareTitle, setSoftwareTitle] = useState('')
+  const [address, setAddress] = useState('')
+  const [city, setCity] = useState('')
+  const [state, setState] = useState('')
+  const [country, setCountry] = useState('')
+  const [postalCode, setPostalCode] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
-  const [editing, setEditing] = useState<ClientPortalDomainRow | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
+  const [logoError, setLogoError] = useState('')
+  const [faviconUploading, setFaviconUploading] = useState(false)
+  const [faviconError, setFaviconError] = useState('')
+
+  const { data: userData, isLoading } = useQuery({
+    queryKey: ['user_info'],
+    queryFn: async () => {
+      const res = await api.get('/user_info')
+      return res.data as { user: { white_label?: WhiteLabelPayload | null } & Record<string, unknown> }
+    },
+    enabled: isAgency,
+  })
+
+  const wl = userData?.user?.white_label
+
+  useEffect(() => {
+    if (!wl) return
+    setTopLevelDomain(wl.top_level_domain || '')
+    setBusinessName(wl.business_name || '')
+    setSoftwareTitle(wl.software_title || '')
+    setAddress(wl.business_address || '')
+    setCity(wl.business_city || '')
+    setState(wl.business_state || '')
+    setCountry(wl.business_country || '')
+    setPostalCode(wl.business_postal_code || '')
+  }, [wl])
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      return api.patch('/user_info', {
+        white_label: {
+          top_level_domain: topLevelDomain || null,
+          business_name: businessName || null,
+          software_title: softwareTitle || null,
+          business_address: address || null,
+          business_city: city || null,
+          business_state: state || null,
+          business_country: country || null,
+          business_postal_code: postalCode || null,
+        },
+      })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user_info'] })
+      setSuccess('White label settings saved.')
+      setError('')
+      setTimeout(() => setSuccess(''), 4000)
+    },
+    onError: (err: any) => {
+      const d = err.response?.data
+      const msg = Array.isArray(d?.errors) ? d.errors.join(', ') : d?.error || 'Could not save settings'
+      setError(msg)
+    },
+  })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    saveMutation.mutate()
+  }
+
+  const handleLogoFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setLogoError('')
+    setLogoUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('watermark_logo', file)
+      await api.post('/user_info/watermark', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      queryClient.invalidateQueries({ queryKey: ['user_info'] })
+    } catch (err: any) {
+      setLogoError(err.response?.data?.error || 'Logo upload failed')
+    } finally {
+      setLogoUploading(false)
+      e.target.value = ''
+    }
+  }
+
+  const handleFaviconFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFaviconError('')
+    setFaviconUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('favicon_logo', file)
+      await api.post('/user_info/favicon', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      queryClient.invalidateQueries({ queryKey: ['user_info'] })
+    } catch (err: any) {
+      setFaviconError(err.response?.data?.error || 'Favicon upload failed')
+    } finally {
+      setFaviconUploading(false)
+      e.target.value = ''
+    }
+  }
 
   if (isClientPortal) {
     return <Navigate to="/dashboard" replace />
   }
 
-  const { data: domainsData, isLoading: domainsLoading } = useQuery({
-    queryKey: ['client_portal_domains'],
-    queryFn: async () => {
-      const res = await api.get('/client_portal_domains')
-      return res.data as { client_portal_domains: ClientPortalDomainRow[] }
-    },
-    enabled: isAgency,
-  })
-
-  const { data: subAccountsData } = useQuery({
-    queryKey: ['sub_accounts'],
-    queryFn: async () => {
-      const res = await api.get('/sub_accounts')
-      return res.data as { sub_accounts: SubAccountOption[] }
-    },
-    enabled: isAgency,
-  })
-
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      const branding: BrandingPayload = {}
-      if (appName.trim()) branding.app_name = appName.trim()
-      if (primaryColor.trim()) branding.primary_color = primaryColor.trim()
-      if (logoUrl.trim()) branding.logo_url = logoUrl.trim()
-      if (faviconUrl.trim()) branding.favicon_url = faviconUrl.trim()
-      return api.post('/client_portal_domains', {
-        client_portal_domain: {
-          hostname: hostname.trim(),
-          user_id: userId,
-          branding,
-        },
-      })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['client_portal_domains'] })
-      setShowForm(false)
-      setHostname('')
-      setUserId('')
-      setAppName('')
-      setPrimaryColor('#4f46e5')
-      setLogoUrl('')
-      setFaviconUrl('')
-      setError('')
-    },
-    onError: (err: any) => {
-      const d = err.response?.data
-      const msg = Array.isArray(d?.errors) ? d.errors.join(', ') : d?.error || d?.message || 'Could not save'
-      setError(msg)
-    },
-  })
-
-  const updateMutation = useMutation({
-    mutationFn: async (payload: { id: number; hostname?: string; branding: BrandingPayload }) => {
-      return api.patch(`/client_portal_domains/${payload.id}`, {
-        client_portal_domain: {
-          ...(payload.hostname != null ? { hostname: payload.hostname } : {}),
-          branding: payload.branding,
-        },
-      })
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['client_portal_domains'] })
-      setEditing(null)
-      setError('')
-    },
-    onError: (err: any) => {
-      const d = err.response?.data
-      setError(Array.isArray(d?.errors) ? d.errors.join(', ') : d?.error || 'Update failed')
-    },
-  })
-
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.delete(`/client_portal_domains/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['client_portal_domains'] }),
-  })
-
-  const domains = domainsData?.client_portal_domains ?? []
-  const subAccounts = subAccountsData?.sub_accounts ?? []
-  /** Prefer client-portal sub-accounts in the dropdown */
-  const clientOptions = subAccounts.filter((s) => s.client_portal_only !== false)
-
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    if (!hostname.trim()) {
-      setError('Hostname is required')
-      return
-    }
-    if (userId === '') {
-      setError('Choose which client account this hostname is for')
-      return
-    }
-    createMutation.mutate()
-  }
-
-  const openEdit = (d: ClientPortalDomainRow) => {
-    setEditing(d)
-    setError('')
-  }
-
-  const submitEdit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!editing) return
-    const branding: BrandingPayload = { ...editing.branding }
-    updateMutation.mutate({
-      id: editing.id,
-      hostname: editing.hostname,
-      branding,
-    })
-  }
-
   if (!isAgency) {
     return (
-      <div className="white-label-page">
-        <p className="wl-muted">Only agency accounts can manage white-label domains.</p>
+      <div className="wl-page">
+        <p className="wl-muted">Only agency accounts can manage white label settings.</p>
       </div>
     )
   }
 
-  if (domainsLoading) {
+  if (isLoading) {
     return (
-      <div className="white-label-page">
+      <div className="wl-page">
         <p>Loading…</p>
       </div>
     )
   }
 
+  const logoPreview = wl?.logo_url || (userData?.user as { watermark_logo_url?: string })?.watermark_logo_url
+  const faviconPreview = wl?.favicon_url
+
   return (
-    <div className="white-label-page">
-      <div className="page-header">
-        <div>
-          <h1>White label</h1>
-          <p className="wl-lead">
-            Map a hostname from your domain pool to a <strong>client</strong> sub-account. When they sign in on that
-            host, the app can show your branding—not Social Rotation.
-          </p>
-        </div>
-        <button type="button" className="create-btn" onClick={() => { setShowForm(true); setError('') }}>
-          + Add domain
-        </button>
+    <div className="wl-page">
+      <div className="wl-page-header">
+        <h1>White Label Settings</h1>
+        <p className="wl-intro">
+          Choose your pool domain, business details, and assets used for your branded experience. Client portal login can use{' '}
+          <strong>secureorderforms.com</strong> and the other approved domains below—point DNS at your app when you go live.
+        </p>
       </div>
 
-      <div className="wl-subaccounts-pill">
-        <span>Clients are sub-accounts.</span>
+      <div className="wl-portal-note">
+        <span>Need sub-accounts for clients?</span>
         <Link to="/sub-accounts">Manage sub-accounts</Link>
       </div>
 
-      <div className="wl-callout">
-        <strong>DNS &amp; SSL:</strong> Point the hostname (or CNAME) to this app and provision TLS on your host
-        (e.g. DigitalOcean / Cloudflare). The API stores the mapping; your infrastructure serves HTTPS.
-      </div>
+      {error && <div className="wl-alert wl-alert-error">{error}</div>}
+      {success && <div className="wl-alert wl-alert-success">{success}</div>}
 
-      {domains.length === 0 && !showForm ? (
-        <div className="empty-state">
-          <p>No white-label domains yet. Add one and assign it to a client sub-account.</p>
+      <form className="wl-form" onSubmit={handleSubmit}>
+        <div className="wl-field">
+          <label htmlFor="wl-tld">Top level domain</label>
+          <select
+            id="wl-tld"
+            value={topLevelDomain}
+            onChange={(e) => setTopLevelDomain(e.target.value)}
+          >
+            <option value="">Select a domain…</option>
+            {TOP_LEVEL_DOMAIN_OPTIONS.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+          <p className="wl-hint">Use this zone in DNS when you create hostnames for your clients (e.g. portal.client.socialrotation.app).</p>
         </div>
-      ) : (
-        <div className="wl-grid">
-          {domains.map((d) => (
-            <div key={d.id} className="wl-card">
-              <div className="wl-card-head">
-                <h3>{d.branding?.app_name || d.hostname}</h3>
-                <div className="wl-card-actions">
-                  <button type="button" className="wl-btn-edit" onClick={() => openEdit(d)}>
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    className="wl-btn-danger"
-                    onClick={() => {
-                      if (window.confirm(`Remove mapping for ${d.hostname}?`)) deleteMutation.mutate(d.id)
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-              <p className="wl-host">
-                <span className="wl-label">Hostname</span>
-                {d.hostname}
-              </p>
-              <p className="wl-meta">
-                <span className="wl-label">Client user ID</span> {d.user_id}
-              </p>
-              {d.branding?.primary_color && (
-                <p className="wl-meta">
-                  <span className="wl-label">Color</span>
-                  <span className="wl-swatch" style={{ background: d.branding.primary_color }} />
-                  {d.branding.primary_color}
-                </p>
-              )}
+
+        <div className="wl-field">
+          <label htmlFor="wl-business">Business name</label>
+          <input
+            id="wl-business"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            placeholder="Tabitha Thomas"
+            autoComplete="organization"
+          />
+        </div>
+
+        <div className="wl-field">
+          <label htmlFor="wl-software">Software title</label>
+          <input
+            id="wl-software"
+            value={softwareTitle}
+            onChange={(e) => setSoftwareTitle(e.target.value)}
+            placeholder="Content Posting Engine"
+          />
+        </div>
+
+        <div className="wl-field">
+          <label htmlFor="wl-address">Address</label>
+          <input
+            id="wl-address"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            placeholder="123 Main St"
+            autoComplete="street-address"
+          />
+        </div>
+
+        <div className="wl-grid-2">
+          <div className="wl-field">
+            <label htmlFor="wl-city">City</label>
+            <input id="wl-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Poplar Bluff" />
+          </div>
+          <div className="wl-field">
+            <label htmlFor="wl-state">State</label>
+            <input id="wl-state" value={state} onChange={(e) => setState(e.target.value)} placeholder="MO" />
+          </div>
+        </div>
+
+        <div className="wl-grid-2">
+          <div className="wl-field">
+            <label htmlFor="wl-zip">Zip / Postal code</label>
+            <input id="wl-zip" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="63901" />
+          </div>
+          <div className="wl-field">
+            <label htmlFor="wl-country">Country</label>
+            <input id="wl-country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="United States" />
+          </div>
+        </div>
+
+        <div className="wl-upload-block">
+          <label>Uploaded logo</label>
+          <p className="wl-hint">Used for watermarks on posts and for white-label branding. PNG with transparency recommended.</p>
+          {logoPreview ? (
+            <div className="wl-preview">
+              <img src={logoPreview} alt="Logo preview" />
             </div>
-          ))}
+          ) : (
+            <p className="wl-placeholder">No logo uploaded yet.</p>
+          )}
+          {logoError && <p className="wl-inline-error">{logoError}</p>}
+          <label className="wl-file-btn">
+            <input type="file" accept="image/png,image/jpeg,image/jpg,image/gif,image/webp" onChange={handleLogoFile} disabled={logoUploading} />
+            {logoUploading ? 'Uploading…' : 'Choose file'}
+          </label>
         </div>
-      )}
 
-      {showForm && (
-        <div className="modal-overlay" onClick={() => !createMutation.isPending && setShowForm(false)}>
-          <div className="modal wl-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Add white-label domain</h2>
-            {error && <div className="error-message">{error}</div>}
-            <form onSubmit={handleCreate}>
-              <div className="form-group">
-                <label htmlFor="wl-hostname">Hostname</label>
-                <input
-                  id="wl-hostname"
-                  value={hostname}
-                  onChange={(e) => setHostname(e.target.value)}
-                  placeholder="portal.clientbrand.com"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-client">Client (sub-account)</label>
-                <select
-                  id="wl-client"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value ? Number(e.target.value) : '')}
-                  required
-                >
-                  <option value="">Select a client…</option>
-                  {(clientOptions.length ? clientOptions : subAccounts).map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.email})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-appname">App / company name (shown to client)</label>
-                <input
-                  id="wl-appname"
-                  value={appName}
-                  onChange={(e) => setAppName(e.target.value)}
-                  placeholder="Your Agency Name"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-color">Primary color</label>
-                <input
-                  id="wl-color"
-                  type="color"
-                  value={primaryColor}
-                  onChange={(e) => setPrimaryColor(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-logo">Logo URL (optional)</label>
-                <input
-                  id="wl-logo"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://…"
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-favicon">Favicon URL (optional)</label>
-                <input
-                  id="wl-favicon"
-                  value={faviconUrl}
-                  onChange={(e) => setFaviconUrl(e.target.value)}
-                  placeholder="https://…"
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="cancel-btn" onClick={() => setShowForm(false)}>
-                  Cancel
-                </button>
-                <button type="submit" className="submit-btn" disabled={createMutation.isPending}>
-                  {createMutation.isPending ? 'Saving…' : 'Save'}
-                </button>
-              </div>
-            </form>
-          </div>
+        <div className="wl-upload-block">
+          <label>Uploaded favicon</label>
+          <p className="wl-hint">Browser tab icon (.png, .ico, etc.).</p>
+          {faviconPreview ? (
+            <div className="wl-preview wl-preview-favicon">
+              <img src={faviconPreview} alt="Favicon preview" />
+            </div>
+          ) : (
+            <p className="wl-placeholder">No favicon uploaded yet.</p>
+          )}
+          {faviconError && <p className="wl-inline-error">{faviconError}</p>}
+          <label className="wl-file-btn">
+            <input type="file" accept="image/*,.ico" onChange={handleFaviconFile} disabled={faviconUploading} />
+            {faviconUploading ? 'Uploading…' : 'Choose file'}
+          </label>
         </div>
-      )}
 
-      {editing && (
-        <div className="modal-overlay" onClick={() => !updateMutation.isPending && setEditing(null)}>
-          <div className="modal wl-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Edit white-label</h2>
-            {error && <div className="error-message">{error}</div>}
-            <form onSubmit={submitEdit}>
-              <div className="form-group">
-                <label htmlFor="wl-edit-host">Hostname</label>
-                <input
-                  id="wl-edit-host"
-                  value={editing.hostname}
-                  onChange={(e) => setEditing({ ...editing, hostname: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-edit-name">App name</label>
-                <input
-                  id="wl-edit-name"
-                  value={editing.branding?.app_name || ''}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      branding: { ...editing.branding, app_name: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-edit-color">Primary color</label>
-                <input
-                  id="wl-edit-color"
-                  type="color"
-                  value={editing.branding?.primary_color || '#4f46e5'}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      branding: { ...editing.branding, primary_color: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-edit-logo">Logo URL</label>
-                <input
-                  id="wl-edit-logo"
-                  value={editing.branding?.logo_url || ''}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      branding: { ...editing.branding, logo_url: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="wl-edit-favicon">Favicon URL</label>
-                <input
-                  id="wl-edit-favicon"
-                  value={editing.branding?.favicon_url || ''}
-                  onChange={(e) =>
-                    setEditing({
-                      ...editing,
-                      branding: { ...editing.branding, favicon_url: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="button" className="cancel-btn" onClick={() => setEditing(null)}>
-                  Cancel
-                </button>
-                <button type="submit" className="submit-btn" disabled={updateMutation.isPending}>
-                  {updateMutation.isPending ? 'Saving…' : 'Update'}
-                </button>
-              </div>
-            </form>
-          </div>
+        <div className="wl-actions">
+          <button type="submit" className="wl-btn-primary" disabled={saveMutation.isPending}>
+            {saveMutation.isPending ? 'Saving…' : 'Update White Label Settings'}
+          </button>
         </div>
-      )}
+      </form>
     </div>
   )
 }
