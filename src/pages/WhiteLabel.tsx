@@ -217,7 +217,7 @@ export default function WhiteLabel() {
               </option>
             ))}
           </select>
-          <p className="wl-hint">Use this zone in DNS when you create hostnames for your clients (e.g. portal.client.socialrotation.app).</p>
+          <p className="wl-hint">Use this zone in DNS when you create hostnames for your clients.</p>
         </div>
 
         <div className="wl-field">
@@ -226,7 +226,6 @@ export default function WhiteLabel() {
             id="wl-business"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
-            placeholder="Tabitha Thomas"
             autoComplete="organization"
           />
         </div>
@@ -237,7 +236,6 @@ export default function WhiteLabel() {
             id="wl-software"
             value={softwareTitle}
             onChange={(e) => setSoftwareTitle(e.target.value)}
-            placeholder="Content Posting Engine"
           />
         </div>
 
@@ -247,7 +245,6 @@ export default function WhiteLabel() {
             id="wl-address"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            placeholder="123 Main St"
             autoComplete="street-address"
           />
         </div>
@@ -255,22 +252,22 @@ export default function WhiteLabel() {
         <div className="wl-grid-2">
           <div className="wl-field">
             <label htmlFor="wl-city">City</label>
-            <input id="wl-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Poplar Bluff" />
+            <input id="wl-city" value={city} onChange={(e) => setCity(e.target.value)} />
           </div>
           <div className="wl-field">
             <label htmlFor="wl-state">State</label>
-            <input id="wl-state" value={state} onChange={(e) => setState(e.target.value)} placeholder="MO" />
+            <input id="wl-state" value={state} onChange={(e) => setState(e.target.value)} />
           </div>
         </div>
 
         <div className="wl-grid-2">
           <div className="wl-field">
             <label htmlFor="wl-zip">Zip / Postal code</label>
-            <input id="wl-zip" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} placeholder="63901" />
+            <input id="wl-zip" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} />
           </div>
           <div className="wl-field">
             <label htmlFor="wl-country">Country</label>
-            <input id="wl-country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="United States" />
+            <input id="wl-country" value={country} onChange={(e) => setCountry(e.target.value)} />
           </div>
         </div>
 
