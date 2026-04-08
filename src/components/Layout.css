@@ -191,22 +191,24 @@
   background-color: #c0392b;
 }
 
+/* Fixed sidebar is out of flex flow; main must not use width:100% + margin-left (double-counts width → narrow/wrong column). */
 .main-content {
-  flex: 1;
-  /* Allow nested routes to use full width (flex default min-width: auto shrinks content oddly) */
+  flex: 1 1 auto;
   min-width: 0;
-  width: 100%;
-  max-width: 100%;
   padding: 2rem;
   background-color: #f5f5f5;
-  transition: margin-left 0.3s ease;
+  transition: margin-left 0.3s ease, width 0.3s ease, max-width 0.3s ease;
   box-sizing: border-box;
 }
 
 .main-content.sidebar-open {
   margin-left: 250px;
+  width: calc(100% - 250px);
+  max-width: calc(100% - 250px);
 }
 
 .main-content.sidebar-closed {
   margin-left: 0;
+  width: 100%;
+  max-width: 100%;
 }

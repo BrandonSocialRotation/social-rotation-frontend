@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
@@ -64,17 +64,28 @@ export default function WhiteLabel() {
 
   const wl = userData?.user?.white_label
 
+  /** Include saved TLD from API if it’s not in the static list (otherwise the <select> shows blank). */
+  const domainSelectOptions = useMemo(() => {
+    const saved = (wl?.top_level_domain ?? '').trim()
+    const base = [...TOP_LEVEL_DOMAIN_OPTIONS] as string[]
+    if (saved && !base.includes(saved)) {
+      return [saved, ...base]
+    }
+    return base
+  }, [wl?.top_level_domain])
+
   useEffect(() => {
-    if (!wl) return
-    setTopLevelDomain(wl.top_level_domain || '')
-    setBusinessName(wl.business_name || '')
-    setSoftwareTitle(wl.software_title || '')
-    setAddress(wl.business_address || '')
-    setCity(wl.business_city || '')
-    setState(wl.business_state || '')
-    setCountry(wl.business_country || '')
-    setPostalCode(wl.business_postal_code || '')
-  }, [wl])
+    const w = userData?.user?.white_label
+    if (!w) return
+    setTopLevelDomain((w.top_level_domain || '').trim())
+    setBusinessName(w.business_name || '')
+    setSoftwareTitle(w.software_title || '')
+    setAddress(w.business_address || '')
+    setCity(w.business_city || '')
+    setState(w.business_state || '')
+    setCountry(w.business_country || '')
+    setPostalCode(w.business_postal_code || '')
+  }, [userData?.user?.white_label])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -200,7 +211,7 @@ export default function WhiteLabel() {
             onChange={(e) => setTopLevelDomain(e.target.value)}
           >
             <option value="">Select a domain…</option>
-            {TOP_LEVEL_DOMAIN_OPTIONS.map((d) => (
+            {domainSelectOptions.map((d) => (
               <option key={d} value={d}>
                 {d}
               </option>
