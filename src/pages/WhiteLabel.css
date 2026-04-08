@@ -1,7 +1,9 @@
+/* Fill the entire main column (no narrow max-width — that read as “half the page” on wide layouts) */
 .wl-page {
+  display: block;
   width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   box-sizing: border-box;
   padding: 0;
 }
