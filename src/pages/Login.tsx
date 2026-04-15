@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
 import { authAPI } from '../services/api'
+import { usePublicClientPortalBranding, DEFAULT_AUTH_APP_NAME } from '../hooks/usePublicClientPortalBranding'
 import './Auth.css'
 
 function Login() {
@@ -13,7 +14,8 @@ function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  
+  const { shellBrand } = usePublicClientPortalBranding({ documentTitleSuffix: 'Login' })
+
   const login = useAuthStore((state) => state.login)
   const navigate = useNavigate()
 
@@ -41,8 +43,20 @@ function Login() {
       <Link to="/" className="back-to-home">
         ← Back to Home
       </Link>
-      <div className="auth-card">
-        <h1>Social Rotation</h1>
+      <div
+        className="auth-card"
+        style={
+          shellBrand?.primary_color
+            ? { borderTop: `4px solid ${shellBrand.primary_color}` }
+            : undefined
+        }
+      >
+        {shellBrand?.logo_url ? (
+          <div className="auth-brand-logo-wrap">
+            <img src={shellBrand.logo_url} alt="" className="auth-brand-logo" />
+          </div>
+        ) : null}
+        <h1>{shellBrand?.app_name ?? DEFAULT_AUTH_APP_NAME}</h1>
         <h2>Login</h2>
         
         {error && <div className="error-message">{error}</div>}
@@ -99,7 +113,19 @@ function Login() {
             </div>
           </div>
           
-          <button type="submit" disabled={loading} className="submit-btn">
+          <button
+            type="submit"
+            disabled={loading}
+            className="submit-btn"
+            style={
+              shellBrand?.primary_color
+                ? {
+                    background: shellBrand.primary_color,
+                    borderColor: shellBrand.primary_color,
+                  }
+                : undefined
+            }
+          >
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>

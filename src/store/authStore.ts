@@ -19,6 +19,13 @@ interface User {
   can_access_rss_feeds?: boolean
   /** Read-only client portal (agency sub-account); hide buckets/RSS and editing */
   client_portal_only?: boolean
+  /** Merged agency + per-domain branding for client portal shell */
+  client_portal_branding?: {
+    app_name?: string
+    logo_url?: string
+    primary_color?: string
+    favicon_url?: string
+  }
 }
 
 interface AuthState {

@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { authAPI } from '../services/api'
 import api from '../services/api'
+import { usePublicClientPortalBranding, DEFAULT_AUTH_APP_NAME } from '../hooks/usePublicClientPortalBranding'
 import './Auth.css'
 
 function Register() {
+  const { shellBrand } = usePublicClientPortalBranding({ documentTitleSuffix: 'Register' })
   const [step, setStep] = useState(1) // 1: Account info, 2: Payment info
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -246,10 +248,25 @@ function Register() {
     }
   }
 
+  const brandSubmitStyle = shellBrand?.primary_color
+    ? { background: shellBrand.primary_color, borderColor: shellBrand.primary_color }
+    : undefined
+
   return (
     <div className="auth-container">
-      <div className="auth-card" style={{ maxWidth: '600px' }}>
-        <h1>Social Rotation</h1>
+      <div
+        className="auth-card"
+        style={{
+          maxWidth: '600px',
+          ...(shellBrand?.primary_color ? { borderTop: `4px solid ${shellBrand.primary_color}` } : {}),
+        }}
+      >
+        {shellBrand?.logo_url ? (
+          <div className="auth-brand-logo-wrap">
+            <img src={shellBrand.logo_url} alt="" className="auth-brand-logo" />
+          </div>
+        ) : null}
+        <h1>{shellBrand?.app_name ?? DEFAULT_AUTH_APP_NAME}</h1>
         <h2>Create Account</h2>
         
         {/* Progress indicator */}
@@ -405,7 +422,12 @@ function Register() {
               </div>
             </div>
             
-            <button type="submit" disabled={loading} className="submit-btn">
+            <button
+              type="submit"
+              disabled={loading}
+              className="submit-btn"
+              style={brandSubmitStyle}
+            >
               {loading ? 'Creating account...' : 'Start Free Trial'}
             </button>
           </form>
@@ -790,11 +812,11 @@ function Register() {
               >
                 Back
               </button>
-              <button 
-                type="submit" 
-                disabled={processingPayment || plansLoading} 
+              <button
+                type="submit"
+                disabled={processingPayment || plansLoading}
                 className="submit-btn"
-                style={{ flex: 2 }}
+                style={{ flex: 2, ...brandSubmitStyle }}
               >
                 {processingPayment ? 'Processing...' : plansLoading ? 'Loading plans...' : `Start Free Trial - ${formatPrice(calculatePrice())}`}
               </button>

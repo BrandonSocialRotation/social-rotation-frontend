@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/authStore';
 import api from '../services/api';
 import './SubAccounts.css';
+
+const SUBDOMAIN_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i;
 
 interface SubAccount {
   id: number;
@@ -14,6 +16,172 @@ interface SubAccount {
   created_at: string;
   buckets_count: number;
   schedules_count: number;
+  client_portal_only?: boolean;
+}
+
+interface ClientPortalDomainApi {
+  id: number;
+  hostname: string;
+  user_id: number;
+}
+
+function PortalUrlSection({
+  subAccountId,
+  clientPortalOnly,
+  zone,
+  domain,
+}: {
+  subAccountId: number;
+  clientPortalOnly: boolean;
+  zone: string | null | undefined;
+  domain: ClientPortalDomainApi | undefined;
+}) {
+  const queryClient = useQueryClient();
+  const [sub, setSub] = useState('');
+  const [localError, setLocalError] = useState('');
+
+  useEffect(() => {
+    if (domain && zone) {
+      const suffix = `.${zone}`;
+      setSub(
+        domain.hostname.endsWith(suffix)
+          ? domain.hostname.slice(0, -suffix.length)
+          : ''
+      );
+    } else {
+      setSub('');
+    }
+  }, [domain, zone]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!zone) throw new Error('No domain zone');
+      const part = sub.trim().toLowerCase();
+      if (!SUBDOMAIN_RE.test(part)) {
+        throw new Error(
+          'Use a single subdomain label (letters, numbers, hyphens), e.g. acme-corp'
+        );
+      }
+      const hostname = `${part}.${zone}`;
+      if (domain) {
+        return api.patch(`/client_portal_domains/${domain.id}`, {
+          client_portal_domain: { hostname },
+        });
+      }
+      return api.post('/client_portal_domains', {
+        client_portal_domain: {
+          user_id: subAccountId,
+          hostname,
+          branding: {},
+        },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client_portal_domains'] });
+      setLocalError('');
+    },
+    onError: (err: any) => {
+      const d = err.response?.data;
+      const msg = Array.isArray(d?.errors)
+        ? d.errors.join(', ')
+        : d?.errors || d?.error || err.message || 'Could not save portal URL';
+      setLocalError(typeof msg === 'string' ? msg : 'Could not save portal URL');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!domain) return;
+      return api.delete(`/client_portal_domains/${domain.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client_portal_domains'] });
+      setLocalError('');
+    },
+    onError: (err: any) => {
+      const d = err.response?.data;
+      setLocalError(
+        typeof d?.error === 'string' ? d.error : 'Could not remove portal URL'
+      );
+    },
+  });
+
+  if (!clientPortalOnly) return null;
+
+  return (
+    <div className="sub-account-portal-url">
+      <label>Client portal URL</label>
+      {!zone ? (
+        <p className="portal-hint">
+          Choose your company domain zone under{' '}
+          <Link to="/white-label">White label</Link> first. Portal addresses must
+          be a subdomain of that zone (your approved domain pool only).
+        </p>
+      ) : (
+        <>
+          <p className="portal-hint">
+            Only subdomains of <strong>{zone}</strong> are allowed. Add DNS &amp;
+            DigitalOcean when you use a new hostname.
+          </p>
+          <div className="portal-input-row">
+            <span>https://</span>
+            <input
+              type="text"
+              value={sub}
+              onChange={(e) => setSub(e.target.value)}
+              placeholder="client-name"
+              autoComplete="off"
+              spellCheck={false}
+            />
+            <span className="portal-zone">.{zone}</span>
+          </div>
+          {domain ? (
+            <a
+              className="portal-link"
+              href={`https://${domain.hostname}/login`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Open https://{domain.hostname}/login
+            </a>
+          ) : null}
+          {localError ? <p className="portal-err">{localError}</p> : null}
+          <div className="portal-actions">
+            <button
+              type="button"
+              className="portal-btn portal-btn-primary"
+              disabled={saveMutation.isPending || !sub.trim()}
+              onClick={() => {
+                setLocalError('');
+                saveMutation.mutate();
+              }}
+            >
+              {domain ? 'Update URL' : 'Save portal URL'}
+            </button>
+            {domain ? (
+              <button
+                type="button"
+                className="portal-btn portal-btn-danger"
+                disabled={deleteMutation.isPending}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Remove portal URL https://${domain.hostname} for this client?`
+                    )
+                  ) {
+                    setLocalError('');
+                    deleteMutation.mutate();
+                  }
+                }}
+              >
+                Remove
+              </button>
+            ) : null}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export default function SubAccounts() {
@@ -38,8 +206,20 @@ export default function SubAccounts() {
     queryKey: ['sub_accounts'],
     queryFn: async () => {
       const response = await api.get('/sub_accounts');
-      return response.data;
+      return response.data as {
+        sub_accounts: SubAccount[];
+        account_top_level_domain?: string | null;
+      };
     },
+  });
+
+  const { data: portalDomains = [] } = useQuery({
+    queryKey: ['client_portal_domains'],
+    queryFn: async () => {
+      const r = await api.get('/client_portal_domains');
+      return (r.data.client_portal_domains || []) as ClientPortalDomainApi[];
+    },
+    enabled: Boolean(user?.reseller || user?.super_admin),
   });
 
   // Create sub-account mutation
@@ -123,6 +303,7 @@ export default function SubAccounts() {
   };
 
   const subAccounts = subAccountsData?.sub_accounts || [];
+  const accountTopLevelDomain = subAccountsData?.account_top_level_domain;
 
   if (isLoading) {
     return <div className="sub-accounts-page"><p>Loading...</p></div>;
@@ -206,6 +387,13 @@ export default function SubAccounts() {
                   <span className="stat-label">Schedules</span>
                 </div>
               </div>
+
+              <PortalUrlSection
+                subAccountId={subAccount.id}
+                clientPortalOnly={Boolean(subAccount.client_portal_only)}
+                zone={accountTopLevelDomain}
+                domain={portalDomains.find((d) => d.user_id === subAccount.id)}
+              />
               
               <div className="sub-account-status">
                 <span className={`status-badge ${subAccount.status === 1 ? 'active' : 'inactive'}`}>

@@ -2,9 +2,11 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { authAPI } from '../services/api'
+import { usePublicClientPortalBranding, DEFAULT_AUTH_APP_NAME } from '../hooks/usePublicClientPortalBranding'
 import './Auth.css'
 
 function ResetPassword() {
+  const { shellBrand } = usePublicClientPortalBranding({ documentTitleSuffix: 'Reset password' })
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   const [password, setPassword] = useState('')
@@ -60,8 +62,20 @@ function ResetPassword() {
         <Link to="/" className="back-to-home">
           ← Back to Home
         </Link>
-        <div className="auth-card">
-          <h1>Social Rotation</h1>
+        <div
+          className="auth-card"
+          style={
+            shellBrand?.primary_color
+              ? { borderTop: `4px solid ${shellBrand.primary_color}` }
+              : undefined
+          }
+        >
+          {shellBrand?.logo_url ? (
+            <div className="auth-brand-logo-wrap">
+              <img src={shellBrand.logo_url} alt="" className="auth-brand-logo" />
+            </div>
+          ) : null}
+          <h1>{shellBrand?.app_name ?? DEFAULT_AUTH_APP_NAME}</h1>
           <h2>Password Reset Successful</h2>
           <div className="success-message" style={{ color: '#4caf50', backgroundColor: '#e8f5e9', padding: '12px', borderRadius: '4px', marginBottom: '16px' }}>
             Your password has been reset successfully. Redirecting to login...
@@ -79,8 +93,20 @@ function ResetPassword() {
       <Link to="/" className="back-to-home">
         ← Back to Home
       </Link>
-      <div className="auth-card">
-        <h1>Social Rotation</h1>
+      <div
+        className="auth-card"
+        style={
+          shellBrand?.primary_color
+            ? { borderTop: `4px solid ${shellBrand.primary_color}` }
+            : undefined
+        }
+      >
+        {shellBrand?.logo_url ? (
+          <div className="auth-brand-logo-wrap">
+            <img src={shellBrand.logo_url} alt="" className="auth-brand-logo" />
+          </div>
+        ) : null}
+        <h1>{shellBrand?.app_name ?? DEFAULT_AUTH_APP_NAME}</h1>
         <h2>Reset Password</h2>
         
         {error && <div className="error-message">{error}</div>}
@@ -148,7 +174,19 @@ function ResetPassword() {
               </div>
             </div>
             
-            <button type="submit" disabled={loading} className="submit-btn">
+            <button
+              type="submit"
+              disabled={loading}
+              className="submit-btn"
+              style={
+                shellBrand?.primary_color
+                  ? {
+                      background: shellBrand.primary_color,
+                      borderColor: shellBrand.primary_color,
+                    }
+                  : undefined
+              }
+            >
               {loading ? 'Resetting...' : 'Reset Password'}
             </button>
           </form>

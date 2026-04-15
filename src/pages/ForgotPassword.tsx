@@ -2,9 +2,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { authAPI } from '../services/api'
+import { usePublicClientPortalBranding, DEFAULT_AUTH_APP_NAME } from '../hooks/usePublicClientPortalBranding'
 import './Auth.css'
 
 function ForgotPassword() {
+  const { shellBrand } = usePublicClientPortalBranding({ documentTitleSuffix: 'Forgot password' })
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -31,8 +33,20 @@ function ForgotPassword() {
       <Link to="/" className="back-to-home">
         ← Back to Home
       </Link>
-      <div className="auth-card">
-        <h1>Social Rotation</h1>
+      <div
+        className="auth-card"
+        style={
+          shellBrand?.primary_color
+            ? { borderTop: `4px solid ${shellBrand.primary_color}` }
+            : undefined
+        }
+      >
+        {shellBrand?.logo_url ? (
+          <div className="auth-brand-logo-wrap">
+            <img src={shellBrand.logo_url} alt="" className="auth-brand-logo" />
+          </div>
+        ) : null}
+        <h1>{shellBrand?.app_name ?? DEFAULT_AUTH_APP_NAME}</h1>
         <h2>Forgot Password</h2>
         
         {error && <div className="error-message">{error}</div>}
@@ -51,7 +65,19 @@ function ForgotPassword() {
             />
           </div>
           
-          <button type="submit" disabled={loading} className="submit-btn">
+          <button
+            type="submit"
+            disabled={loading}
+            className="submit-btn"
+            style={
+              shellBrand?.primary_color
+                ? {
+                    background: shellBrand.primary_color,
+                    borderColor: shellBrand.primary_color,
+                  }
+                : undefined
+            }
+          >
             {loading ? 'Sending...' : 'Send Reset Link'}
           </button>
         </form>

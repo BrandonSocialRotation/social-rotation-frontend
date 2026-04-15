@@ -9,6 +9,13 @@ import './Layout.css'
 function Layout() {
   const { user, originalUser, logout, switchBackToOriginal } = useAuthStore()
   const isClientPortal = user?.client_portal_only === true
+  const portalTitle =
+    isClientPortal && user?.client_portal_branding?.app_name
+      ? user.client_portal_branding.app_name
+      : isClientPortal
+        ? 'Client portal'
+        : 'Social Rotation'
+  const portalLogo = isClientPortal ? user?.client_portal_branding?.logo_url : undefined
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(true)
 
@@ -46,7 +53,10 @@ function Layout() {
       {/* Sidebar navigation */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
         <div className="sidebar-header">
-          <h1>{isClientPortal ? 'Client portal' : 'Social Rotation'}</h1>
+          {portalLogo ? (
+            <img src={portalLogo} alt="" className="sidebar-brand-logo" />
+          ) : null}
+          <h1>{portalTitle}</h1>
           <button 
             className="sidebar-toggle-in-header"
             onClick={toggleSidebar}

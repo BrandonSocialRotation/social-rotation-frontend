@@ -4,19 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
 import api from '../services/api'
 import './WhiteLabel.css'
+import { WHITE_LABEL_REGISTRAR_DOMAINS } from '../constants/whiteLabelRegistrarDomains'
 
-/** Must match Api::V1::UserInfoController::ALLOWED_WHITE_LABEL_DOMAINS */
-const TOP_LEVEL_DOMAIN_OPTIONS = [
-  'contentrotation.com',
-  'contentrotator.com',
-  'postrotation.com',
-  'postrotator.com',
-  'secureorderforms.com',
-  'secureorderformsdev.com',
-  'socialrotation.app',
-  'socialrotation.com',
-  'socialrotation.dev',
-] as const
+const TOP_LEVEL_DOMAIN_OPTIONS = WHITE_LABEL_REGISTRAR_DOMAINS
 
 interface WhiteLabelPayload {
   top_level_domain?: string | null
