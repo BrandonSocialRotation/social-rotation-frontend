@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '../store/authStore'
@@ -43,6 +43,20 @@ export default function WhiteLabel() {
   const [faviconUploading, setFaviconUploading] = useState(false)
   const [faviconError, setFaviconError] = useState('')
 
+  /** Avoid overwriting the form on every user_info refetch (e.g. tab focus) — that was clearing typed values before save. */
+  const didHydrateFormFromServer = useRef(false)
+
+  const applyWhiteLabelToForm = (w: WhiteLabelPayload) => {
+    setTopLevelDomain((w.top_level_domain || '').trim())
+    setBusinessName(w.business_name || '')
+    setSoftwareTitle(w.software_title || '')
+    setAddress(w.business_address || '')
+    setCity(w.business_city || '')
+    setState(w.business_state || '')
+    setCountry(w.business_country || '')
+    setPostalCode(w.business_postal_code || '')
+  }
+
   const { data: userData, isLoading } = useQuery({
     queryKey: ['user_info'],
     queryFn: async () => {
@@ -50,6 +64,7 @@ export default function WhiteLabel() {
       return res.data as { user: { white_label?: WhiteLabelPayload | null } & Record<string, unknown> }
     },
     enabled: isAgency,
+    refetchOnWindowFocus: false,
   })
 
   const wl = userData?.user?.white_label
@@ -66,20 +81,14 @@ export default function WhiteLabel() {
 
   useEffect(() => {
     const w = userData?.user?.white_label
-    if (!w) return
-    setTopLevelDomain((w.top_level_domain || '').trim())
-    setBusinessName(w.business_name || '')
-    setSoftwareTitle(w.software_title || '')
-    setAddress(w.business_address || '')
-    setCity(w.business_city || '')
-    setState(w.business_state || '')
-    setCountry(w.business_country || '')
-    setPostalCode(w.business_postal_code || '')
+    if (!w || didHydrateFormFromServer.current) return
+    didHydrateFormFromServer.current = true
+    applyWhiteLabelToForm(w)
   }, [userData?.user?.white_label])
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      return api.patch('/user_info', {
+      const res = await api.patch('/user_info', {
         white_label: {
           top_level_domain: topLevelDomain || null,
           business_name: businessName || null,
@@ -91,12 +100,25 @@ export default function WhiteLabel() {
           business_postal_code: postalCode || null,
         },
       })
+      return res.data as {
+        user?: { white_label?: WhiteLabelPayload | null }
+        white_label_update_meta?: { persisted_keys?: string[]; dropped_keys?: string[] }
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const w = data?.user?.white_label
+      if (w) applyWhiteLabelToForm(w)
       queryClient.invalidateQueries({ queryKey: ['user_info'] })
-      setSuccess('White label settings saved.')
+      const dropped = data?.white_label_update_meta?.dropped_keys ?? []
+      if (dropped.length > 0) {
+        setSuccess(
+          `Saved what the server could store. These fields were not saved (usually missing DB columns on the server): ${dropped.join(', ')}. Run migrations on the API host (rails db:migrate).`
+        )
+      } else {
+        setSuccess('White label settings saved.')
+      }
       setError('')
-      setTimeout(() => setSuccess(''), 4000)
+      setTimeout(() => setSuccess(''), 8000)
     },
     onError: (err: any) => {
       const d = err.response?.data
