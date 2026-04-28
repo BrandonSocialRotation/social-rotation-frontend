@@ -1,6 +1,6 @@
 /**
  * Registrar zones your company owns (agencies pick one in White label).
- * Keep in sync with config/initializers/white_label_registrar.rb (WhiteLabelRegistrar::DOMAINS).
+ * Keep in sync with config/initializers/00_white_label_registrar.rb (WhiteLabelRegistrar::DOMAINS).
  */
 export const WHITE_LABEL_REGISTRAR_DOMAINS = [
   'contentrotation.com',
