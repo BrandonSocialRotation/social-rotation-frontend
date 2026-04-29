@@ -189,7 +189,7 @@ export default function SubAccounts() {
   const { switchToSubAccount, user } = useAuthStore();
 
   if (user?.client_portal_only) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to="/analytics" replace />;
   }
   
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -269,7 +269,7 @@ export default function SubAccounts() {
       // Store original user/token before switching
       switchToSubAccount(response.data.user, response.data.token);
       // Refresh page to reload with new context
-      window.location.href = '/dashboard';
+      window.location.href = '/analytics';
     },
   });
 

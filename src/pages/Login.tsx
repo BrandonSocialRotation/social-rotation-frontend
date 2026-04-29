@@ -1,6 +1,6 @@
 // Login page - user authentication
 // Form fields: email, password (with show/hide toggle)
-// On success: saves token and redirects to dashboard or profile based on subscription status
+// On success: saves token and redirects to analytics (or profile based on subscription status)
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
@@ -29,8 +29,8 @@ function Login() {
       const { user, token } = response.data
       
       login(user, token)
-      // Always redirect to dashboard - users can view app but posting/scheduling will be blocked if subscription is canceled
-      navigate('/dashboard')
+      // Always redirect to analytics - users can view app but posting/scheduling will be blocked if subscription is canceled
+      navigate('/analytics')
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed. Please try again.')
     } finally {

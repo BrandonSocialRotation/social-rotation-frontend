@@ -174,13 +174,13 @@ function Dashboard() {
     <div className="dashboard">
       <div className="dashboard-header">
         <div>
-          <h1>Welcome back, {userInfo?.user?.name || user?.name || 'User'}!</h1>
+          <h1>Analytics</h1>
           <p style={{ color: '#666', marginTop: '0.5rem' }}>
             {isClientPortal
-              ? 'Your performance and scheduled content (view only)'
+              ? `Welcome back, ${userInfo?.user?.name || user?.name || 'User'} · Your performance and scheduled content (view only)`
               : user?.reseller
-                ? 'Manage your agency and sub-accounts'
-                : "Here's an overview of your content"}
+                ? `Welcome back, ${userInfo?.user?.name || user?.name || 'User'} · Manage your agency and metrics`
+                : `Welcome back, ${userInfo?.user?.name || user?.name || 'User'} · Overview of your content`}
           </p>
         </div>
         <div className="time-range-dropdown-wrapper">

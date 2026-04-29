@@ -2,7 +2,8 @@
 // Updated: Removed all redirects to preserve URL on refresh
 // Routes:
 //   / - Landing page (public)
-//   /dashboard - Dashboard (protected)
+//   /analytics - Analytics (metrics, protected)
+//   /dashboard - Super admin accounts table (protected)
 //   /login - Login page
 //   /register - Register page
 //   /buckets - Bucket management (protected)
@@ -18,6 +19,7 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
+import SuperAdminDashboard from './pages/SuperAdminDashboard'
 import Buckets from './pages/Buckets'
 import BucketImages from './pages/BucketImages'
 import Schedule from './pages/Schedule'
@@ -50,7 +52,18 @@ function App() {
       <Route path="/privacy-policy" element={<Privacy />} />
       <Route path="/oauth/callback" element={<OAuthCallback />} />
       
-      {/* Protected routes with layout */}
+      {/* Analytics (metrics) — was /dashboard */}
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route index element={<Dashboard />} />
+      </Route>
+      {/* Super admin only: all accounts table */}
       <Route
         path="/dashboard"
         element={
@@ -59,7 +72,7 @@ function App() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<Dashboard />} />
+        <Route index element={<SuperAdminDashboard />} />
       </Route>
       
       {/* Other protected routes */}

@@ -1,0 +1,56 @@
+.super-admin-dashboard {
+  padding: 1.5rem 2rem;
+  max-width: 1200px;
+}
+
+.super-admin-dashboard-header h1 {
+  margin: 0 0 0.35rem;
+  font-size: 1.75rem;
+}
+
+.super-admin-dashboard-intro {
+  margin: 0 0 1.25rem;
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.super-admin-dashboard-muted {
+  color: #64748b;
+}
+
+.super-admin-dashboard-error {
+  color: #b91c1c;
+}
+
+.super-admin-table-wrap {
+  overflow-x: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.super-admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.super-admin-table th,
+.super-admin-table td {
+  padding: 0.65rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.super-admin-table th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #334155;
+}
+
+.super-admin-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.super-admin-table tbody tr:hover td {
+  background: #fafafa;
+}

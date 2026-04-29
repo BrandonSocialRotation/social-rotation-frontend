@@ -174,7 +174,7 @@ export default function WhiteLabel() {
   }
 
   if (isClientPortal) {
-    return <Navigate to="/dashboard" replace />
+    return <Navigate to="/analytics" replace />
   }
 
   if (!isAgency) {
