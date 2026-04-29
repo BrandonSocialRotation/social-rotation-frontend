@@ -79,11 +79,22 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
+.super-admin-account-card-heading-text {
+  min-width: 0;
+}
+
 .super-admin-account-title {
   margin: 0;
   font-size: 1.15rem;
   font-weight: 600;
   color: #0f172a;
+}
+
+.super-admin-billing-line {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.35;
 }
 
 .super-admin-account-kind {

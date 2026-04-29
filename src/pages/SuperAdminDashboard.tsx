@@ -18,6 +18,8 @@ type AccountGroup = {
   account_id: number | null
   account_title: string
   account_kind: string
+  /** Plan name, price, and billing cadence (same for all rows in this group). */
+  billing_summary: string | null
   main_users: UserRow[]
   sub_accounts: UserRow[]
 }
@@ -62,7 +64,12 @@ export default function SuperAdminDashboard() {
               className="super-admin-account-card"
             >
               <div className="super-admin-account-card-header">
-                <h2 className="super-admin-account-title">{group.account_title}</h2>
+                <div className="super-admin-account-card-heading-text">
+                  <h2 className="super-admin-account-title">{group.account_title}</h2>
+                  {group.billing_summary ? (
+                    <p className="super-admin-billing-line">{group.billing_summary}</p>
+                  ) : null}
+                </div>
                 <span className="super-admin-account-kind">{group.account_kind}</span>
               </div>
 
@@ -73,7 +80,7 @@ export default function SuperAdminDashboard() {
                       <th>Username</th>
                       <th>Name</th>
                       <th>Role</th>
-                      <th>Account type</th>
+                      <th>Plan &amp; billing</th>
                       <th>Active</th>
                     </tr>
                   </thead>
@@ -101,7 +108,7 @@ export default function SuperAdminDashboard() {
                           <th>Username</th>
                           <th>Name</th>
                           <th>Role</th>
-                          <th>Account type</th>
+                          <th>Plan &amp; billing</th>
                           <th>Active</th>
                         </tr>
                       </thead>
